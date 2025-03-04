@@ -6,7 +6,10 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 
-const app = createApp(App)
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import './assets/icons/font-awesome-icons'
+
+const app = createApp(App).component('font-awesome-icon', FontAwesomeIcon)
 
 app.use(createPinia())
 app.use(router)

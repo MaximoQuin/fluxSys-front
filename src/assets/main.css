@@ -1,4 +1,15 @@
-@import './base.css';
+@import 'tailwindcss';
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background-color: #f0f1f3;
+  /* background-color: blue; */
+}
+
+/* @import './base.css';
 
 #app {
   max-width: 1280px;
@@ -32,4 +43,4 @@ a,
     grid-template-columns: 1fr 1fr;
     padding: 0 2rem;
   }
-}
+} */
