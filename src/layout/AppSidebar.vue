@@ -1,9 +1,14 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router';
+import { computed } from 'vue';
 
 const props = defineProps<{
   isSidebarActive: boolean;
 }>();
+
+const sidebarClass = computed(() => {
+  return props.isSidebarActive ? 'sidebar-true' : 'sidebar-false';
+});
 
 </script>
 
@@ -46,8 +51,8 @@ const props = defineProps<{
       </RouterLink>
     </div>
 
-    <div v-if="isSidebarActive"
-      class="hidden md:flex flex-col  py-8 overflow-y-auto bg-white sm:w-64 w-60 dark:bg-gray-900 rounded-lg gap-5">
+    <div :class="sidebarClass"
+      class="flex flex-col py-8 overflow-y-auto bg-white dark:bg-gray-900 rounded-lg gap-5 sidebar">
       <RouterLink to="/">
         <h2 class="px-5 text-lg font-medium text-gray-800 dark:text-white">FLUXSYS</h2>
       </RouterLink>
