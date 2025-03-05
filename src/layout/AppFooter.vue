@@ -6,7 +6,7 @@
     <div class="container px-6 py-8 mx-auto">
       <div class="flex flex-col items-center text-center">
         <a href="#">
-          <img class="w-auto h-7" src="https://merakiui.com/images/full-logo.svg" alt="">
+          <img class="w-auto h-7" src="@/assets/logo.svg" alt="">
         </a>
 
         <p class="max-w-md mx-auto mt-4 text-gray-500 dark:text-gray-400">Lorem ipsum dolor sit amet consectetur
