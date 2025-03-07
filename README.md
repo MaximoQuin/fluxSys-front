@@ -1,38 +1,58 @@
-# fluxSys-front
+# fluxSys-front - Sistema de Gestión de Inventario
 
-This template should help get you started developing with Vue 3 in Vite.
+## Problemática
 
-## Recommended IDE Setup
+La gestión de inventarios es un aspecto crucial en cualquier empresa que maneje productos. Sin embargo, la falta de un sistema adecuado para llevar a cabo esta tarea puede dar lugar a una serie de problemas que afectan la eficiencia operativa, la satisfacción del cliente y los costos. A continuación, se describen las principales problemáticas derivadas de una gestión de inventarios deficiente:
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+- Pérdida de productos por mala organización
+- Errores humanos en el conteo y registro manual
+- Dificultad para rastrear existencias en tiempo real
+- Falta de control en entradas y salidas de productos
+- Demoras en la reposición de mercancía
 
-## Type Support for `.vue` Imports in TS
+## Integrantes
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
+- Sánchez Lobato Gael
 
-## Customize configuration
+- Quintero Escobar Carlos Máximo
+- Gutiérrez Canul Gustavo
+- Raymundo Mata Isha Mia
+- Velázquez De La Cruz Carlos Yahir
 
-See [Vite Configuration Reference](https://vite.dev/config/).
+## Tecnologías y Librerías
 
-## Project Setup
+- **Vue 3**: Framework de JavaScript para la construcción de interfaces de usuario.
+- **Vite**: Herramienta de construcción rápida para proyectos modernos.
+- **TypeScript**: Para el desarrollo con tipado estático.
+- **Volar**: Extensión de VSCode para soporte de Vue 3.
+- **ESLint**: Para el análisis y corrección de código.
+
+## Cómo Correr el Proyecto
+
+Sigue estos pasos para ejecutar el proyecto en tu entorno local:
+
+1. **Clona el repositorio**:
+   ```bash
+   git clone https://github.com/MaximoQuin/fluxSys-front.git
+
+### Instalar dependencias
 
 ```sh
 npm install
 ```
-
-### Compile and Hot-Reload for Development
+### Ejecuta el servidor de desarrollo:
 
 ```sh
 npm run dev
 ```
 
-### Type-Check, Compile and Minify for Production
+### Compilar y Minificar para Producción:
 
 ```sh
 npm run build
 ```
 
-### Lint with [ESLint](https://eslint.org/)
+### Lint con ESLint:
 
 ```sh
 npm run lint
