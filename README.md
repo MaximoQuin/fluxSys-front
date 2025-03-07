@@ -19,6 +19,7 @@ La gestión de inventarios es un aspecto crucial en cualquier empresa que maneje
 - Raymundo Mata Isha Mia
 - Velázquez De La Cruz Carlos Yahir
 
+
 ## Tecnologías y Librerías
 
 - **Vue 3**: Framework de JavaScript para la construcción de interfaces de usuario.
