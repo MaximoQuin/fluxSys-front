@@ -22,7 +22,7 @@ const toggleSidebar = () => {
       <div class="w-full">
         <AppTopbar @toggle-sidebar="toggleSidebar"></AppTopbar>
         <RouterView />
-        <AppFooter></AppFooter>
+        <!-- <AppFooter></AppFooter> -->
       </div>
     </div>
   </div>
