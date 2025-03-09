@@ -13,11 +13,11 @@ La gestión de inventarios es un aspecto crucial en cualquier empresa que maneje
 ## Integrantes
 
 - Sánchez Lobato Gael
-
 - Quintero Escobar Carlos Máximo
 - Gutiérrez Canul Gustavo
 - Raymundo Mata Isha Mia
 - Velázquez De La Cruz Carlos Yahir
+
 
 ## Tecnologías y Librerías
 
