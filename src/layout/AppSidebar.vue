@@ -58,7 +58,7 @@ const sidebarClass = computed(() => {
       </RouterLink>
 
       <div class="flex flex-col gap-8">
-        <RouterLink to="/">
+        <RouterLink to="/dashboard">
           <button style="cursor: pointer;"
             class="flex items-center w-full px-5 transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none">
             <div class="text-left rtl:text-right">

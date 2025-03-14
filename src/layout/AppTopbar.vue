@@ -1,4 +1,16 @@
 <script setup lang="ts">
+import { useAuthStore } from '../stores/authStore';
+import { useRouter } from 'vue-router';
+
+const authStore = useAuthStore();
+const router = useRouter();
+
+const handleLogout = async () => {
+  await authStore.logout();
+  router.push('/login');
+};
+
+
 const emit = defineEmits<{
   (event: 'toggle-sidebar'): void;
 }>();
@@ -47,6 +59,8 @@ const toggleSidebar = () => {
       </div>
     </div>
     <!-- end search bar -->
+
+    <button @click="handleLogout" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 active:scale-90 transition">Cerrar sesion</button>
 
     <!-- login -->
     <div class="flex-initial">
