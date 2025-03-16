@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
 import type { Company } from "@/interfaces/Company";
-import { getCompanies, createCompany, updateCompany, deleteCompany, restoreCompany } from "@/services/companyServices";
+import { getCompanies, createCompany, updateCompany, deleteCompany, restoreCompany } from "@/services/companyService";
 
 export const useCompanyStore = defineStore("company", () => {
   const companies = ref<Company[]>([]);
