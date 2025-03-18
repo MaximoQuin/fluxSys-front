@@ -1,7 +1,7 @@
 import type { LoginRequest, LoginResponse, ValidateTokenResponse } from '@/interfaces/authInterfaces';
 import { genericRequest } from '@/utils/httpUtils';
 
-const API_URL = 'https://localhost:7002/api/Auth';
+const API_URL = ' http://localhost:5076/api/Auth';
 
 export const authService = {
   async login(credentials: LoginRequest): Promise<LoginResponse> {
