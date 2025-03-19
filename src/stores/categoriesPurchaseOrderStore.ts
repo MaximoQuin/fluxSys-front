@@ -1,74 +1,85 @@
 import { defineStore } from "pinia";
+import { ref } from "vue";
 import categoriesService from "@/services/categoriesPurchaseOrdersService";
+import type { Category, CategoryCreate, CategoryUpdate } from '@/interfaces/categoriesPucharseOrderInterface';
 
-interface Category {
-  id_category_purchase_order: number;
-  name_category_purchase_order: string;
-  name_company: string;
-  delete_log_category_purchase_order: boolean;
-}
+export const useCategoriesStore = defineStore("categories", () => {
+  const categories = ref<Category[]>([]);
+  const loading = ref<boolean>(false);
+  const error = ref<string | null>(null);
 
-export const useCategoriesStore = defineStore("categories", {
-  state: () => ({
-    categories: [] as Category[],
-    loading: false,
-    error: null as string | null,
-  }),
+  // Acción para obtener las categorías
+  const fetchCategories = async () => {
+    loading.value = true;
+    error.value = null;
+    try {
+      console.log("fetchCategories: Llamando al servicio");
+      categories.value = await categoriesService.getCategories();
+      console.log("fetchCategories: Categorías obtenidas", categories.value);
+    } catch (err) {
+      error.value = "Error al obtener categorías.";
+      console.error("fetchCategories:", error.value, err);
+    } finally {
+      loading.value = false;
+    }
+  };
 
-  actions: {
-    async fetchCategories() {
-      this.loading = true;
-      this.error = null;
-      try {
-        console.log("fetchCategories: Llamando al servicio");
-        this.categories = await categoriesService.getCategories();
-        console.log("fetchCategories: Categorías obtenidas", this.categories);
-      } catch (error) {
-        this.error = "Error al obtener categorías.";
-        console.error("fetchCategories:", this.error, error);
-      } finally {
-        this.loading = false;
-      }
-    },
+  // Acción para agregar una nueva categoría
+  const addCategory = async (categoryData: CategoryCreate) => {
+    try {
+      console.log("addCategory: Datos a agregar", categoryData);
+      await categoriesService.createCategory(categoryData);
+      await fetchCategories();  // Actualizamos la lista de categorías después de agregar
+    } catch (err) {
+      error.value = "Error al agregar la categoría.";
+      console.error("addCategory: Error al agregar categoría:", err);
+    }
+  };
 
-    async addCategory(categoryData: { name_category_purchase_order: string; id_company_Id: number }) {
-      try {
-        console.log("Store addCategory: Datos a agregar", categoryData);
-        await categoriesService.createCategory(categoryData);
-        await this.fetchCategories();
-      } catch (error) {
-        console.error("Store addCategory: Error al agregar categoría:", error);
-      }
-    },
+  // Acción para actualizar una categoría existente
+  const updateCategory = async (id: number, categoryData: CategoryUpdate) => {
+    try {
+      console.log("updateCategory: Actualizando categoría ID", id, "con datos", categoryData);
+      await categoriesService.updateCategory(id, categoryData);
+      await fetchCategories();  // Actualizamos la lista de categorías después de actualizar
+    } catch (err) {
+      error.value = `Error al actualizar categoría con ID ${id}.`;
+      console.error(`updateCategory: Error al actualizar categoría con ID ${id}:`, err);
+    }
+  };
 
-    async updateCategory(id: number, categoryData: { name_category_purchase_order: string; id_company_Id: number }) {
-      try {
-        console.log("Store updateCategory: Actualizando categoría ID", id, "con datos", categoryData);
-        await categoriesService.updateCategory(id, categoryData);
-        await this.fetchCategories();
-      } catch (error) {
-        console.error(`Store updateCategory: Error al actualizar categoría con ID ${id}:`, error);
-      }
-    },
+  // Acción para eliminar (soft delete) una categoría
+  const deleteCategory = async (id: number) => {
+    try {
+      console.log("deleteCategory: Eliminando categoría con ID", id);
+      await categoriesService.deleteCategory(id);
+      await fetchCategories();  // Actualizamos la lista de categorías después de eliminar
+    } catch (err) {
+      error.value = "Error al eliminar la categoría.";
+      console.error("deleteCategory: Error al eliminar categoría:", err);
+    }
+  };
 
-    async softDeleteCategory(id: number) {
-      try {
-        console.log("Store softDeleteCategory: Eliminando categoría con ID", id);
-        await categoriesService.softDeleteCategory(id);
-        await this.fetchCategories();
-      } catch (error) {
-        console.error(`Store softDeleteCategory: Error al eliminar categoría con ID ${id}:`, error);
-      }
-    },
+  // Acción para restaurar una categoría eliminada
+  const restoreCategory = async (id: number) => {
+    try {
+      console.log("restoreCategory: Restaurando categoría con ID", id);
+      await categoriesService.restoreCategory(id);
+      await fetchCategories();  // Actualizamos la lista de categorías después de restaurar
+    } catch (err) {
+      error.value = "Error al restaurar la categoría.";
+      console.error("restoreCategory: Error al restaurar categoría:", err);
+    }
+  };
 
-    async restoreCategory(id: number) {
-      try {
-        console.log("Store restoreCategory: Restaurando categoría con ID", id);
-        await categoriesService.restoreCategory(id);
-        await this.fetchCategories();
-      } catch (error) {
-        console.error(`Store restoreCategory: Error al restaurar categoría con ID ${id}:`, error);
-      }
-    },
-  },
+  return {
+    categories,
+    loading,
+    error,
+    fetchCategories,
+    addCategory,
+    updateCategory,
+    deleteCategory,
+    restoreCategory,
+  };
 });

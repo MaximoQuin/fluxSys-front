@@ -1,90 +1,77 @@
-import axios from "axios";
+import { genericRequest } from '@/utils/httpUtils';
+import type { Position, PositionCreate, PositionUpdate } from '@/interfaces/positionsinterface';
 
-interface Position {
-  Id_position: number;
-  Name_position: string;
-  Name_company: string;
-  Delete_log_position: boolean;
+const API_URL_POSITIONS = "http://localhost:5076/api/Positions";
+
+// Función para obtener los encabezados de autenticación
+function getAuthHeaders() {
+  const token = localStorage.getItem("token");
+  if (!token) {
+    console.error("No se encontró el token de autenticación.");
+    throw new Error("Token de autenticación no disponible.");
+  }
+  return {
+    Authorization: `Bearer ${token}`,
+    "Content-Type": "application/json",
+  };
 }
 
-interface PositionCreate {
-  Name_position: string;
-  Id_company_Id: number;
+// Función para obtener las posiciones
+export async function getPositions(): Promise<Position[]> {
+  try {
+    return await genericRequest<Position[]>('get', `${API_URL_POSITIONS}/get-positions`, {}, getAuthHeaders());
+  } catch (error) {
+    console.error("Error al obtener posiciones:", error);
+    throw error;
+  }
 }
 
-interface PositionUpdate {
-  Name_position: string;
-  Id_company_Id: number;
+// Función para crear una posición
+export async function createPosition(positionData: PositionCreate): Promise<Position> {
+  try {
+    return await genericRequest<Position>('post', `${API_URL_POSITIONS}/create-position`, positionData, getAuthHeaders());
+  } catch (error) {
+    console.error("Error al crear posición:", error);
+    throw error;
+  }
 }
 
-const API_URL_POSITIONS = "http://localhost:5076/api/Positions/get-positions";
+// Función para actualizar una posición
+export async function updatePosition(id: number, positionData: PositionUpdate): Promise<Position> {
+  try {
+    return await genericRequest<Position>('put', `${API_URL_POSITIONS}/update-position/${id}`, positionData, getAuthHeaders());
+  } catch (error) {
+    console.error("Error al actualizar posición:", error);
+    throw error;
+  }
+}
 
-export default {
-  async getPositions(): Promise<Position[]> {
-    try {
-      const response = await axios.get<Position[]>(API_URL_POSITIONS, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
-      return response.data;
-    } catch (error) {
-      console.error("Error obteniendo posiciones:", error);
-      throw error;
-    }
-  },
+// Función para eliminar una posición (soft delete)
+export async function deletePosition(id: number): Promise<void> {
+  try {
+    return await genericRequest<void>('delete', `${API_URL_POSITIONS}/delete-position/${id}`, {}, getAuthHeaders());
+  } catch (error) {
+    console.error("Error al eliminar posición:", error);
+    throw error;
+  }
+}
 
-  async createPosition(positionData: PositionCreate) {
-    try {
-      await axios.post(API_URL_POSITIONS, positionData, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-          "Content-Type": "application/json",
-        },
-      });
-    } catch (error) {
-      console.error("Error creando posición:", error);
-      throw error;
-    }
-  },
+// Función para restaurar una posición
+export async function restorePosition(id: number): Promise<void> {
+  try {
+    return await genericRequest<void>('patch', `${API_URL_POSITIONS}/restore-position/${id}`, {}, getAuthHeaders());
+  } catch (error) {
+    console.error("Error al restaurar posición:", error);
+    throw error;
+  }
+}
 
-  async updatePosition(id: number, positionData: PositionUpdate) {
-    try {
-      await axios.put(`${API_URL_POSITIONS}/${id}`, positionData, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-          "Content-Type": "application/json",
-        },
-      });
-    } catch (error) {
-      console.error("Error actualizando posición:", error);
-      throw error;
-    }
-  },
-
-  async deletePosition(id: number) {
-    try {
-      await axios.patch(`${API_URL_POSITIONS}/soft-delete/${id}`, null, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
-    } catch (error) {
-      console.error("Error eliminando posición:", error);
-      throw error;
-    }
-  },
-
-  async restorePosition(id: number) {
-    try {
-      await axios.patch(`${API_URL_POSITIONS}/restore/${id}`, null, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
-    } catch (error) {
-      console.error("Error restaurando posición:", error);
-      throw error;
-    }
-  },
+const positionsService = {
+  getPositions,
+  createPosition,
+  updatePosition,
+  deletePosition,
+  restorePosition,
 };
+
+export default positionsService;

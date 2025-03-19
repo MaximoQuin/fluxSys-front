@@ -7,7 +7,7 @@ const categoriesStore = useCategoriesStore();
 
 const newCategory = ref({
   name_category_purchase_order: "",
-  id_company_Id: 1, // Valor por defecto; ajústalo si es necesario
+  id_company_Id: 1, // Valor por defecto; ajusta según convenga
 });
 
 const editingCategory = ref<any>(null);
@@ -24,40 +24,74 @@ watch(
   }
 );
 
+// Función para agregar una nueva categoría
 const addCategory = async () => {
-  if (newCategory.value.name_category_purchase_order.trim() === "") return;
+  if (newCategory.value.name_category_purchase_order.trim() === "") {
+    console.error("El nombre de la categoría no puede estar vacío.");
+    return;
+  }
   console.log("Vista: Agregando categoría", newCategory.value);
-  await categoriesStore.addCategory(newCategory.value);
-  newCategory.value.name_category_purchase_order = "";
+  try {
+    await categoriesStore.addCategory(newCategory.value);
+    newCategory.value.name_category_purchase_order = ""; // Limpiar el campo después de agregar
+    console.log("Vista: Categoría agregada exitosamente.");
+  } catch (error) {
+    console.error("Error al agregar categoría:", error);
+  }
 };
 
+// Función para iniciar el modo de edición de una categoría
 const startEditing = (category: any) => {
   console.log("Vista: Iniciando edición para", category);
-  editingCategory.value = { ...category };
+  editingCategory.value = { ...category }; // Se crea una copia para no modificar directamente el array
 };
 
+// Función para cancelar la edición
 const cancelEditing = () => {
   console.log("Vista: Cancelar edición");
   editingCategory.value = null;
 };
 
+// Función para guardar la edición
 const saveEdit = async () => {
   if (!editingCategory.value) return;
   const { id_category_purchase_order, name_category_purchase_order } = editingCategory.value;
   const id_company_Id = editingCategory.value.id_company_Id || 1;
-  console.log("Vista: Guardando edición para ID", id_category_purchase_order, "con datos", { name_category_purchase_order, id_company_Id });
-  await categoriesStore.updateCategory(id_category_purchase_order, { name_category_purchase_order, id_company_Id });
-  editingCategory.value = null;
+  console.log(
+    "Vista: Guardando edición para ID",
+    id_category_purchase_order,
+    "con datos",
+    { name_category_purchase_order, id_company_Id }
+  );
+  try {
+    await categoriesStore.updateCategory(id_category_purchase_order, { name_category_purchase_order, id_company_Id });
+    editingCategory.value = null; // Limpiar modo edición al finalizar
+    console.log("Vista: Edición guardada exitosamente.");
+  } catch (error) {
+    console.error("Error al guardar la edición:", error);
+  }
 };
 
+// Función para eliminar (soft delete) una categoría
 const deleteCategory = async (id: number) => {
   console.log("Vista: Eliminando categoría con ID", id);
-  await categoriesStore.softDeleteCategory(id);
+  try {
+    await categoriesStore.deleteCategory(id);
+    console.log("Vista: Categoría eliminada exitosamente.");
+  } catch (error) {
+    console.error("Error al eliminar la categoría:", error);
+  }
 };
 
+// Función para restaurar una categoría eliminada
 const restoreCategory = async (id: number) => {
   console.log("Vista: Restaurando categoría con ID", id);
-  await categoriesStore.restoreCategory(id);
+  try {
+    await categoriesStore.restoreCategory(id);
+    console.log("Vista: Categoría restaurada exitosamente.");
+  } catch (error) {
+    console.error("Error al restaurar la categoría:", error);
+  }
 };
 </script>
 
@@ -66,6 +100,16 @@ const restoreCategory = async (id: number) => {
     <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">
       Categorías de Órdenes de Compra
     </h1>
+
+    <!-- Indicador de carga -->
+    <div v-if="categoriesStore.loading" class="text-center mb-4">
+      Cargando...
+    </div>
+
+    <!-- Mensaje de error -->
+    <div v-if="categoriesStore.error" class="text-center text-red-500 mb-4">
+      {{ categoriesStore.error }}
+    </div>
 
     <!-- Formulario para agregar nueva categoría -->
     <div class="flex gap-4 mb-6">
@@ -90,7 +134,9 @@ const restoreCategory = async (id: number) => {
         class="p-5 bg-white shadow-lg rounded-xl mb-4"
       >
         <!-- Modo de edición inline -->
-        <div v-if="editingCategory && editingCategory.id_category_purchase_order === category.id_category_purchase_order">
+        <div
+          v-if="editingCategory && editingCategory.id_category_purchase_order === category.id_category_purchase_order"
+        >
           <div class="mb-2">
             <label class="block text-sm font-medium text-gray-700">Nombre de Categoría:</label>
             <input
@@ -109,10 +155,16 @@ const restoreCategory = async (id: number) => {
             />
           </div>
           <div class="flex gap-2 mt-2">
-            <button @click="saveEdit" class="bg-green-500 text-white px-3 py-1 rounded flex items-center gap-1">
+            <button
+              @click="saveEdit"
+              class="bg-green-500 text-white px-3 py-1 rounded flex items-center gap-1"
+            >
               <Save class="w-4 h-4" /> Guardar
             </button>
-            <button @click="cancelEditing" class="bg-gray-500 text-white px-3 py-1 rounded flex items-center gap-1">
+            <button
+              @click="cancelEditing"
+              class="bg-gray-500 text-white px-3 py-1 rounded flex items-center gap-1"
+            >
               <XCircle class="w-4 h-4" /> Cancelar
             </button>
           </div>
@@ -150,3 +202,20 @@ const restoreCategory = async (id: number) => {
     <p v-else class="text-gray-600 text-center">No hay categorías disponibles</p>
   </div>
 </template>
+
+<style scoped>
+/* Estilos para los botones */
+button {
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+button:hover {
+  transform: translateY(-2px);
+}
+
+/* Estilos para la lista de categorías */
+ul {
+  list-style-type: none;
+  padding-left: 0;
+}
+</style>
