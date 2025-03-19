@@ -54,60 +54,75 @@ const sidebarClass = computed(() => {
     <div :class="sidebarClass"
       class="flex flex-col py-8 overflow-y-auto bg-white dark:bg-gray-900 rounded-lg gap-5 sidebar">
       <RouterLink to="/">
-        <h2 class="px-5 text-lg font-medium text-gray-800 dark:text-white">FLUXSYS</h2>
+        <h2 class="px-5 py-4 text-lg font-medium text-gray-800 dark:text-white">FLUXSYS</h2>
       </RouterLink>
 
       <div class="flex flex-col gap-8">
-        <RouterLink to="/dashboard">
+        <RouterLink to="/compañias">
           <button style="cursor: pointer;"
-            class="flex items-center w-full px-5 transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none">
+            class="flex items-center w-full px-5 py-4 transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none">
             <div class="text-left rtl:text-right">
-              <h1 class="text-sm font-medium text-gray-700 capitalize dark:text-white">Dashboard</h1>
+              <h1 class="text-sm font-medium text-gray-700 capitalize dark:text-white">Compañias</h1>
             </div>
           </button>
         </RouterLink>
 
-        <RouterLink to="/">
+        <RouterLink to="/tipos-movimientos">
           <button style="cursor: pointer;"
-            class="flex items-center w-full px-5 transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none">
+            class="flex items-center w-full px-5 py-4 transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none">
             <div class="text-left rtl:text-right">
-              <h1 class="text-sm font-medium text-gray-700 capitalize dark:text-white">Inventario</h1>
+              <h1 class="text-sm font-medium text-gray-700 capitalize dark:text-white">Tipos de Movimiento</h1>
+            </div>
+          </button>
+        </RouterLink>
+        <RouterLink to="/ca-purchase-orders">
+          <button style="cursor: pointer;"
+            class="flex items-center w-full px-5 py-4 transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none">
+            <div class="text-left rtl:text-right">
+              <h1 class="text-sm font-medium text-gray-700 capitalize dark:text-white">ca-ordenes-compra</h1>
+            </div>
+          </button>
+        </RouterLink>
+        <RouterLink to="/ca-suppliers">
+          <button style="cursor: pointer;"
+            class="flex items-center w-full px-5 py-4  transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none">
+            <div class="text-left rtl:text-right">
+              <h1 class="text-sm font-medium text-gray-700 capitalize dark:text-white">ca-proveedores</h1>
+            </div>
+          </button>
+        </RouterLink>
+        <RouterLink to="/departments">
+          <button style="cursor: pointer;"
+            class="flex items-center w-full px-5 py-4 transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none">
+            <div class="text-left rtl:text-right">
+              <h1 class="text-sm font-medium text-gray-700 capitalize dark:text-white">departamentos</h1>
             </div>
           </button>
         </RouterLink>
 
-        <RouterLink to="/">
+        <RouterLink to="/positions">
           <button style="cursor: pointer;"
-            class="flex items-center w-full px-5 transition-colors duration-200 bg-gray-100 dark:bg-gray-800 gap-x-2 focus:outline-none">
+            class="flex items-center w-full px-5 py-4 transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none">
             <div class="text-left rtl:text-right">
-              <h1 class="text-sm font-medium text-gray-700 capitalize dark:text-white">Reportes</h1>
+              <h1 class="text-sm font-medium text-gray-700 capitalize dark:text-white">posiciones</h1>
             </div>
           </button>
         </RouterLink>
 
-        <RouterLink to="/">
+        <RouterLink to="/ca-products">
           <button style="cursor: pointer;"
-            class="flex items-center w-full px-5 transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none">
+            class="flex items-center w-full px-5 py-4 transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none">
             <div class="text-left rtl:text-right">
-              <h1 class="text-sm font-medium text-gray-700 capitalize dark:text-white">Proveedores</h1>
+              <h1 class="text-sm font-medium text-gray-700 capitalize dark:text-white">ca-productos</h1>
             </div>
           </button>
         </RouterLink>
 
-        <RouterLink to="/">
+        <RouterLink to="/states">
           <button style="cursor: pointer;"
-            class="flex items-center w-full px-5 transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none">
+            class="flex items-center w-full px-5 py-4 transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none">
             <div class="text-left rtl:text-right">
-              <h1 class="text-sm font-medium text-gray-700 capitalize dark:text-white">Ordenes</h1>
-            </div>
-          </button>
-        </RouterLink>
-
-        <RouterLink to="/">
-          <button style="cursor: pointer;"
-            class="flex items-center w-full px-5 transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none">
-            <div class="text-left rtl:text-right">
-              <h1 class="text-sm font-medium text-gray-700 capitalize dark:text-white">Gestion</h1>
+              <h1 class="text-sm font-medium text-gray-700 capitalize dark:text-white">Estados</h1>
             </div>
           </button>
         </RouterLink>
