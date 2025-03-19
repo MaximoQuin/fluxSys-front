@@ -3,16 +3,15 @@ import { useAuthStore } from '@/stores/authStore'
 
 const routes = [
   { path: '/', component: () => import('@/views/HomeView.vue'), meta: { requiresAuth: true } },
-  { path: '/dashboard', component: () => import('@/views/Dashboard.vue'), meta: { requiresAuth: true } },
-  { path: '/categories', component: () => import('@/views/ProductsView.vue'), meta: { requiresAuth: true } },
-  { path: '/MovementsTypes', component: () => import('@/views/MovementsTypesView.vue'), meta: { requiresAuth: true } },
+  { path: '/compañias', component: () => import('@/views/CompanyView.vue'), meta: { requiresAuth: true } },
+  { path: '/ca-products', component: () => import('@/views/CategoryProductView.vue'), meta: { requiresAuth: true } },
+  { path: '/tipos-movimientos', component: () => import('@/views/MovementTypeView.vue'), meta: { requiresAuth: true } },
   { path: '/login', component: () => import('@/views/LoginView.vue') },
-  { path: '/categoriesOrder', component: () => import('../views/CategoriesPucharseOrderView.vue'), meta: { requiresAuth: true } },
-  { path: '/positions', component: () => import('@/views/PositionsView.vue'), meta: { requiresAuth: true } },
-  { path: '/Departments', component: () => import('@/views/Departments.vue'), meta: { requiresAuth: true } },
-  { path: '/dashboard', component: () => import('@/views/Dashboard.vue'), meta: { requiresAuth: true } },
-  { path: '/suppliers', component: () => import('@/views/SuppliersView.vue'), meta: { requiresAuth: true } },
-  { path: '/states', component: () => import('@/views/StatesView.vue'), meta: { requiresAuth: true } },
+  { path: '/ca-purchase-orders', component: () => import('@/views/CategoryPurchaseOrderView.vue'), meta: { requiresAuth: true } },
+  { path: '/positions', component: () => import('@/views/PositionView.vue'), meta: { requiresAuth: true } },
+  { path: '/departments', component: () => import('@/views/DepartmentView.vue'), meta: { requiresAuth: true } },
+  { path: '/ca-suppliers', component: () => import('@/views/CategorySupplierView.vue'), meta: { requiresAuth: true } },
+  { path: '/states', component: () => import('@/views/StateView.vue'), meta: { requiresAuth: true } },
   { path: '/login', component: () => import('@/views/LoginView.vue') },
 ];
 
