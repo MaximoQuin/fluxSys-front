@@ -81,7 +81,7 @@ const handleLogin = async () => {
     await authStore.login(email.value, password.value);
     router.push('/');
   } catch (error) {
-    loginError.value = true; 
+    alert('Login failed. Please check your credentials.'+ error);
   }
 };
 </script>
