@@ -24,7 +24,7 @@ export const useAuthStore = defineStore('auth', () => {
   const login = async (email: string, password: string) => {
     try {
       const response = await authService.login({ email, password });
-      console.log('Token recibido:', response.token); // Verifica el token
+      //console.log('Token recibido:', response.token); // Verifica el token
       setToken(response.token);
       await validateToken();
     } catch (error) {
@@ -35,16 +35,16 @@ export const useAuthStore = defineStore('auth', () => {
 
   const validateToken = async () => {
     if (!token.value) {
-      console.warn('No hay token en el localStorage.');
+      //console.warn('No hay token en el localStorage.');
       return;
     }
 
     try {
-      console.log('Validando token:', token.value);
+      //console.log('Validando token:', token.value);
       const response = await authService.validateToken(token.value);
       setUser(response.user);  // Almacena el usuario con los nombres
     } catch (error) {
-      console.error('Error validando el token:', error);
+      //console.error('Error validando el token:', error);
       removeToken();
     }
   };
