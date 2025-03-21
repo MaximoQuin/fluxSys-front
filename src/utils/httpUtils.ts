@@ -1,21 +1,19 @@
-// src/utils/httpUtils.ts
-import axios from 'axios'; // Importa axios normalmente
-import type { AxiosResponse, AxiosError } from 'axios'; // Importa los tipos correctamente
-import { useAuthStore } from '@/stores/authStore'; // Importa el store de autenticación
+import axios from 'axios';
+import type { AxiosResponse, AxiosError } from 'axios';
+import { useAuthStore } from '@/stores/authStore';
 
 export async function genericRequest<T>(
   method: 'get' | 'post' | 'put' | 'delete' | 'patch',
   url: string,
   data?: any,
-  customHeaders?: Record<string, string> // Headers personalizados (opcional)
+  customHeaders?: Record<string, string>
 ): Promise<T> {
-  const authStore = useAuthStore(); // Obtén el store de autenticación
-  const token = authStore.token; // Obtén el token del store
+  const authStore = useAuthStore();
+  const token = authStore.token;
 
-  // Configura los headers
   const headers = {
-    ...customHeaders, // Headers personalizados (si los hay)
-    ...(token && { Authorization: `Bearer ${token}` }), // Agrega el token si está disponible
+    ...customHeaders,
+    ...(token && { Authorization: `Bearer ${token}` }),
   };
 
   try {
@@ -28,10 +26,34 @@ export async function genericRequest<T>(
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
-      console.error('Error en la solicitud:', error.response?.data);
-    } else {
-      console.error('Error desconocido:', error);
-    }
+      const errorMessage = error.response?.data?.message || 'Error desconocido';
+      const stackTrace = error.stack || 'No hay stack trace disponible';
+      const source = `${method.toUpperCase()}`;
+
+      // Enviar el error al backend usando la estructura del DTO
+      await logErrorToBackend({
+        message: errorMessage,
+        stackTrace: stackTrace,
+        source: source,
+      });
+
+    //   console.error('Error en la solicitud:', errorMessage);
+    } // else {
+    //   console.error('Error desconocido:', error);
+    // }
     throw error;
+  }
+}
+
+// Función para enviar errores al backend usando el DTO
+async function logErrorToBackend(errorData: {
+  message: string;
+  stackTrace: string;
+  source: string;
+}) {
+  try {
+    await axios.post('https://localhost:7002/api/Errors/log', errorData);
+  } catch (error) {
+    console.error('Error al enviar el log al backend:', error);
   }
 }
