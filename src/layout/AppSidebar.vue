@@ -2,6 +2,8 @@
 import { RouterLink } from 'vue-router';
 import { computed } from 'vue';
 
+import { ref } from "vue";
+
 const props = defineProps<{
   isSidebarActive: boolean;
 }>();
@@ -10,123 +12,141 @@ const sidebarClass = computed(() => {
   return props.isSidebarActive ? 'sidebar-true' : 'sidebar-false';
 });
 
+const items = [
+  {
+    key: 'Compañías',
+    label: 'Compañías',
+    icon: 'house',
+    items: [
+      {
+        label: 'Compañías',
+        icon: '',
+        to: '/compañias'
+      },
+    ]
+  },
+  {
+    key: 'Tipos de Movimiento',
+    label: 'Tipos de Movimiento',
+    icon: 'house',
+    to: '/tipos-movimientos',
+  },
+  {
+    key: 'CA - Órdenes de Compra',
+    label: 'CA - Órdenes de Compra',
+    icon: 'boxes-stacked',
+    to: '/ca-purchase-orders',
+  },
+  {
+    key: 'CA - Proveedores',
+    label: 'CA - Proveedores',
+    icon: 'file-csv',
+    to: '/ca-suppliers',
+  },
+  {
+    key: 'Departamentos',
+    label: 'Departamentos',
+    icon: 'user',
+    to: '/departments',
+  },
+  {
+    key: 'Posiciones',
+    label: 'Posiciones',
+    icon: 'dolly',
+    to: '/positions',
+  },
+  {
+    key: 'CA - Productos',
+    label: 'CA - Productos',
+    icon: 'dolly',
+    to: '/ca-products',
+  },
+  {
+    key: 'Estados',
+    label: 'Estados',
+    icon: 'dolly',
+    to: '/states',
+  }
+];
+
+const expandedKeys = ref({});
+
 </script>
 
 <template>
   <!-- component -->
-  <aside class="flex my-2 ml-2 min-h-[95vh] h-full">
-    <div class="flex flex-col items-center w-16  py-8 bg-white dark:bg-gray-900 dark:border-gray-700 rounded-lg gap-4">
-      <RouterLink to="/" style="cursor: pointer;">
-        <img class="w-auto h-6" src="@/assets/logo.svg" alt="">
-      </RouterLink>
+  <aside class="flex my-2 mx-2 min-h-[95vh]">
+    <div class="flex flex-col py-8 px-5 bg-white dark:bg-gray-900 dark:border-gray-700 rounded-lg gap-4">
 
-      <RouterLink to="/"
-        class="p-1.5 text-gray-500 focus:outline-nones transition-colors duration-200 rounded-lg dark:text-gray-400 dark:hover:bg-gray-800 hover:bg-gray-100">
-        <font-awesome-icon :icon="['fas', 'house']" />
-      </RouterLink>
-
-      <RouterLink to="/"
-        class="p-1.5 text-gray-500 focus:outline-nones transition-colors duration-200 rounded-lg dark:text-gray-400 dark:hover:bg-gray-800 hover:bg-gray-100">
-        <font-awesome-icon :icon="['fas', 'boxes-stacked']" />
-      </RouterLink>
-
-      <RouterLink to="/"
-        class="p-1.5 text-blue-500 transition-colors duration-200 bg-blue-100 rounded-lg dark:text-blue-400 dark:bg-gray-800">
-        <font-awesome-icon :icon="['fas', 'file-csv']" />
-      </RouterLink>
-
-      <RouterLink to="/"
-        class="p-1.5 text-gray-500 focus:outline-nones transition-colors duration-200 rounded-lg dark:text-gray-400 dark:hover:bg-gray-800 hover:bg-gray-100">
-        <font-awesome-icon :icon="['fas', 'user']" />
-      </RouterLink>
-
-      <RouterLink to="/"
-        class="p-1.5 text-gray-500 focus:outline-nones transition-colors duration-200 rounded-lg dark:text-gray-400 dark:hover:bg-gray-800 hover:bg-gray-100">
-        <font-awesome-icon :icon="['fas', 'dolly']" />
-      </RouterLink>
-
-      <RouterLink to="/"
-        class="p-1.5 text-gray-500 focus:outline-nones transition-colors duration-200 rounded-lg dark:text-gray-400 dark:hover:bg-gray-800 hover:bg-gray-100">
-        <font-awesome-icon :icon="['far', 'rectangle-list']" />
-      </RouterLink>
-    </div>
-
-    <div :class="sidebarClass"
-      class="flex flex-col py-8 overflow-y-auto bg-white dark:bg-gray-900 rounded-lg gap-5 sidebar">
       <RouterLink to="/">
-        <h2 class="px-5 py-4 text-lg font-medium text-gray-800 dark:text-white">FLUXSYS</h2>
+        <button style="cursor: pointer;"
+          class="flex items-center transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none p-4 sidebar"
+          :class="sidebarClass">
+          <img class="w-auto h-6" src="@/assets/logo.svg" alt="">
+          <p class="text-sm font-medium text-gray-700 capitalize dark:text-white sidebar">
+            FLUX-SYS
+          </p>
+        </button>
       </RouterLink>
 
-      <div class="flex flex-col gap-8">
-        <RouterLink to="/compañias">
-          <button style="cursor: pointer;"
-            class="flex items-center w-full px-5 py-4 transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none">
-            <div class="text-left rtl:text-right">
-              <h1 class="text-sm font-medium text-gray-700 capitalize dark:text-white">Compañias</h1>
-            </div>
-          </button>
-        </RouterLink>
-
-        <RouterLink to="/tipos-movimientos">
-          <button style="cursor: pointer;"
-            class="flex items-center w-full px-5 py-4 transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none">
-            <div class="text-left rtl:text-right">
-              <h1 class="text-sm font-medium text-gray-700 capitalize dark:text-white">Tipos de Movimiento</h1>
-            </div>
-          </button>
-        </RouterLink>
-        <RouterLink to="/ca-purchase-orders">
-          <button style="cursor: pointer;"
-            class="flex items-center w-full px-5 py-4 transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none">
-            <div class="text-left rtl:text-right">
-              <h1 class="text-sm font-medium text-gray-700 capitalize dark:text-white">ca-ordenes-compra</h1>
-            </div>
-          </button>
-        </RouterLink>
-        <RouterLink to="/ca-suppliers">
-          <button style="cursor: pointer;"
-            class="flex items-center w-full px-5 py-4  transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none">
-            <div class="text-left rtl:text-right">
-              <h1 class="text-sm font-medium text-gray-700 capitalize dark:text-white">ca-proveedores</h1>
-            </div>
-          </button>
-        </RouterLink>
-        <RouterLink to="/departments">
-          <button style="cursor: pointer;"
-            class="flex items-center w-full px-5 py-4 transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none">
-            <div class="text-left rtl:text-right">
-              <h1 class="text-sm font-medium text-gray-700 capitalize dark:text-white">departamentos</h1>
-            </div>
-          </button>
-        </RouterLink>
-
-        <RouterLink to="/positions">
-          <button style="cursor: pointer;"
-            class="flex items-center w-full px-5 py-4 transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none">
-            <div class="text-left rtl:text-right">
-              <h1 class="text-sm font-medium text-gray-700 capitalize dark:text-white">posiciones</h1>
-            </div>
-          </button>
-        </RouterLink>
-
-        <RouterLink to="/ca-products">
-          <button style="cursor: pointer;"
-            class="flex items-center w-full px-5 py-4 transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none">
-            <div class="text-left rtl:text-right">
-              <h1 class="text-sm font-medium text-gray-700 capitalize dark:text-white">ca-productos</h1>
-            </div>
-          </button>
-        </RouterLink>
-
-        <RouterLink to="/states">
-          <button style="cursor: pointer;"
-            class="flex items-center w-full px-5 py-4 transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none">
-            <div class="text-left rtl:text-right">
-              <h1 class="text-sm font-medium text-gray-700 capitalize dark:text-white">Estados</h1>
-            </div>
-          </button>
-        </RouterLink>
+      <div v-if="props.isSidebarActive">
+        <PanelMenu :model="items">
+          <template #item="{ item }">
+            <template v-if="item.to">
+              <RouterLink :to="item.to">
+                <button style="cursor: pointer;"
+                  class="flex items-center transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none p-4 sidebar"
+                  :class="sidebarClass">
+                  <font-awesome-icon :icon="['fas', item.icon]" />
+                  <p class="text-sm font-medium text-gray-700 capitalize dark:text-white sidebar">
+                    {{ item.label }}
+                  </p>
+                </button>
+              </RouterLink>
+            </template>
+            <template v-else>
+              <button style="cursor: pointer;"
+                class="flex items-center transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none p-4 sidebar"
+                :class="sidebarClass">
+                <font-awesome-icon :icon="['fas', item.icon]" />
+                <p class="text-sm font-medium text-gray-700 capitalize dark:text-white sidebar">
+                  {{ item.label }}
+                </p>
+              </button>
+            </template>
+          </template>
+        </PanelMenu>
       </div>
+      <div v-else>
+        <PanelMenu :model="items" :expandedKeys="expandedKeys">
+          <template #item="{ item }">
+            <template v-if="item.to">
+              <RouterLink :to="item.to">
+                <button style="cursor: pointer;"
+                  class="flex items-center transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none p-4 sidebar"
+                  :class="sidebarClass">
+                  <font-awesome-icon :icon="['fas', item.icon]" />
+                  <p class="text-sm font-medium text-gray-700 capitalize dark:text-white sidebar">
+                    {{ item.label }}
+                  </p>
+                </button>
+              </RouterLink>
+            </template>
+            <template v-else>
+              <button style="cursor: pointer;"
+                class="flex items-center transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none p-4 sidebar"
+                :class="sidebarClass">
+                <font-awesome-icon :icon="['fas', item.icon]" />
+                <p class="text-sm font-medium text-gray-700 capitalize dark:text-white sidebar">
+                  {{ item.label }}
+                </p>
+              </button>
+            </template>
+          </template>
+        </PanelMenu>
+      </div>
+
+
     </div>
   </aside>
 </template>
