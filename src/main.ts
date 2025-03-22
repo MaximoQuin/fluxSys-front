@@ -12,6 +12,8 @@ import './assets/icons/font-awesome-icons'
 
 import PrimeVue from 'primevue/config'
 import Aura from '@primeuix/themes/aura'
+import ConfirmationService from 'primevue/confirmationservice'
+import ToastService from 'primevue/toastservice'
 
 const app = createApp(App).component('font-awesome-icon', FontAwesomeIcon)
 
@@ -22,5 +24,7 @@ app.use(PrimeVue, {
     preset: Aura,
   },
 })
+app.use(ConfirmationService)
+app.use(ToastService)
 
 app.mount('#app')

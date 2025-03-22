@@ -63,6 +63,8 @@
       Cargando...
     </div>
 
+    <ConfirmDialog></ConfirmDialog>
+
     <!-- Crear Nueva Empresa -->
     <div class="mt-4">
       <h2 class="text-xl font-bold">Crear Empresa</h2>
@@ -81,6 +83,12 @@
 import { ref, computed, onMounted } from 'vue';
 import { useCompanyStore } from '@/stores/companyStore';
 import TableComponent from '@/components/TableComponent.vue';
+
+import { useConfirm } from "primevue/useconfirm";
+import { useToast } from "primevue/usetoast";
+
+const confirm = useConfirm();
+const toast = useToast();
 
 const companyStore = useCompanyStore();
 const showActive = ref(true);
@@ -126,8 +134,7 @@ const showDeletedCompanies = () => {
 };
 
 const removeCompany = async (id: number) => {
-  await companyStore.removeCompany(id);
-  await companyStore.fetchCompanies(); // Refrescar la lista
+  confirmDelete(id)
 };
 
 const restoreDeletedCompany = async (id: number) => {
@@ -141,6 +148,36 @@ const createCompany = async () => {
     newCompanyName.value = ''; // Limpiar el campo después de crear la empresa
     await companyStore.fetchCompanies(); // Refrescar la lista
   }
+};
+
+const confirmDelete = (id: number) => {
+  confirm.require({
+    message: '¿Quieres eliminar esta compañia?',
+    header: 'Eliminar',
+    icon: 'pi pi-info-circle',
+    rejectLabel: 'Cancel',
+    rejectProps: {
+      label: 'Cancelar',
+      severity: 'secondary',
+      outlined: true
+    },
+    acceptProps: {
+      label: 'Eliminar',
+      severity: 'danger'
+    },
+    accept: async () => {
+      try {
+        await companyStore.removeCompany(id);
+        await companyStore.fetchCompanies();
+        toast.add({ severity: 'info', summary: 'Eliminado', detail: 'Compañia eliminada', life: 3000 });
+      } catch (error) {
+        toast.add({ severity: 'error', summary: 'Error', detail: 'Hubo un problema al eliminar la compañía. Intenta nuevamente.', life: 3000 });
+      }
+    },
+    reject: () => {
+      // toast.add({ severity: 'error', summary: 'Rechazado', detail: 'Rechazaste la operación', life: 3000 });
+    }
+  });
 };
 
 onMounted(() => {
