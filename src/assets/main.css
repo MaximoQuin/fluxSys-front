@@ -48,3 +48,12 @@ body {
   padding: 0 !important;
   padding-left: 2rem !important;
 }
+
+.p-datatable-header {
+  border-top-left-radius: 10px !important;
+  border-top-right-radius: 10px !important;
+}
+
+.p-paginator {
+  border-radius: 0 !important;
+}
