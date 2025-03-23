@@ -22,7 +22,7 @@ const toggleSidebar = () => {
 
 <template>
   <!-- component -->
-  <nav class=" bg-white flex relative justify-between items-center px-8 h-20 m-2 rounded-lg">
+  <nav class=" bg-white flex relative justify-between items-center px-8 h-20 my-2 mr-2 rounded-lg">
     <div class="flex mr-4 items-center">
       <div class="block relative">
         <button type="button" class="hidden md:inline-block py-2 px-3 hover:bg-gray-200 rounded-full relative"

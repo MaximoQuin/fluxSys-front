@@ -1,131 +1,247 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
+import { useAuth } from '@/composables/useAuth';
 
 const props = defineProps<{
   isSidebarActive: boolean;
 }>();
 
+const { userRole } = useAuth();
+
 const sidebarClass = computed(() => {
   return props.isSidebarActive ? 'sidebar-true' : 'sidebar-false';
 });
 
+const items = [
+  {
+    key: 'Compañías',
+    label: 'Administracion General',
+    icon: 'dolly',
+    visibleForRoles: ['Administrador', 'Administrador Empresarial', 'Jefe de Departamento'],
+    items: [
+      {
+        label: 'Compañías',
+        icon: 'table-list',
+        to: '/companies-a',
+        visibleForRoles: ['Administrador'],
+      },
+      {
+        label: 'Usuarios',
+        icon: 'table-list',
+        to: '/users-ua',
+        visibleForRoles: ['Administrador Empresarial', 'Jefe de Departamento'],
+      },
+      {
+        label: 'Departamentos',
+        icon: 'table-list',
+        to: '/departments-u',
+        visibleForRoles: ['Administrador', 'Administrador Empresarial'],
+      },
+      {
+        label: 'Posiciones',
+        icon: 'table-list',
+        to: '/positions-u',
+      },
+    ],
+  },
+  {
+    key: 'Inventario',
+    label: 'Gestión de Inventario',
+    icon: 'boxes-stacked',
+    visibleForRoles: ['Administrador', 'Administrador Empresarial', 'Jefe de Departamento', 'Subjefe de Departamento', 'Colaborador'],
+    items: [
+      {
+        label: 'Inventario',
+        icon: 'table-list',
+        to: '/inventories-u',
+      },
+      {
+        label: 'Categorias',
+        icon: 'table-list',
+        to: '/ca-products-u',
+      },
+      {
+        label: 'Tipos de Movimientos',
+        icon: 'table-list',
+        to: '/movements-types-u',
+      },
+      {
+        label: 'Estados de Productos',
+        icon: 'table-list',
+        to: '/states-u',
+      },
+      {
+        label: 'Movimientos de Inventario',
+        icon: 'table-list',
+        to: '/inv-movements-ua',
+        visibleForRoles: ['Administrador', 'Administrador Empresarial', 'Jefe de Departamento', 'Subjefe de Departamento'],
+      },
+    ],
+  },
+  {
+    key: 'Proveedores',
+    label: 'Proveedores',
+    icon: 'user',
+    visibleForRoles: ['Administrador', 'Administrador Empresarial', 'Jefe de Departamento', 'Subjefe de Departamento', 'Colaborador'],
+    items: [
+      {
+        label: 'Proveedores',
+        icon: 'table-list',
+        to: '/suppliers-u',
+      },
+      {
+        label: 'Categorias',
+        icon: 'table-list',
+        to: '/ca-suppliers-u',
+      },
+    ],
+  },
+  {
+    key: 'Ordenes de Compra',
+    label: 'Ordenes de Compra',
+    icon: 'dolly',
+    visibleForRoles: ['Administrador', 'Administrador Empresarial', 'Jefe de Departamento', 'Subjefe de Departamento', 'Colaborador'],
+    items: [
+      {
+        label: 'Ordenes de Compra',
+        icon: 'table-list',
+        to: '/purchase-orders-u',
+      },
+      {
+        label: 'Categorias',
+        icon: 'table-list',
+        to: '/ca-purchase-orders-u',
+      },
+    ],
+  },
+  {
+    key: 'Facturas',
+    label: 'Gestión de Facturas',
+    icon: 'dolly',
+    visibleForRoles: ['Administrador', 'Administrador Empresarial', 'Jefe de Departamento', 'Subjefe de Departamento', 'Colaborador'],
+    items: [
+      {
+        label: 'Facturas',
+        icon: 'table-list',
+        to: '/invoices-u',
+      },
+    ],
+  },
+  {
+    key: 'Administración',
+    label: 'Sistema',
+    icon: 'user',
+    visibleForRoles: ['Administrador'],
+    items: [
+      {
+        label: 'Usuarios',
+        icon: 'table-list',
+        to: '/users-ua',
+      },
+      {
+        label: 'Auditorias',
+        icon: 'table-list',
+        to: '/audits-a',
+      },
+      {
+        label: 'Visor de Eventos',
+        icon: 'table-list',
+        to: '/errors-a',
+      },
+      {
+        label: 'Movimientos de Inventario',
+        icon: 'table-list',
+        to: '/inv-movements-ua',
+      },
+    ],
+  },
+];
+
+const filteredItems = computed(() => {
+  return items
+    .filter((item) => item.visibleForRoles.includes(userRole.value)) // Filtrar bloques
+    .map((item) => ({
+      ...item,
+      items: item.items?.filter(
+        (subItem) =>
+          !subItem.visibleForRoles || subItem.visibleForRoles.includes(userRole.value) // Filtrar sub-ítems
+      ),
+    }));
+});
+
+const expandedKeys = ref({});
 </script>
 
 <template>
-  <!-- component -->
-  <aside class="flex my-2 ml-2 min-h-[95vh] h-full">
-    <div class="flex flex-col items-center w-16  py-8 bg-white dark:bg-gray-900 dark:border-gray-700 rounded-lg gap-4">
-      <RouterLink to="/" style="cursor: pointer;">
-        <img class="w-auto h-6" src="@/assets/logo.svg" alt="">
-      </RouterLink>
-
-      <RouterLink to="/"
-        class="p-1.5 text-gray-500 focus:outline-nones transition-colors duration-200 rounded-lg dark:text-gray-400 dark:hover:bg-gray-800 hover:bg-gray-100">
-        <font-awesome-icon :icon="['fas', 'house']" />
-      </RouterLink>
-
-      <RouterLink to="/"
-        class="p-1.5 text-gray-500 focus:outline-nones transition-colors duration-200 rounded-lg dark:text-gray-400 dark:hover:bg-gray-800 hover:bg-gray-100">
-        <font-awesome-icon :icon="['fas', 'boxes-stacked']" />
-      </RouterLink>
-
-      <RouterLink to="/"
-        class="p-1.5 text-blue-500 transition-colors duration-200 bg-blue-100 rounded-lg dark:text-blue-400 dark:bg-gray-800">
-        <font-awesome-icon :icon="['fas', 'file-csv']" />
-      </RouterLink>
-
-      <RouterLink to="/"
-        class="p-1.5 text-gray-500 focus:outline-nones transition-colors duration-200 rounded-lg dark:text-gray-400 dark:hover:bg-gray-800 hover:bg-gray-100">
-        <font-awesome-icon :icon="['fas', 'user']" />
-      </RouterLink>
-
-      <RouterLink to="/"
-        class="p-1.5 text-gray-500 focus:outline-nones transition-colors duration-200 rounded-lg dark:text-gray-400 dark:hover:bg-gray-800 hover:bg-gray-100">
-        <font-awesome-icon :icon="['fas', 'dolly']" />
-      </RouterLink>
-
-      <RouterLink to="/"
-        class="p-1.5 text-gray-500 focus:outline-nones transition-colors duration-200 rounded-lg dark:text-gray-400 dark:hover:bg-gray-800 hover:bg-gray-100">
-        <font-awesome-icon :icon="['far', 'rectangle-list']" />
-      </RouterLink>
-    </div>
-
-    <div :class="sidebarClass"
-      class="flex flex-col py-8 overflow-y-auto bg-white dark:bg-gray-900 rounded-lg gap-5 sidebar">
+  <aside class="flex my-2 mx-2 min-h-[95vh]">
+    <div class="flex flex-col py-8 px-5 bg-white dark:bg-gray-900 dark:border-gray-700 rounded-lg gap-4">
       <RouterLink to="/">
-        <h2 class="px-5 py-4 text-lg font-medium text-gray-800 dark:text-white">FLUXSYS</h2>
+        <button style="cursor: pointer;"
+          class="flex items-center transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none p-4 sidebar"
+          :class="sidebarClass">
+          <img class="w-auto h-6" src="@/assets/logo.svg" alt="">
+          <p class="text-sm font-medium text-gray-700 capitalize dark:text-white sidebar">
+            FLUX-SYS
+          </p>
+        </button>
       </RouterLink>
 
-      <div class="flex flex-col gap-8">
-        <RouterLink to="/compañias">
-          <button style="cursor: pointer;"
-            class="flex items-center w-full px-5 py-4 transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none">
-            <div class="text-left rtl:text-right">
-              <h1 class="text-sm font-medium text-gray-700 capitalize dark:text-white">Compañias</h1>
-            </div>
-          </button>
-        </RouterLink>
-
-        <RouterLink to="/tipos-movimientos">
-          <button style="cursor: pointer;"
-            class="flex items-center w-full px-5 py-4 transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none">
-            <div class="text-left rtl:text-right">
-              <h1 class="text-sm font-medium text-gray-700 capitalize dark:text-white">Tipos de Movimiento</h1>
-            </div>
-          </button>
-        </RouterLink>
-        <RouterLink to="/ca-purchase-orders">
-          <button style="cursor: pointer;"
-            class="flex items-center w-full px-5 py-4 transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none">
-            <div class="text-left rtl:text-right">
-              <h1 class="text-sm font-medium text-gray-700 capitalize dark:text-white">ca-ordenes-compra</h1>
-            </div>
-          </button>
-        </RouterLink>
-        <RouterLink to="/ca-suppliers">
-          <button style="cursor: pointer;"
-            class="flex items-center w-full px-5 py-4  transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none">
-            <div class="text-left rtl:text-right">
-              <h1 class="text-sm font-medium text-gray-700 capitalize dark:text-white">ca-proveedores</h1>
-            </div>
-          </button>
-        </RouterLink>
-        <RouterLink to="/departments">
-          <button style="cursor: pointer;"
-            class="flex items-center w-full px-5 py-4 transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none">
-            <div class="text-left rtl:text-right">
-              <h1 class="text-sm font-medium text-gray-700 capitalize dark:text-white">departamentos</h1>
-            </div>
-          </button>
-        </RouterLink>
-
-        <RouterLink to="/positions">
-          <button style="cursor: pointer;"
-            class="flex items-center w-full px-5 py-4 transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none">
-            <div class="text-left rtl:text-right">
-              <h1 class="text-sm font-medium text-gray-700 capitalize dark:text-white">posiciones</h1>
-            </div>
-          </button>
-        </RouterLink>
-
-        <RouterLink to="/ca-products">
-          <button style="cursor: pointer;"
-            class="flex items-center w-full px-5 py-4 transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none">
-            <div class="text-left rtl:text-right">
-              <h1 class="text-sm font-medium text-gray-700 capitalize dark:text-white">ca-productos</h1>
-            </div>
-          </button>
-        </RouterLink>
-
-        <RouterLink to="/states">
-          <button style="cursor: pointer;"
-            class="flex items-center w-full px-5 py-4 transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none">
-            <div class="text-left rtl:text-right">
-              <h1 class="text-sm font-medium text-gray-700 capitalize dark:text-white">Estados</h1>
-            </div>
-          </button>
-        </RouterLink>
+      <div v-if="props.isSidebarActive">
+        <PanelMenu :model="filteredItems">
+          <template #item="{ item }">
+            <template v-if="item.to">
+              <RouterLink :to="item.to">
+                <button style="cursor: pointer;"
+                  class="flex items-center transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none p-4 sidebar"
+                  :class="sidebarClass">
+                  <font-awesome-icon :icon="['fas', item.icon]" />
+                  <p class="text-sm font-medium text-gray-700 capitalize dark:text-white sidebar">
+                    {{ item.label }}
+                  </p>
+                </button>
+              </RouterLink>
+            </template>
+            <template v-else>
+              <button style="cursor: pointer;"
+                class="flex items-center transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none p-4 sidebar"
+                :class="sidebarClass">
+                <font-awesome-icon :icon="['fas', item.icon]" />
+                <p class="text-sm font-medium text-gray-700 capitalize dark:text-white sidebar">
+                  {{ item.label }}
+                </p>
+              </button>
+            </template>
+          </template>
+        </PanelMenu>
+      </div>
+      <div v-else>
+        <PanelMenu :model="filteredItems" :expandedKeys="expandedKeys">
+          <template #item="{ item }">
+            <template v-if="item.to">
+              <RouterLink :to="item.to">
+                <button style="cursor: pointer;"
+                  class="flex items-center transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none p-4 sidebar"
+                  :class="sidebarClass">
+                  <font-awesome-icon :icon="['fas', item.icon]" />
+                  <p class="text-sm font-medium text-gray-700 capitalize dark:text-white sidebar">
+                    {{ item.label }}
+                  </p>
+                </button>
+              </RouterLink>
+            </template>
+            <template v-else>
+              <button style="cursor: pointer;"
+                class="flex items-center transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none p-4 sidebar"
+                :class="sidebarClass">
+                <font-awesome-icon :icon="['fas', item.icon]" />
+                <p class="text-sm font-medium text-gray-700 capitalize dark:text-white sidebar">
+                  {{ item.label }}
+                </p>
+              </button>
+            </template>
+          </template>
+        </PanelMenu>
       </div>
     </div>
   </aside>

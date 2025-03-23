@@ -5,9 +5,22 @@ import { useAuthStore } from "@/stores/authStore"; // Importa el store de autent
 
 const API_URL = "https://localhost:7002/api/States";
 
-// Exporta las funciones directamente
+// Obtener todos los estados o estados por compañía si no es Administrador
 export async function getStates(): Promise<State[]> {
-  return genericRequest<State[]>("get", `${API_URL}/get-states`);
+  const authStore = useAuthStore();
+  const user = authStore.user;
+
+  if (!user) {
+    throw new Error("No se pudo obtener la información del usuario.");
+  }
+
+  // Si el usuario es Administrador, usa el endpoint que trae todos los estados
+  if (user.role.name_role === "Administrador") {
+    return genericRequest<State[]>("get", `${API_URL}/get-states`);
+  } else {
+    // Si no es Administrador, usa el endpoint que trae los estados por compañía
+    return genericRequest<State[]>("get", `${API_URL}/get-states-by-company/${user.company.id_company}`);
+  }
 }
 
 export async function createState(name: string): Promise<State> {
