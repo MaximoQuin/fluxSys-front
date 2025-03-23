@@ -1,13 +1,26 @@
 // src/services/inventoryService.ts
-import type { InventoryProduct, Supplier } from "@/interfaces/InventoryProduct";
-import { genericRequest } from "@/utils/httpUtils";
-import { useAuthStore } from "@/stores/authStore";
+import type { InventoryProduct } from "@/interfaces/InventoryProduct";
+import { genericRequest } from "@/utils/httpUtils"; // Importa la función genérica
+import { useAuthStore } from "@/stores/authStore"; // Importa el store de autenticación
 
 const API_URL = "https://localhost:7002/api/Inventories";
 
-// Obtener inventario por compañía
-export async function getInventoriesByCompany(id_company: number): Promise<InventoryProduct[]> {
-  return genericRequest<InventoryProduct[]>("get", `${API_URL}/get-inventories-by-company/${id_company}`);
+// Obtener inventario por compañía o todos los inventarios si es Administrador
+export async function getInventoriesByCompany(): Promise<InventoryProduct[]> {
+  const authStore = useAuthStore();
+  const user = authStore.user;
+
+  if (!user) {
+    throw new Error("No se pudo obtener la información del usuario.");
+  }
+
+  // Si el usuario es Administrador, usa el endpoint que trae todos los inventarios
+  if (user.role.name_role === "Administrador") {
+    return genericRequest<InventoryProduct[]>("get", `${API_URL}/get-inventories`);
+  } else {
+    // Si no es Administrador, usa el endpoint que trae los inventarios por compañía
+    return genericRequest<InventoryProduct[]>("get", `${API_URL}/get-inventories-by-company/${user.company.id_company}`);
+  }
 }
 
 // Obtener detalles de un producto por ID

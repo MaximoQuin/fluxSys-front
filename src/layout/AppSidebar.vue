@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router';
-import { computed } from 'vue';
-
-import { ref } from "vue";
+import { computed, ref } from 'vue';
+import { useAuth } from '@/composables/useAuth';
 
 const props = defineProps<{
   isSidebarActive: boolean;
 }>();
+
+const { userRole } = useAuth();
 
 const sidebarClass = computed(() => {
   return props.isSidebarActive ? 'sidebar-true' : 'sidebar-false';
@@ -15,69 +16,166 @@ const sidebarClass = computed(() => {
 const items = [
   {
     key: 'Compañías',
-    label: 'Compañías',
-    icon: 'house',
+    label: 'Administracion General',
+    icon: 'dolly',
+    visibleForRoles: ['Administrador', 'Administrador Empresarial', 'Jefe de Departamento'],
     items: [
       {
         label: 'Compañías',
-        icon: '',
-        to: '/compañias'
+        icon: 'table-list',
+        to: '/companies-a',
+        visibleForRoles: ['Administrador'],
       },
-    ]
+      {
+        label: 'Usuarios',
+        icon: 'table-list',
+        to: '/users-ua',
+        visibleForRoles: ['Administrador Empresarial', 'Jefe de Departamento'],
+      },
+      {
+        label: 'Departamentos',
+        icon: 'table-list',
+        to: '/departments-u',
+        visibleForRoles: ['Administrador', 'Administrador Empresarial'],
+      },
+      {
+        label: 'Posiciones',
+        icon: 'table-list',
+        to: '/positions-u',
+      },
+    ],
   },
   {
-    key: 'Tipos de Movimiento',
-    label: 'Tipos de Movimiento',
-    icon: 'house',
-    to: '/tipos-movimientos',
-  },
-  {
-    key: 'CA - Órdenes de Compra',
-    label: 'CA - Órdenes de Compra',
+    key: 'Inventario',
+    label: 'Gestión de Inventario',
     icon: 'boxes-stacked',
-    to: '/ca-purchase-orders',
+    visibleForRoles: ['Administrador', 'Administrador Empresarial', 'Jefe de Departamento', 'Subjefe de Departamento', 'Colaborador'],
+    items: [
+      {
+        label: 'Inventario',
+        icon: 'table-list',
+        to: '/inventories-u',
+      },
+      {
+        label: 'Categorias',
+        icon: 'table-list',
+        to: '/ca-products-u',
+      },
+      {
+        label: 'Tipos de Movimientos',
+        icon: 'table-list',
+        to: '/movements-types-u',
+      },
+      {
+        label: 'Estados de Productos',
+        icon: 'table-list',
+        to: '/states-u',
+      },
+      {
+        label: 'Movimientos de Inventario',
+        icon: 'table-list',
+        to: '/inv-movements-ua',
+        visibleForRoles: ['Administrador', 'Administrador Empresarial', 'Jefe de Departamento', 'Subjefe de Departamento'],
+      },
+    ],
   },
   {
-    key: 'CA - Proveedores',
-    label: 'CA - Proveedores',
-    icon: 'file-csv',
-    to: '/ca-suppliers',
-  },
-  {
-    key: 'Departamentos',
-    label: 'Departamentos',
+    key: 'Proveedores',
+    label: 'Proveedores',
     icon: 'user',
-    to: '/departments',
+    visibleForRoles: ['Administrador', 'Administrador Empresarial', 'Jefe de Departamento', 'Subjefe de Departamento', 'Colaborador'],
+    items: [
+      {
+        label: 'Proveedores',
+        icon: 'table-list',
+        to: '/suppliers-u',
+      },
+      {
+        label: 'Categorias',
+        icon: 'table-list',
+        to: '/ca-suppliers-u',
+      },
+    ],
   },
   {
-    key: 'Posiciones',
-    label: 'Posiciones',
+    key: 'Ordenes de Compra',
+    label: 'Ordenes de Compra',
     icon: 'dolly',
-    to: '/positions',
+    visibleForRoles: ['Administrador', 'Administrador Empresarial', 'Jefe de Departamento', 'Subjefe de Departamento', 'Colaborador'],
+    items: [
+      {
+        label: 'Ordenes de Compra',
+        icon: 'table-list',
+        to: '/purchase-orders-u',
+      },
+      {
+        label: 'Categorias',
+        icon: 'table-list',
+        to: '/ca-purchase-orders-u',
+      },
+    ],
   },
   {
-    key: 'CA - Productos',
-    label: 'CA - Productos',
+    key: 'Facturas',
+    label: 'Gestión de Facturas',
     icon: 'dolly',
-    to: '/ca-products',
+    visibleForRoles: ['Administrador', 'Administrador Empresarial', 'Jefe de Departamento', 'Subjefe de Departamento', 'Colaborador'],
+    items: [
+      {
+        label: 'Facturas',
+        icon: 'table-list',
+        to: '/invoices-u',
+      },
+    ],
   },
   {
-    key: 'Estados',
-    label: 'Estados',
-    icon: 'dolly',
-    to: '/states',
-  }
+    key: 'Administración',
+    label: 'Sistema',
+    icon: 'user',
+    visibleForRoles: ['Administrador'],
+    items: [
+      {
+        label: 'Usuarios',
+        icon: 'table-list',
+        to: '/users-ua',
+      },
+      {
+        label: 'Auditorias',
+        icon: 'table-list',
+        to: '/audits-a',
+      },
+      {
+        label: 'Visor de Eventos',
+        icon: 'table-list',
+        to: '/errors-a',
+      },
+      {
+        label: 'Movimientos de Inventario',
+        icon: 'table-list',
+        to: '/inv-movements-ua',
+      },
+    ],
+  },
 ];
 
-const expandedKeys = ref({});
+const filteredItems = computed(() => {
+  return items
+    .filter((item) => item.visibleForRoles.includes(userRole.value)) // Filtrar bloques
+    .map((item) => ({
+      ...item,
+      items: item.items?.filter(
+        (subItem) =>
+          !subItem.visibleForRoles || subItem.visibleForRoles.includes(userRole.value) // Filtrar sub-ítems
+      ),
+    }));
+});
 
+const expandedKeys = ref({});
 </script>
 
 <template>
-  <!-- component -->
   <aside class="flex my-2 mx-2 min-h-[95vh]">
     <div class="flex flex-col py-8 px-5 bg-white dark:bg-gray-900 dark:border-gray-700 rounded-lg gap-4">
-
       <RouterLink to="/">
         <button style="cursor: pointer;"
           class="flex items-center transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none p-4 sidebar"
@@ -90,7 +188,7 @@ const expandedKeys = ref({});
       </RouterLink>
 
       <div v-if="props.isSidebarActive">
-        <PanelMenu :model="items">
+        <PanelMenu :model="filteredItems">
           <template #item="{ item }">
             <template v-if="item.to">
               <RouterLink :to="item.to">
@@ -118,7 +216,7 @@ const expandedKeys = ref({});
         </PanelMenu>
       </div>
       <div v-else>
-        <PanelMenu :model="items" :expandedKeys="expandedKeys">
+        <PanelMenu :model="filteredItems" :expandedKeys="expandedKeys">
           <template #item="{ item }">
             <template v-if="item.to">
               <RouterLink :to="item.to">
@@ -145,8 +243,6 @@ const expandedKeys = ref({});
           </template>
         </PanelMenu>
       </div>
-
-
     </div>
   </aside>
 </template>

@@ -1,12 +1,26 @@
 // src/services/purchaseOrderService.ts
-import type { PurchaseOrder, PurchaseOrderProduct } from "@/interfaces/PurchaseOrder";
-import { genericRequest } from "@/utils/httpUtils";
+import type { PurchaseOrder } from "@/interfaces/PurchaseOrder";
+import { genericRequest } from "@/utils/httpUtils"; // Importa la función genérica
+import { useAuthStore } from "@/stores/authStore"; // Importa el store de autenticación
 
 const API_URL = "https://localhost:7002/api/PurchaseOrders";
 
-// Obtener órdenes de compra por compañía
-export async function getPurchaseOrdersByCompany(id_company: number): Promise<PurchaseOrder[]> {
-  return genericRequest<PurchaseOrder[]>("get", `${API_URL}/get-purchase-orders-by-company/${id_company}`);
+// Obtener órdenes de compra por compañía o todas las órdenes si es Administrador
+export async function getPurchaseOrdersByCompany(): Promise<PurchaseOrder[]> {
+  const authStore = useAuthStore();
+  const user = authStore.user;
+
+  if (!user) {
+    throw new Error("No se pudo obtener la información del usuario.");
+  }
+
+  // Si el usuario es Administrador, usa el endpoint que trae todas las órdenes de compra
+  if (user.role.name_role === "Administrador") {
+    return genericRequest<PurchaseOrder[]>("get", `${API_URL}/get-purchase-orders`);
+  } else {
+    // Si no es Administrador, usa el endpoint que trae las órdenes de compra por compañía
+    return genericRequest<PurchaseOrder[]>("get", `${API_URL}/get-purchase-orders-by-company/${user.company.id_company}`);
+  }
 }
 
 // Crear una nueva orden de compra

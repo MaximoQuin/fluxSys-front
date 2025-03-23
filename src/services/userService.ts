@@ -1,13 +1,26 @@
 // src/services/userService.ts
 import type { User } from "@/interfaces/User";
-import { genericRequest } from "@/utils/httpUtils";
-import { useAuthStore } from "@/stores/authStore";
+import { genericRequest } from "@/utils/httpUtils"; // Importa la función genérica
+import { useAuthStore } from "@/stores/authStore"; // Importa el store de autenticación
 
 const API_URL = "https://localhost:7002/api/Users";
 
-// Obtener todos los usuarios
+// Obtener todos los usuarios o usuarios por compañía si no es Administrador
 export async function getUsers(): Promise<User[]> {
-  return genericRequest<User[]>("get", `${API_URL}/get-users`);
+  const authStore = useAuthStore();
+  const user = authStore.user;
+
+  if (!user) {
+    throw new Error("No se pudo obtener la información del usuario.");
+  }
+
+  // Si el usuario es Administrador, usa el endpoint que trae todos los usuarios
+  if (user.role.name_role === "Administrador") {
+    return genericRequest<User[]>("get", `${API_URL}/get-users`);
+  } else {
+    // Si no es Administrador, usa el endpoint que trae los usuarios por compañía
+    return genericRequest<User[]>("get", `${API_URL}/get-users-by-company/${user.company.id_company}`);
+  }
 }
 
 // Crear un nuevo usuario

@@ -4,7 +4,7 @@
     <h1 class="text-2xl font-bold mb-4">Movimientos de Inventario</h1>
 
     <!-- Tabla de movimientos de inventario -->
-    <table class="min-w-full bg-white">
+    <table class="min-w-full bg-black">
       <thead>
         <tr>
           <th class="py-2 px-4 border-b">ID</th>

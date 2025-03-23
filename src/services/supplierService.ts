@@ -1,12 +1,26 @@
 // src/services/supplierService.ts
-import type { Supplier, SupplierProduct } from "@/interfaces/Supplier";
-import { genericRequest } from "@/utils/httpUtils";
+import type { Supplier } from "@/interfaces/Supplier";
+import { genericRequest } from "@/utils/httpUtils"; // Importa la función genérica
+import { useAuthStore } from "@/stores/authStore"; // Importa el store de autenticación
 
 const API_URL = "https://localhost:7002/api/Suppliers";
 
-// Obtener proveedores por compañía
-export async function getSuppliersByCompany(id_company: number): Promise<Supplier[]> {
-  return genericRequest<Supplier[]>("get", `${API_URL}/get-suppliers-by-company/${id_company}`);
+// Obtener proveedores por compañía o todos los proveedores si es Administrador
+export async function getSuppliersByCompany(): Promise<Supplier[]> {
+  const authStore = useAuthStore();
+  const user = authStore.user;
+
+  if (!user) {
+    throw new Error("No se pudo obtener la información del usuario.");
+  }
+
+  // Si el usuario es Administrador, usa el endpoint que trae todos los proveedores
+  if (user.role.name_role === "Administrador") {
+    return genericRequest<Supplier[]>("get", `${API_URL}/get-suppliers`);
+  } else {
+    // Si no es Administrador, usa el endpoint que trae los proveedores por compañía
+    return genericRequest<Supplier[]>("get", `${API_URL}/get-suppliers-by-company/${user.company.id_company}`);
+  }
 }
 
 // Obtener detalles de un proveedor por ID

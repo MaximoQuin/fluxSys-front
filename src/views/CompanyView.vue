@@ -15,47 +15,9 @@
     </div>
 
     <!-- Tabla de empresas -->
-    <!-- <table class="min-w-full bg-white">
-      <thead>
-        <tr>
-          <th class="py-2 px-4 border-b">ID</th>
-          <th class="py-2 px-4 border-b">Nombre</th>
-          <th class="py-2 px-4 border-b">Acciones</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="company in filteredCompanies" :key="company.id_company" class="hover:bg-gray-50">
-          <td class="py-2 px-4 border-b">{{ company.id_company }}</td>
-          <td class="py-2 px-4 border-b">
-            <span v-if="!isEditing(company.id_company)">{{ company.name_company }}</span>
-            <div v-else class="flex items-center">
-              <input v-model="editingName" class="border rounded px-2 py-1" />
-              <button @click="saveEdit(company.id_company)" class="bg-green-500 text-white px-4 py-2 rounded ml-2">
-                Aceptar
-              </button>
-            </div>
-          </td>
-          <td class="py-2 px-4 border-b">
-            <button v-if="showActive && !isEditing(company.id_company)"
-              @click="startEdit(company.id_company, company.name_company)"
-              class="bg-yellow-500 text-white px-4 py-2 rounded mr-2">
-              Editar
-            </button>
-            <button v-if="showActive && !isEditing(company.id_company)" @click="removeCompany(company.id_company)"
-              class="bg-red-500 text-white px-4 py-2 rounded">
-              Eliminar
-            </button>
-            <button v-else-if="!isEditing(company.id_company)" @click="restoreDeletedCompany(company.id_company)"
-              class="bg-green-500 text-white px-4 py-2 rounded">
-              Restaurar
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table> -->
     <TableComponent v-if="!companyStore.loading" :columns="mappedColumns" :data="filteredCompanies" id="id_company"
-      :flagRestore="showActive" @actionUpdate="startEdit($event)" @actionDanger="removeCompany($event)"
-      @actionRestore="restoreDeletedCompany($event)">
+      :flagRestore="showActive" @actionUpdate="handleUpdate" @actionDanger="removeCompany"
+      @actionRestore="restoreDeletedCompany" :currentUserCompany="currentUserCompany">
     </TableComponent>
 
     <!-- Cargando -->
@@ -82,6 +44,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useCompanyStore } from '@/stores/companyStore';
+import { useAuthStore } from '@/stores/authStore'; // Importar el authStore
 import TableComponent from '@/components/TableComponent.vue';
 
 import { useConfirm } from "primevue/useconfirm";
@@ -91,13 +54,16 @@ const confirm = useConfirm();
 const toast = useToast();
 
 const companyStore = useCompanyStore();
+const authStore = useAuthStore(); // Usar el authStore
+
 const showActive = ref(true);
-const editingId = ref<number | null>(null);
-const editingName = ref('');
 const newCompanyName = ref('');
 
+// Obtener el nombre de la compañía del usuario actual
+const currentUserCompany = computed(() => authStore.user?.company?.name_company || '');
+
+// Solo incluye la columna "Nombre"
 const mappedColumns = [
-  { field: 'id_company', header: 'ID' },
   { field: 'name_company', header: 'Nombre' }
 ];
 
@@ -106,24 +72,6 @@ const filteredCompanies = computed(() => {
     showActive.value ? !company.delete_log_company : company.delete_log_company
   );
 });
-
-const isEditing = (id: number) => {
-  return editingId.value === id;
-};
-
-const startEdit = (id: number, name?: string) => {
-  editingId.value = id;
-  // editingName.value = name;
-};
-
-const saveEdit = async (id: number) => {
-  if (editingName.value.trim()) {
-    await companyStore.editCompany(id, editingName.value);
-    editingId.value = null;
-    editingName.value = '';
-    await companyStore.fetchCompanies(); // Refrescar la lista
-  }
-};
 
 const showActiveCompanies = () => {
   showActive.value = true;
@@ -134,7 +82,7 @@ const showDeletedCompanies = () => {
 };
 
 const removeCompany = async (id: number) => {
-  confirmDelete(id)
+  confirmDelete(id);
 };
 
 const restoreDeletedCompany = async (id: number) => {
@@ -148,6 +96,11 @@ const createCompany = async () => {
     newCompanyName.value = ''; // Limpiar el campo después de crear la empresa
     await companyStore.fetchCompanies(); // Refrescar la lista
   }
+};
+
+const handleUpdate = async (id: number, newValue: string) => {
+  await companyStore.editCompany(id, newValue);
+  await companyStore.fetchCompanies(); // Refrescar la lista
 };
 
 const confirmDelete = (id: number) => {
