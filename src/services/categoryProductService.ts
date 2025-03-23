@@ -7,7 +7,20 @@ const API_URL = "https://localhost:7002/api/CategoriesProducts";
 
 // Exporta las funciones directamente
 export async function getCategoriesProducts(): Promise<CategoryProduct[]> {
-  return genericRequest<CategoryProduct[]>("get", `${API_URL}/get-categories-products`);
+  const authStore = useAuthStore();
+  const user = authStore.user;
+
+  if (!user) {
+    throw new Error("No se pudo obtener la información del usuario.");
+  }
+
+  // Si el usuario es Administrador, usa el endpoint que trae todas las categorías
+  if (user.role.name_role === "Administrador") {
+    return genericRequest<CategoryProduct[]>("get", `${API_URL}/get-categories-products`);
+  } else {
+    // Si no es Administrador, usa el endpoint que trae las categorías por compañía
+    return genericRequest<CategoryProduct[]>("get", `${API_URL}/get-categories-products-by-company/${user.company.id_company}`);
+  }
 }
 
 export async function createCategoryProduct(name: string): Promise<CategoryProduct> {

@@ -1,5 +1,6 @@
+// src/stores/authStore.ts
 import { defineStore } from 'pinia';
-import { ref } from 'vue';
+import { ref, computed } from 'vue'; // Importar computed desde Vue
 import { authService } from '@/services/authService';
 import type { LoginResponse, User, ValidateTokenResponse } from '@/interfaces/authInterfaces';
 
@@ -21,10 +22,12 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = userData;
   };
 
+  // Obtener el rol del usuario
+  const userRole = computed(() => user.value?.role?.name_role || null); // Usar computed
+
   const login = async (email: string, password: string) => {
     try {
       const response = await authService.login({ email, password });
-      //console.log('Token recibido:', response.token); // Verifica el token
       setToken(response.token);
       await validateToken();
     } catch (error) {
@@ -35,16 +38,13 @@ export const useAuthStore = defineStore('auth', () => {
 
   const validateToken = async () => {
     if (!token.value) {
-      //console.warn('No hay token en el localStorage.');
       return;
     }
 
     try {
-      //console.log('Validando token:', token.value);
       const response = await authService.validateToken(token.value);
-      setUser(response.user);  // Almacena el usuario con los nombres
+      setUser(response.user); // Almacena el usuario con los nombres
     } catch (error) {
-      //console.error('Error validando el token:', error);
       removeToken();
     }
   };
@@ -65,6 +65,7 @@ export const useAuthStore = defineStore('auth', () => {
   return {
     token,
     user,
+    userRole, // Expone el rol del usuario
     login,
     validateToken,
     logout,

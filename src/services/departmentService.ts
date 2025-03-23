@@ -7,7 +7,20 @@ const API_URL = "https://localhost:7002/api/Departments";
 
 // Exporta las funciones directamente
 export async function getDepartments(): Promise<Department[]> {
-  return genericRequest<Department[]>("get", `${API_URL}/get-departments`);
+  const authStore = useAuthStore();
+  const user = authStore.user;
+
+  if (!user) {
+    throw new Error("No se pudo obtener la información del usuario.");
+  }
+
+  // Si el usuario es Administrador, usa el endpoint que trae todos los departamentos
+  if (user.role.name_role === "Administrador") {
+    return genericRequest<Department[]>("get", `${API_URL}/get-departments`);
+  } else {
+    // Si no es Administrador, usa el endpoint que trae los departamentos por compañía
+    return genericRequest<Department[]>("get", `${API_URL}/get-departments-by-company/${user.company.id_company}`);
+  }
 }
 
 export async function createDepartment(name: string): Promise<Department> {

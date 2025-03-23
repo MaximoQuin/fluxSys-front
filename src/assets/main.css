@@ -1,24 +1,59 @@
 @import 'tailwindcss';
+/* @import 'primeflex/primeflex.css'; */
 
 * {
   box-sizing: border-box;
 }
 
 body {
-  background-color: #f0f1f3;
+  background-color: red;
+  /* background-color: #f0f1f3; */
 }
 
 .sidebar {
-  width: 0;
-  transition: width 0.5s ease-in-out;
+  /* transition: max-width 0.6s ease-in-out; */
+}
+
+.sidebar svg {
+  font-size: 20px;
 }
 
 @media (min-width: 768px) {
   .sidebar.sidebar-true {
-    width: 15rem;
+    max-width: 1296px;
   }
 
   .sidebar.sidebar-false {
-    width: 0;
+    max-width: 65px;
   }
+
+  .sidebar p {
+    width: auto;
+    text-wrap: nowrap;
+    /* transition: max-width 0.6s ease, opacity 0.6s ease; */
+  }
+
+  .sidebar.sidebar-false p {
+    max-width: 0;
+    opacity: 0;
+  }
+
+  .sidebar.sidebar-true p {
+    max-width: 1296px;
+    opacity: 1;
+  }
+}
+
+.p-panelmenu-submenu {
+  padding: 0 !important;
+  padding-left: 2rem !important;
+}
+
+.p-datatable-header {
+  border-top-left-radius: 10px !important;
+  border-top-right-radius: 10px !important;
+}
+
+.p-paginator {
+  border-radius: 0 !important;
 }

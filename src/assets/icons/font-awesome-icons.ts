@@ -5,7 +5,8 @@ import { faBars } from '@fortawesome/free-solid-svg-icons'
 import { faBoxesStacked } from '@fortawesome/free-solid-svg-icons'
 import { faFileCsv } from '@fortawesome/free-solid-svg-icons'
 import { faDolly } from '@fortawesome/free-solid-svg-icons'
-import { faRectangleList } from '@fortawesome/free-regular-svg-icons'
+import { faRectangleList } from '@fortawesome/free-regular-svg-icons' 
+import { faTableList } from '@fortawesome/free-solid-svg-icons'
 
 library.add(
   faUser,
@@ -16,4 +17,5 @@ library.add(
   faFileCsv,
   faDolly,
   faRectangleList,
+  faTableList,
 )
