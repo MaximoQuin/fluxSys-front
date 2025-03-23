@@ -126,6 +126,78 @@ const sidebarClass = computed(() => {
             </div>
           </button>
         </RouterLink>
+
+        <RouterLink to="/inventory-u">
+          <button style="cursor: pointer;"
+            class="flex items-center w-full px-5 py-4 transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none">
+            <div class="text-left rtl:text-right">
+              <h1 class="text-sm font-medium text-gray-700 capitalize dark:text-white">Inventario</h1>
+            </div>
+          </button>
+        </RouterLink>
+
+        <RouterLink to="/supplier-u">
+          <button style="cursor: pointer;"
+            class="flex items-center w-full px-5 py-4 transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none">
+            <div class="text-left rtl:text-right">
+              <h1 class="text-sm font-medium text-gray-700 capitalize dark:text-white">Proveedores</h1>
+            </div>
+          </button>
+        </RouterLink>
+
+        <RouterLink to="/invoice-u">
+          <button style="cursor: pointer;"
+            class="flex items-center w-full px-5 py-4 transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none">
+            <div class="text-left rtl:text-right">
+              <h1 class="text-sm font-medium text-gray-700 capitalize dark:text-white">Facturas</h1>
+            </div>
+          </button>
+        </RouterLink>
+
+        <RouterLink to="/purchase-order-u">
+          <button style="cursor: pointer;"
+            class="flex items-center w-full px-5 py-4 transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none">
+            <div class="text-left rtl:text-right">
+              <h1 class="text-sm font-medium text-gray-700 capitalize dark:text-white">Ordenes de compra</h1>
+            </div>
+          </button>
+        </RouterLink>
+
+        <RouterLink to="/users-a">
+          <button style="cursor: pointer;"
+            class="flex items-center w-full px-5 py-4 transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none">
+            <div class="text-left rtl:text-right">
+              <h1 class="text-sm font-medium text-gray-700 capitalize dark:text-white">Gestión de usuarios</h1>
+            </div>
+          </button>
+        </RouterLink>
+
+        <RouterLink to="/audits-a">
+          <button style="cursor: pointer;"
+            class="flex items-center w-full px-5 py-4 transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none">
+            <div class="text-left rtl:text-right">
+              <h1 class="text-sm font-medium text-gray-700 capitalize dark:text-white">Registro de Auditorias</h1>
+            </div>
+          </button>
+        </RouterLink>
+
+        <RouterLink to="/errors-a">
+          <button style="cursor: pointer;"
+            class="flex items-center w-full px-5 py-4 transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none">
+            <div class="text-left rtl:text-right">
+              <h1 class="text-sm font-medium text-gray-700 capitalize dark:text-white">Registro de Errores</h1>
+            </div>
+          </button>
+        </RouterLink>
+
+        <RouterLink to="/inv-movements">
+          <button style="cursor: pointer;"
+            class="flex items-center w-full px-5 py-4 transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none">
+            <div class="text-left rtl:text-right">
+              <h1 class="text-sm font-medium text-gray-700 capitalize dark:text-white">Registro de Movemientos de Inventario</h1>
+            </div>
+          </button>
+        </RouterLink>
       </div>
     </div>
   </aside>
