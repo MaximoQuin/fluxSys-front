@@ -27,6 +27,7 @@ onMounted(async () => {
 </script>
 
 <template>
+  <Toast />
   <div>
     <!-- Renderiza el layout solo si el usuario está autenticado -->
     <template v-if="authStore.token">

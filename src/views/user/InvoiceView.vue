@@ -29,7 +29,7 @@
       </button>
   
       <!-- Tabla de facturas -->
-      <table class="min-w-full bg-white">
+      <table class="min-w-full bg-black">
         <thead>
           <tr>
             <th class="py-2 px-4 border-b">ID</th>

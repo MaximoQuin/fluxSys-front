@@ -5,9 +5,22 @@ import { useAuthStore } from "@/stores/authStore"; // Importa el store de autent
 
 const API_URL = "https://localhost:7002/api/Positions";
 
-// Exporta las funciones directamente
+// Obtener todas las posiciones o posiciones por compañía si no es Administrador
 export async function getPositions(): Promise<Position[]> {
-  return genericRequest<Position[]>("get", `${API_URL}/get-positions`);
+  const authStore = useAuthStore();
+  const user = authStore.user;
+
+  if (!user) {
+    throw new Error("No se pudo obtener la información del usuario.");
+  }
+
+  // Si el usuario es Administrador, usa el endpoint que trae todas las posiciones
+  if (user.role.name_role === "Administrador") {
+    return genericRequest<Position[]>("get", `${API_URL}/get-positions`);
+  } else {
+    // Si no es Administrador, usa el endpoint que trae las posiciones por compañía
+    return genericRequest<Position[]>("get", `${API_URL}/get-positions-by-company/${user.company.id_company}`);
+  }
 }
 
 export async function createPosition(name: string): Promise<Position> {

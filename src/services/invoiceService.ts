@@ -1,12 +1,26 @@
 // src/services/invoiceService.ts
-import type { Invoice, InvoiceProduct } from "@/interfaces/Invoice";
-import { genericRequest } from "@/utils/httpUtils";
+import type { Invoice } from "@/interfaces/Invoice";
+import { genericRequest } from "@/utils/httpUtils"; // Importa la función genérica
+import { useAuthStore } from "@/stores/authStore"; // Importa el store de autenticación
 
 const API_URL = "https://localhost:7002/api/Invoices";
 
-// Obtener facturas por compañía
-export async function getInvoicesByCompany(id_company: number): Promise<Invoice[]> {
-  return genericRequest<Invoice[]>("get", `${API_URL}/get-invoices-by-company/${id_company}`);
+// Obtener facturas por compañía o todas las facturas si es Administrador
+export async function getInvoicesByCompany(): Promise<Invoice[]> {
+  const authStore = useAuthStore();
+  const user = authStore.user;
+
+  if (!user) {
+    throw new Error("No se pudo obtener la información del usuario.");
+  }
+
+  // Si el usuario es Administrador, usa el endpoint que trae todas las facturas
+  if (user.role.name_role === "Administrador") {
+    return genericRequest<Invoice[]>("get", `${API_URL}/get-invoices`);
+  } else {
+    // Si no es Administrador, usa el endpoint que trae las facturas por compañía
+    return genericRequest<Invoice[]>("get", `${API_URL}/get-invoices-by-company/${user.company.id_company}`);
+  }
 }
 
 // Crear una nueva factura

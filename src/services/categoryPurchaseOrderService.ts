@@ -7,7 +7,20 @@ const API_URL = "https://localhost:7002/api/CategoriesPurchaseOrders";
 
 // Exporta las funciones directamente
 export async function getCategoriesPurchaseOrders(): Promise<CategoryPurchaseOrder[]> {
-  return genericRequest<CategoryPurchaseOrder[]>("get", `${API_URL}/get-categories-purchase-orders`);
+  const authStore = useAuthStore();
+  const user = authStore.user;
+
+  if (!user) {
+    throw new Error("No se pudo obtener la información del usuario.");
+  }
+
+  // Si el usuario es Administrador, usa el endpoint que trae todas las categorías
+  if (user.role.name_role === "Administrador") {
+    return genericRequest<CategoryPurchaseOrder[]>("get", `${API_URL}/get-categories-purchase-orders`);
+  } else {
+    // Si no es Administrador, usa el endpoint que trae las categorías por compañía
+    return genericRequest<CategoryPurchaseOrder[]>("get", `${API_URL}/get-categories-purchase-orders-by-company/${user.company.id_company}`);
+  }
 }
 
 export async function createCategoryPurchaseOrder(name: string): Promise<CategoryPurchaseOrder> {
