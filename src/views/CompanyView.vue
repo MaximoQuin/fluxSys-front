@@ -15,29 +15,36 @@
     </div>
 
     <!-- Tabla de empresas -->
-    <TableComponent v-if="!companyStore.loading" :columns="mappedColumns" :data="filteredCompanies" id="id_company"
-      :flagRestore="showActive" @actionUpdate="handleUpdate" @actionDanger="removeCompany"
-      @actionRestore="restoreDeletedCompany" :currentUserCompany="currentUserCompany">
+    <TableComponent :loader="companyStore.loading" :columns="mappedColumns" :data="filteredCompanies" id="id_company"
+      :flagRestore="showActive" @actionSee="handleSee" @actionCreate="handleCreate" @actionUpdate="handleUpdate"
+      @actionDanger="handleRemove" @actionRestore="restoreDeletedCompany" :currentUserCompany="currentUserCompany">
     </TableComponent>
 
-    <!-- Cargando -->
-    <div v-else class="mt-4">
-      Cargando...
-    </div>
+    <!-- Modal de detalles -->
+    <Dialog v-model:visible="visible2" modal header="Detalles de la compañia" :style="{ width: '25rem' }">
+      <div class="flex gap-2 mb-4">
+        <p><b>Nombre de compañia:</b></p>
+        <p>{{ currentCompany.name_company }}</p>
+      </div>
+    </Dialog>
 
+    <!-- Modal de editar y crear -->
+    <Dialog v-model:visible="visible" modal :header="isEdit ? 'Editar compañia' : 'Crear compañia'"
+      :style="{ width: '25rem' }">
+      <div class="flex flex-col gap-2 mb-4">
+        <label for="name" class="font-semibold w-24">Nombre de compañia:</label>
+        <InputText v-model="newCompanyName" id="name" class="flex-auto" autocomplete="off" />
+      </div>
+      <div class="flex justify-end gap-2">
+        <Button type="button" label="Cancelar" severity="danger" @click="visible = false"></Button>
+        <Button type="button" label="Guardar" severity="info"
+          @click="isEdit ? updateCompany() : createCompany(); visible = false"></Button>
+      </div>
+    </Dialog>
+
+    <!-- Modal de confirmación para borrar -->
     <ConfirmDialog></ConfirmDialog>
 
-    <!-- Crear Nueva Empresa -->
-    <div class="mt-4">
-      <h2 class="text-xl font-bold">Crear Empresa</h2>
-      <div class="flex items-center mt-2">
-        <input v-model="newCompanyName" type="text" placeholder="Nombre de la empresa"
-          class="border rounded px-4 py-2 mr-2" />
-        <button @click="createCompany" class="bg-blue-500 text-white px-4 py-2 rounded">
-          Crear
-        </button>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -52,6 +59,13 @@ import { useToast } from "primevue/usetoast";
 
 const confirm = useConfirm();
 const toast = useToast();
+
+const visible = ref(false);
+const isEdit = ref(false);
+const idCompany = ref(0);
+
+const visible2 = ref(false);
+const currentCompany = ref();
 
 const companyStore = useCompanyStore();
 const authStore = useAuthStore(); // Usar el authStore
@@ -81,8 +95,8 @@ const showDeletedCompanies = () => {
   showActive.value = false;
 };
 
-const removeCompany = async (id: number) => {
-  confirmDelete(id);
+const handleRemove = async (id: number) => {
+  deleteCompany(id);
 };
 
 const restoreDeletedCompany = async (id: number) => {
@@ -90,20 +104,45 @@ const restoreDeletedCompany = async (id: number) => {
   await companyStore.fetchCompanies(); // Refrescar la lista
 };
 
-const createCompany = async () => {
-  if (newCompanyName.value.trim()) {
-    await companyStore.addCompany(newCompanyName.value);
-    newCompanyName.value = ''; // Limpiar el campo después de crear la empresa
-    await companyStore.fetchCompanies(); // Refrescar la lista
+const handleSee = (id: number) => {
+  const Findcompany = filteredCompanies.value.find(company => company.id_company === id);
+  if (Findcompany) {
+    currentCompany.value = Findcompany;
+    console.log(currentCompany.value);
+
+    visible2.value = true;
   }
 };
 
-const handleUpdate = async (id: number, newValue: string) => {
-  await companyStore.editCompany(id, newValue);
+const handleCreate = () => {
+  isEdit.value = false;
+  newCompanyName.value = '';
+  visible.value = true;
+};
+
+const createCompany = async () => {
+  // if (newCompanyName.value.trim()) {
+  await companyStore.addCompany(newCompanyName.value);
+  newCompanyName.value = ''; // Limpiar el campo después de crear la empresa
+  await companyStore.fetchCompanies(); // Refrescar la lista
+  // }
+};
+
+// const handleUpdate = async (id: number, newValue: string) => {
+const handleUpdate = async (id: number) => {
+  isEdit.value = true;
+  idCompany.value = id;
+  const companyEdit = filteredCompanies.value.find(company => company.id_company === id);
+  newCompanyName.value = companyEdit!.name_company;
+  visible.value = true;
+};
+
+const updateCompany = async () => {
+  await companyStore.editCompany(idCompany.value, newCompanyName.value);
   await companyStore.fetchCompanies(); // Refrescar la lista
 };
 
-const confirmDelete = (id: number) => {
+const deleteCompany = (id: number) => {
   confirm.require({
     message: '¿Quieres eliminar esta compañia?',
     header: 'Eliminar',
@@ -124,7 +163,7 @@ const confirmDelete = (id: number) => {
         await companyStore.fetchCompanies();
         toast.add({ severity: 'info', summary: 'Eliminado', detail: 'Compañia eliminada', life: 3000 });
       } catch (error) {
-        toast.add({ severity: 'error', summary: 'Error', detail: 'Hubo un problema al eliminar la compañía. Intenta nuevamente.', life: 3000 });
+        toast.add({ severity: 'error', summary: 'Error', detail: 'Hubo un problema al eliminar. Intenta nuevamente.', life: 3000 });
       }
     },
     reject: () => {
