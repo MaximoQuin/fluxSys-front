@@ -42,8 +42,15 @@
         <InputText v-model="formCategoryName" :class="{ 'p-invalid': nameError }" />
         <small v-if="nameError" class="p-error">{{ nameError }}</small>
 
-        <label class="font-semibold">Nombre de la compañía:*</label>
-        <InputText v-model="formCompanyName" :class="{ 'p-invalid': companyError }" />
+        <label class="font-semibold">Seleccionar compañía:*</label>
+        <Dropdown
+          v-model="formCompanyName"
+          :options="companyOptions"
+          optionLabel="name"
+          optionValue="name"
+          placeholder="Selecciona una compañía"
+          :class="{ 'p-invalid': companyError }"
+        />
         <small v-if="companyError" class="p-error">{{ companyError }}</small>
       </div>
 
@@ -75,15 +82,18 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useCategoryPurchaseOrderStore } from '@/stores/categoryPurchaseOrderStore';
+import { useCompanyStore } from '@/stores/companyStore';
 import { useConfirm } from 'primevue/useconfirm';
 import { useToast } from 'primevue/usetoast';
 import TableComponent from '@/components/TableComponent.vue';
 import Dialog from 'primevue/dialog';
 import InputText from 'primevue/inputtext';
+import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
 import ConfirmDialog from 'primevue/confirmdialog';
 
 const categoryPurchaseOrderStore = useCategoryPurchaseOrderStore();
+const companyStore = useCompanyStore();
 const confirm = useConfirm();
 const toast = useToast();
 
@@ -104,6 +114,10 @@ const columns = [
   { field: 'name_company', header: 'Compañía' },
 ];
 
+const companyOptions = computed(() =>
+  companyStore.companies.map(company => ({ name: company.name_company }))
+);
+
 const filteredCategories = computed(() =>
   categoryPurchaseOrderStore.categoriesPurchaseOrders.filter(category =>
     showActive.value
@@ -120,7 +134,7 @@ const nameError = computed(() => {
 });
 
 const companyError = computed(() => {
-  if (!formCompanyName.value.trim()) return 'La compañía es requerida';
+  if (!formCompanyName.value) return 'La compañía es requerida';
   return null;
 });
 
@@ -209,6 +223,7 @@ const restoreDeletedCategoryPurchaseOrder = async (id: number) => {
 
 onMounted(() => {
   categoryPurchaseOrderStore.fetchCategoriesPurchaseOrders();
+  companyStore.fetchCompanies();
 });
 </script>
 
