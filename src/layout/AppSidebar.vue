@@ -30,7 +30,7 @@ const items = [
         label: 'Usuarios',
         icon: 'table-list',
         to: '/users-ua',
-        visibleForRoles: ['Administrador Empresarial', 'Jefe de Departamento'],
+        visibleForRoles: ['Administrador Empresarial'],
       },
       {
         label: 'Departamentos',
