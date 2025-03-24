@@ -4,154 +4,275 @@
 
     <!-- Filtros -->
     <div class="mb-4">
-      <button @click="showActiveInventories"
-        :class="{ 'bg-blue-500 text-white': showActive, 'bg-gray-200': !showActive }" class="px-4 py-2 rounded-l">
+      <button
+        @click="showActiveInventories"
+        :class="{ 'bg-blue-500 text-white': showActive, 'bg-gray-200': !showActive }"
+        class="px-4 py-2 rounded-l"
+      >
         Activos
       </button>
-      <button @click="showDeletedInventories"
-        :class="{ 'bg-red-500 text-white': !showActive, 'bg-gray-200': showActive }" class="px-4 py-2 rounded-r">
+      <button
+        @click="showDeletedInventories"
+        :class="{ 'bg-red-500 text-white': !showActive, 'bg-gray-200': showActive }"
+        class="px-4 py-2 rounded-r"
+      >
         Eliminados
       </button>
     </div>
 
     <!-- Tabla de inventario -->
-    <TableComponent :loader="inventoryStore.loading" :columns="mappedColumns" :data="filteredInventories"
-      id="id_inventory_product" :flagRestore="showActive" @actionSee="handleSee" @actionCreate="handleCreate"
-      @actionUpdate="handleUpdate" @actionDanger="handleRemove" @actionRestore="restoreDeletedProduct"
-      :currentUserCompany="currentUserCompany">
-    </TableComponent>
+    <TableComponent
+      :loader="inventoryStore.loading"
+      :columns="mappedColumns"
+      :data="filteredInventories"
+      id="id_inventory_product"
+      :flagRestore="showActive"
+      @actionSee="handleSee"
+      @actionCreate="handleCreate"
+      @actionUpdate="handleUpdate"
+      @actionDanger="handleRemove"
+      @actionRestore="restoreDeletedInventory"
+    />
 
-    <!-- Modal de ver -->
-    <Dialog v-model:visible="visible2" modal header="Detalles del Producto" :style="{ width: '25rem' }">
-      <!-- <h2 class="text-xl font-bold mb-4">Detalles del Producto</h2> -->
-      <div class="bg-white p-6 rounded-lg shadow">
-        <p><strong>Nombre:</strong> {{ currentProduct.name_product }}</p>
-        <p><strong>Stock:</strong> {{ currentProduct.stock_product }}</p>
-        <p><strong>Precio:</strong> {{ currentProduct.price_product }}</p>
-        <p><strong>Categoría:</strong> {{ currentProduct.name_category_product }}</p>
-        <p><strong>Estado:</strong> {{ currentProduct.name_state }}</p>
-        <p><strong>Tipo de Movimiento:</strong> {{ currentProduct.name_movement_type }}</p>
-        <p><strong>Proveedor:</strong> {{ currentProduct.name_supplier }}</p>
-        <p><strong>Departamento:</strong> {{ currentProduct.name_department }}</p>
+    <!-- Modal de detalles mejorado -->
+    <Dialog v-model:visible="visibleDetails" modal header="Detalles del Producto" :style="{ width: '60rem' }">
+      <div v-if="currentProduct" class="flex flex-col gap-6">
+        <!-- Tarjeta de Información Básica -->
+        <Card>
+          <template #title>
+            <div class="flex items-center gap-2">
+              <i class="pi pi-box" style="font-size: 1.5rem"></i>
+              <span>Información Básica</span>
+            </div>
+          </template>
+          <template #content>
+            <div class="grid grid-cols-3 gap-4">
+              <div class="flex flex-col">
+                <span class="text-sm font-medium text-gray-500">Nombre</span>
+                <span class="font-semibold">{{ currentProduct.name_product }}</span>
+              </div>
+              <div class="flex flex-col">
+                <span class="text-sm font-medium text-gray-500">Stock</span>
+                <span class="font-semibold">
+                  {{ currentProduct.stock_product }}
+                  <span class="text-sm text-gray-500 ml-1">unidades</span>
+                </span>
+              </div>
+              <div class="flex flex-col">
+                <span class="text-sm font-medium text-gray-500">Precio</span>
+                <span class="font-semibold">
+                  ${{ currentProduct.price_product?.toLocaleString('en-US', { minimumFractionDigits: 2 }) }}
+                </span>
+              </div>
+              <div class="flex flex-col">
+                <span class="text-sm font-medium text-gray-500">Categoría</span>
+                <span class="font-semibold">{{ currentProduct.name_category_product }}</span>
+              </div>
+              <div class="flex flex-col">
+                <span class="text-sm font-medium text-gray-500">Estado</span>
+                <Tag :value="currentProduct.name_state" 
+                     :severity="currentProduct.name_state === 'Activo' ? 'success' : 'warning'" />
+              </div>
+              <div class="flex flex-col">
+                <span class="text-sm font-medium text-gray-500">Tipo Movimiento</span>
+                <span class="font-semibold">{{ currentProduct.name_movement_type }}</span>
+              </div>
+            </div>
+          </template>
+        </Card>
 
-        <h3 class="font-bold mt-4">Información Adicional</h3>
+        <!-- Tarjeta de Relaciones -->
+        <Card>
+          <template #title>
+            <div class="flex items-center gap-2">
+              <i class="pi pi-link" style="font-size: 1.5rem"></i>
+              <span>Relaciones</span>
+            </div>
+          </template>
+          <template #content>
+            <div class="grid grid-cols-2 gap-4">
+              <div class="flex flex-col">
+                <span class="text-sm font-medium text-gray-500">Proveedor Principal</span>
+                <span class="font-semibold">{{ currentProduct.name_supplier }}</span>
+              </div>
+              <div class="flex flex-col">
+                <span class="text-sm font-medium text-gray-500">Departamento del Producto</span>
+                <span class="font-semibold">{{ currentProduct.name_department }}</span>
+              </div>
+            </div>
+          </template>
+        </Card>
 
-        <details class="mb-4">
-          <summary class="font-semibold cursor-pointer">
-            Proveedores asociados ({{ currentProduct?.suppliers?.length || 0 }})
-          </summary>
-          <ul class="mt-2 pl-4">
-            <li v-for="supplier in currentProduct?.suppliers || []" :key="supplier.id_supplier" class="mb-2">
-              {{ supplier.name_supplier }}
-            </li>
-          </ul>
-        </details>
+        <!-- Acordeón de Información Adicional -->
+        <Accordion>
+          <AccordionTab>
+            <template #header>
+              <div class="flex items-center gap-2">
+                <i class="pi pi-truck" style="font-size: 1rem"></i>
+                <span>Proveedores asociados ({{ currentProduct.suppliers?.length || 0 }})</span>
+              </div>
+            </template>
+            <DataTable :value="currentProduct.suppliers" :rows="5" paginator>
+              <Column field="name_supplier" header="Nombre"></Column>
+            </DataTable>
+          </AccordionTab>
 
-        <details class="mb-4">
-          <summary class="font-semibold cursor-pointer">
-            Facturas asociadas ({{ currentProduct?.invoices?.length || 0 }})
-          </summary>
-          <ul class="mt-2 pl-4">
-            <li v-for="invoice in currentProduct?.invoices || []" :key="invoice.id_invoice" class="mb-2">
-              {{ invoice.name_invoice }}
-            </li>
-          </ul>
-        </details>
+          <AccordionTab>
+            <template #header>
+              <div class="flex items-center gap-2">
+                <i class="pi pi-file" style="font-size: 1rem"></i>
+                <span>Facturas asociadas ({{ currentProduct.invoices?.length || 0 }})</span>
+              </div>
+            </template>
+            <DataTable :value="currentProduct.invoices" :rows="5" paginator>
+              <Column field="name_invoice" header="Referencia"></Column>
+            </DataTable>
+          </AccordionTab>
 
-        <details>
-          <summary class="font-semibold cursor-pointer">
-            Órdenes de compra asociadas ({{ currentProduct?.purchaseOrders?.length || 0 }})
-          </summary>
-          <ul class="mt-2 pl-4">
-            <li v-for="order in currentProduct?.purchaseOrders || []" :key="order.id_purchase_order" class="mb-2">
-              {{ order.name_purchase_order }}
-            </li>
-          </ul>
-        </details>
-
+          <AccordionTab>
+            <template #header>
+              <div class="flex items-center gap-2">
+                <i class="pi pi-shopping-cart" style="font-size: 1rem"></i>
+                <span>Órdenes de compra ({{ currentProduct.purchaseOrders?.length || 0 }})</span>
+              </div>
+            </template>
+            <DataTable :value="currentProduct.purchaseOrders" :rows="5" paginator>
+              <Column field="name_purchase_order" header="Referencia"></Column>
+            </DataTable>
+          </AccordionTab>
+        </Accordion>
       </div>
     </Dialog>
 
-    <!-- Modal de editar y crear -->
-    <Dialog v-model:visible="visible" modal :header="isEdit ? 'Editar inventario' : 'Crear inventario'"
-      :style="{ width: '25rem' }">
-      <div class="flex flex-col gap-4">
-        <div class="flex flex-col gap-2 mb-4">
-          <label for="name" class="font-semibold w-24">Nombre de inventario:</label>
-          <InputText v-model="editingProduct.name_product" type="text" placeholder="Nombre del producto" id="name"
-            class="flex-auto" autocomplete="off" />
+    <!-- Modal de editar/crear con validaciones -->
+    <Dialog v-model:visible="visibleForm" modal :header="isEdit ? 'Editar Producto' : 'Crear Producto'" :style="{ width: '50rem' }">
+      <div class="grid grid-cols-2 gap-4">
+        <!-- Nombre del Producto -->
+        <div class="flex flex-col gap-2">
+          <label for="name" class="font-semibold">Nombre del producto:*</label>
+          <InputText 
+            v-model="formProduct.name_product" 
+            id="name" 
+            autocomplete="off"
+            :class="{ 'p-invalid': nameError }"
+          />
+          <small v-if="nameError" class="p-error">
+            {{ nameError }}
+          </small>
         </div>
-        <div class="flex flex-col gap-2 mb-4">
-          <label for="stock" class="font-semibold w-24">Stock:</label>
-          <InputText v-model="editingProduct.stock_product" type="number" placeholder="Stock" id="stock"
-            class="flex-auto" autocomplete="off" />
+        
+        <!-- Stock -->
+        <div class="flex flex-col gap-2">
+          <label for="stock" class="font-semibold">Stock:*</label>
+          <InputNumber 
+            v-model="formProduct.stock_product" 
+            id="stock" 
+            mode="decimal" 
+            :min="0" 
+            :max="2147483647"
+            :class="{ 'p-invalid': stockError }"
+          />
+          <small v-if="stockError" class="p-error">
+            {{ stockError }}
+          </small>
         </div>
-        <div class="flex flex-col gap-2 mb-4">
-          <label for="price" class="font-semibold w-24">Precio:</label>
-          <InputText v-model="editingProduct.price_product" type="number" placeholder="Precio" id="price"
-            class="flex-auto" autocomplete="off" />
+        
+        <!-- Precio -->
+        <div class="flex flex-col gap-2">
+          <label for="price" class="font-semibold">Precio:*</label>
+          <InputNumber 
+            v-model="formProduct.price_product" 
+            id="price" 
+            mode="currency" 
+            currency="USD" 
+            locale="en-US"
+            :min="0.01"
+            :class="{ 'p-invalid': priceError }"
+          />
+          <small v-if="priceError" class="p-error">
+            {{ priceError }}
+          </small>
         </div>
-        <div class="flex flex-col gap-2 mb-4">
-          <label class="font-semibold w-24">Categoría:</label>
-          <select v-model="editingProduct.id_category_product_Id" class="border rounded px-4 py-2">
-            <option :value="null" disabled>Seleccione una categoría</option>
-            <option v-for="category in categoryProductStore.categoriesProducts" :key="category.id_category_product"
-              :value="category.id_category_product">
-              {{ category.name_category_product }}
-            </option>
-          </select>
+        
+        <!-- Categoría -->
+        <div class="flex flex-col gap-2">
+          <label for="category" class="font-semibold">Categoría:*</label>
+          <Dropdown 
+            v-model="formProduct.id_category_product_Id" 
+            :options="categoryProductStore.categoriesProducts" 
+            optionLabel="name_category_product" 
+            optionValue="id_category_product"
+            placeholder="Seleccione una categoría"
+            :class="{ 'p-invalid': categoryError }"
+          />
+          <small v-if="categoryError" class="p-error">
+            {{ categoryError }}
+          </small>
         </div>
-        <div class="flex flex-col gap-2 mb-4">
-          <label class="font-semibold w-24">Estado:</label>
-          <select v-model="editingProduct.id_state_Id" class="border rounded px-4 py-2">
-            <option :value="null" disabled>Seleccione un estado</option>
-            <option v-for="state in stateStore.states" :key="state.id_state" :value="state.id_state">
-              {{ state.name_state }}
-            </option>
-          </select>
+        
+        <!-- Estado -->
+        <div class="flex flex-col gap-2">
+          <label for="state" class="font-semibold">Estado:*</label>
+          <Dropdown 
+            v-model="formProduct.id_state_Id" 
+            :options="stateStore.states" 
+            optionLabel="name_state" 
+            optionValue="id_state"
+            placeholder="Seleccione un estado"
+            :class="{ 'p-invalid': stateError }"
+          />
+          <small v-if="stateError" class="p-error">
+            {{ stateError }}
+          </small>
         </div>
-        <div class="flex flex-col gap-2 mb-4">
-          <label class="font-semibold w-24">Movimiento:</label>
-          <select v-model="editingProduct.id_movement_type_Id" class="border rounded px-4 py-2">
-            <option :value="null" disabled>Seleccione un tipo de movimiento</option>
-            <option v-for="movementType in movementTypeStore.movementsTypes" :key="movementType.id_movement_type"
-              :value="movementType.id_movement_type">
-              {{ movementType.name_movement_type }}
-            </option>
-          </select>
+        
+        <!-- Tipo de Movimiento -->
+        <div class="flex flex-col gap-2">
+          <label for="movement" class="font-semibold">Tipo de Movimiento:*</label>
+          <Dropdown 
+            v-model="formProduct.id_movement_type_Id" 
+            :options="movementTypeStore.movementsTypes" 
+            optionLabel="name_movement_type" 
+            optionValue="id_movement_type"
+            placeholder="Seleccione un tipo"
+            :class="{ 'p-invalid': movementError }"
+          />
+          <small v-if="movementError" class="p-error">
+            {{ movementError }}
+          </small>
         </div>
-        <div class="flex flex-col gap-2 mb-4">
-          <label class="font-semibold w-24">Proveedor:</label>
-          <select v-model="editingProduct.id_supplier_Id" class="border rounded px-4 py-2">
-            <option :value="null" disabled>Seleccione un proveedor</option>
-            <option v-for="supplier in supplierStore.suppliers" :key="supplier.id_supplier"
-              :value="supplier.id_supplier">
-              {{ supplier.name_supplier }}
-            </option>
-          </select>
+        
+        <!-- Proveedor -->
+        <div class="flex flex-col gap-2">
+          <label for="supplier" class="font-semibold">Proveedor Principal:*</label>
+          <Dropdown 
+            v-model="formProduct.id_supplier_Id" 
+            :options="supplierStore.suppliers" 
+            optionLabel="name_supplier" 
+            optionValue="id_supplier"
+            placeholder="Seleccione un proveedor"
+            :class="{ 'p-invalid': supplierError }"
+          />
+          <small v-if="supplierError" class="p-error">
+            {{ supplierError }}
+          </small>
         </div>
       </div>
-
-      <div class="flex justify-end gap-2">
-        <Button type="button" label="Cancelar" severity="danger" @click="visible = false"></Button>
-        <Button type="button" label="Guardar" severity="info"
-          @click="isEdit ? updateProduct() : createProduct(); visible = false"></Button>
+      
+      <div class="flex justify-end gap-2 mt-4">
+        <Button type="button" label="Cancelar" severity="danger" @click="visibleForm = false"></Button>
+        <Button 
+          type="button" 
+          label="Guardar" 
+          severity="info"
+          :disabled="!isFormValid"
+          @click="isEdit ? updateProduct() : createProduct()"
+        ></Button>
       </div>
     </Dialog>
 
     <!-- Modal de confirmación para borrar -->
     <ConfirmDialog></ConfirmDialog>
-
-    <!-- Descargar PDF (no funciono jajaja mejor lo quito)-->
-    <!-- <div class="mt-4">
-      <button
-        @click="downloadPDF"
-        class="bg-green-500 text-white px-4 py-2 rounded"
-      >
-        Descargar PDF
-      </button>
-    </div> -->
-
   </div>
 </template>
 
@@ -163,8 +284,6 @@ import { useStateStore } from '@/stores/stateStore';
 import { useMovementTypeStore } from '@/stores/movementTypeStore';
 import { useSupplierStore } from '@/stores/supplierStore';
 import { useAuthStore } from '@/stores/authStore';
-import type { InventoryProduct } from '@/interfaces/InventoryProduct';
-
 import TableComponent from '@/components/TableComponent.vue';
 
 import { useConfirm } from "primevue/useconfirm";
@@ -172,14 +291,6 @@ import { useToast } from "primevue/usetoast";
 
 const confirm = useConfirm();
 const toast = useToast();
-
-const visible = ref(false);
-const isEdit = ref(false);
-const idProduct = ref(0);
-const editingProduct = ref<InventoryProduct>();
-
-const visible2 = ref(false);
-const currentProduct = ref();
 
 // Stores
 const inventoryStore = useInventoryStore();
@@ -189,108 +300,169 @@ const movementTypeStore = useMovementTypeStore();
 const supplierStore = useSupplierStore();
 const authStore = useAuthStore();
 
+// Estados
 const showActive = ref(true);
+const visibleDetails = ref(false);
+const visibleForm = ref(false);
+const isEdit = ref(false);
+const currentProduct = ref<any>(null);
+const editingId = ref<number | null>(null);
 
-// Función para descargar PDF
-// const downloadPDF = async () => {
-//   try {
-//     await inventoryStore.downloadPDF();
-//   } catch (error) {
-//     console.error('Error al descargar el PDF:', error);
-//     alert('Hubo un error al descargar el PDF. Por favor, intenta nuevamente.');
-//   }
-// };
-
-// Obtener el nombre de la compañía del usuario actual
-const currentUserCompany = computed(() => authStore.user?.company?.name_company || '');
-
+// Columnas para la tabla
 const mappedColumns = [
   { field: 'name_product', header: 'Nombre' },
   { field: 'stock_product', header: 'Stock' },
   { field: 'price_product', header: 'Precio' },
   { field: 'name_category_product', header: 'Categoría' },
   { field: 'name_state', header: 'Estado' },
-  { field: 'name_movement_type', header: 'Tipo de Movimiento' },
-  { field: 'name_supplier', header: 'Proveedor' }
+  { field: 'name_movement_type', header: 'Tipo Movimiento' },
+  { field: 'name_supplier', header: 'Proveedor Principal' }
 ];
 
-// Filtro de inventarios
+// Formulario para crear/editar
+const formProduct = ref({
+  name_product: '',
+  stock_product: null as number | null,
+  price_product: null as number | null,
+  id_category_product_Id: null as number | null,
+  id_state_Id: null as number | null,
+  id_movement_type_Id: null as number | null,
+  id_supplier_Id: null as number | null,
+  id_department_Id: null as number | null,
+  id_company_Id: null as number | null,
+  id_user_Id: null as number | null,
+});
+
+// Validaciones reactivas
+const nameError = computed(() => {
+  const name = formProduct.value.name_product || '';
+  
+  // Primero validar si está vacío
+  if (!name.trim()) return 'El nombre es requerido';
+  
+  // Validación contra caracteres especiales (con cualquier longitud)
+  const specialCharsRegex = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+/;
+  if (specialCharsRegex.test(name)) {
+    return 'No se permiten caracteres especiales';
+  }
+  
+  // Luego validar la longitud
+  if (name.length < 3) return 'Mínimo 3 caracteres';
+  if (name.length > 100) return 'Máximo 100 caracteres';
+  
+  return null;
+});
+
+const stockError = computed(() => {
+  if (formProduct.value.stock_product === null) return 'El stock es requerido';
+  if (formProduct.value.stock_product < 0) return 'No puede ser negativo';
+  if (formProduct.value.stock_product > 2147483647) return 'Valor demasiado grande';
+  return null;
+});
+
+const priceError = computed(() => {
+  if (formProduct.value.price_product === null) return 'El precio es requerido';
+  if (formProduct.value.price_product < 0.01) return 'Mínimo $0.01';
+  return null;
+});
+
+const categoryError = computed(() => {
+  if (formProduct.value.id_category_product_Id === null) return 'La categoría es requerida';
+  return null;
+});
+
+const stateError = computed(() => {
+  if (formProduct.value.id_state_Id === null) return 'El estado es requerido';
+  return null;
+});
+
+const movementError = computed(() => {
+  if (formProduct.value.id_movement_type_Id === null) return 'El tipo de movimiento es requerido';
+  return null;
+});
+
+const supplierError = computed(() => {
+  if (formProduct.value.id_supplier_Id === null) return 'El proveedor es requerido';
+  return null;
+});
+
+const isFormValid = computed(() => {
+  return !nameError.value && !stockError.value && !priceError.value && 
+         !categoryError.value && !stateError.value && 
+         !movementError.value && !supplierError.value;
+});
+
+// Computed
 const filteredInventories = computed(() => {
   return inventoryStore.inventories.filter(inventory =>
     showActive.value ? !inventory.delete_log_inventory : inventory.delete_log_inventory
   );
 });
 
-// Mostrar inventarios activos
+// Métodos
 const showActiveInventories = () => {
   showActive.value = true;
 };
 
-// Mostrar inventarios eliminados
 const showDeletedInventories = () => {
   showActive.value = false;
 };
 
-const handleRemove = async (id: number) => {
-  deleteProduct(id);
-};
-
-const restoreDeletedProduct = async (id: number) => {
-  await inventoryStore.restoreDeletedInventory(id);
-  await inventoryStore.fetchInventories(); // Refrescar la lista
-};
-
-const handleSee = (id: number) => {
-  const FindInventary = filteredInventories.value.find(inventary => inventary.id_inventory_product === id);
-  if (FindInventary) {
-    currentProduct.value = FindInventary;
-    console.log(currentProduct.value);
-
-    visible2.value = true;
-  }
+const handleSee = async (id: number) => {
+  await inventoryStore.fetchInventoryById(id);
+  currentProduct.value = inventoryStore.currentInventory;
+  visibleDetails.value = true;
 };
 
 const handleCreate = () => {
   isEdit.value = false;
-  editingProduct.value = {};
-  visible.value = true;
+  resetForm();
+  visibleForm.value = true;
 };
 
-const createProduct = async () => {
-  const user = authStore.user;
-  const data = {
-    ...editingProduct.value,
-    id_department_Id: user?.department?.id_department,
-    id_company_Id: user?.company?.id_company,
-    id_user_Id: user?.id_user,
-  };
-  await inventoryStore.addInventory(data);
-  editingProduct.value = {}; // Limpiar el campo después de crear la empresa
-  await inventoryStore.fetchInventories(); // Refrescar la lista
+const handleUpdate = (id: number) => {
+  const product = inventoryStore.inventories.find(p => p.id_inventory_product === id);
+  if (product) {
+    isEdit.value = true;
+    editingId.value = id;
+    
+    // Buscar IDs de relaciones por nombre
+    const category = categoryProductStore.categoriesProducts.find(
+      cat => cat.name_category_product === product.name_category_product
+    );
+    const state = stateStore.states.find(
+      st => st.name_state === product.name_state
+    );
+    const movementType = movementTypeStore.movementsTypes.find(
+      mt => mt.name_movement_type === product.name_movement_type
+    );
+    const supplier = supplierStore.suppliers.find(
+      sup => sup.name_supplier === product.name_supplier
+    );
+
+    formProduct.value = {
+      name_product: product.name_product,
+      stock_product: product.stock_product,
+      price_product: product.price_product,
+      id_category_product_Id: category?.id_category_product || null,
+      id_state_Id: state?.id_state || null,
+      id_movement_type_Id: movementType?.id_movement_type || null,
+      id_supplier_Id: supplier?.id_supplier || null,
+      id_department_Id: authStore.user?.department?.id_department,
+      id_company_Id: authStore.user?.company?.id_company,
+      id_user_Id: authStore.user?.id_user,
+    };
+    
+    visibleForm.value = true;
+  }
 };
 
-// const handleUpdate = async (id: number, newValue: string) => {
-const handleUpdate = async (id: number) => {
-  isEdit.value = true;
-  idProduct.value = id;
-  const inventaryEdit = filteredInventories.value.find(inventary => inventary.id_inventory_product === id);
-  editingProduct.value = inventaryEdit;
-  visible.value = true;
-};
-
-const updateProduct = async () => {
-  const nameUser = authStore.user?.name_user || '';
-  const nameDepartment = authStore.user?.department?.name_department || '';
-  await inventoryStore.editInventory(idProduct.value, editingProduct.value, nameUser, nameDepartment);
-  await inventoryStore.fetchInventories(); // Refrescar la lista
-};
-
-const deleteProduct = (id: number) => {
+const handleRemove = (id: number) => {
   confirm.require({
-    message: '¿Quieres eliminar este producto?',
-    header: 'Eliminar',
-    icon: 'pi pi-info-circle',
-    rejectLabel: 'Cancel',
+    message: '¿Estás seguro de eliminar este producto del inventario?',
+    header: 'Confirmación',
+    icon: 'pi pi-exclamation-triangle',
+    rejectLabel: 'Cancelar',
     rejectProps: {
       label: 'Cancelar',
       severity: 'secondary',
@@ -304,18 +476,144 @@ const deleteProduct = (id: number) => {
       try {
         await inventoryStore.removeInventory(id);
         await inventoryStore.fetchInventories();
-        toast.add({ severity: 'info', summary: 'Eliminado', detail: 'Producto eliminado', life: 3000 });
+        toast.add({ 
+          severity: 'success', 
+          summary: 'Éxito', 
+          detail: 'Producto eliminado correctamente', 
+          life: 3000 
+        });
       } catch (error) {
-        toast.add({ severity: 'error', summary: 'Error', detail: 'Hubo un problema al eliminar. Intenta nuevamente.', life: 3000 });
+        toast.add({ 
+          severity: 'error', 
+          summary: 'Error', 
+          detail: 'Error al eliminar el producto', 
+          life: 3000 
+        });
       }
     },
-    reject: () => {
-      // toast.add({ severity: 'error', summary: 'Rechazado', detail: 'Rechazaste la operación', life: 3000 });
-    }
+    reject: () => {}
   });
 };
 
-// Cargar datos al montar el componente
+const restoreDeletedInventory = async (id: number) => {
+  try {
+    await inventoryStore.restoreDeletedInventory(id);
+    await inventoryStore.fetchInventories();
+    toast.add({ 
+      severity: 'success', 
+      summary: 'Éxito', 
+      detail: 'Producto restaurado correctamente', 
+      life: 3000 
+    });
+  } catch (error) {
+    toast.add({ 
+      severity: 'error', 
+      summary: 'Error', 
+      detail: 'Error al restaurar el producto', 
+      life: 3000 
+    });
+  }
+};
+
+const createProduct = async () => {
+  if (!isFormValid.value) return;
+  
+  try {
+    const user = authStore.user;
+    const data = {
+      ...formProduct.value,
+      id_department_Id: user?.department?.id_department,
+      id_company_Id: user?.company?.id_company,
+      id_user_Id: user?.id_user,
+    };
+
+    await inventoryStore.addInventory(data);
+    resetForm();
+    await inventoryStore.fetchInventories();
+    visibleForm.value = false;
+    toast.add({ 
+      severity: 'success', 
+      summary: 'Éxito', 
+      detail: 'Producto creado correctamente', 
+      life: 3000 
+    });
+  } catch (error) {
+    toast.add({ 
+      severity: 'error', 
+      summary: 'Error', 
+      detail: 'Error al crear el producto', 
+      life: 3000 
+    });
+  }
+};
+
+const updateProduct = async () => {
+  if (!isFormValid.value || !editingId.value) return;
+  
+  try {
+    const user = authStore.user;
+    const nameUser = user?.name_user || '';
+    const nameDepartment = user?.department?.name_department || '';
+
+    await inventoryStore.editInventory(
+      editingId.value,
+      formProduct.value,
+      nameUser,
+      nameDepartment
+    );
+    
+    resetForm();
+    await inventoryStore.fetchInventories();
+    visibleForm.value = false;
+    toast.add({ 
+      severity: 'success', 
+      summary: 'Éxito', 
+      detail: 'Producto actualizado correctamente', 
+      life: 3000 
+    });
+  } catch (error) {
+    toast.add({ 
+      severity: 'error', 
+      summary: 'Error', 
+      detail: 'Error al actualizar el producto', 
+      life: 3000 
+    });
+  }
+};
+
+const resetForm = () => {
+  formProduct.value = {
+    name_product: '',
+    stock_product: null,
+    price_product: null,
+    id_category_product_Id: null,
+    id_state_Id: null,
+    id_movement_type_Id: null,
+    id_supplier_Id: null,
+    id_department_Id: null,
+    id_company_Id: null,
+    id_user_Id: null,
+  };
+  editingId.value = null;
+};
+
+// Función para formatear fechas
+const formatDate = (dateString: string) => {
+  if (!dateString) return 'N/A';
+  return new Date(dateString).toLocaleDateString();
+};
+
+// Función para determinar color de estado
+const getStatusSeverity = (status: string) => {
+  switch(status?.toLowerCase()) {
+    case 'completado': return 'success';
+    case 'pendiente': return 'warning';
+    case 'cancelado': return 'danger';
+    default: return 'info';
+  }
+};
+
+// Cargar datos iniciales
 onMounted(() => {
   inventoryStore.fetchInventories();
   supplierStore.fetchSuppliers();
@@ -326,5 +624,30 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Estilos adicionales si son necesarios */
+/* Estilos personalizados para las tarjetas */
+.p-card {
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+}
+
+.p-card-title {
+  font-size: 1.1rem;
+  color: var(--primary-color);
+}
+
+/* Mejor espaciado en acordeones */
+.p-accordion-content {
+  padding: 1rem !important;
+}
+
+/* Estilo para los campos inválidos */
+.p-invalid {
+  border-color: var(--red-500) !important;
+}
+
+.p-error {
+  color: var(--red-500);
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
 </style>

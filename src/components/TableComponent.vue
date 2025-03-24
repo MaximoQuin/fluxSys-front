@@ -6,7 +6,7 @@
       <template #header>
         <div class="flex gap-3 justify-end">
           <InputText v-model="filters['global'].value" placeholder="Buscar" />
-          <Button label="Crear" icon="pi pi-plus" class="p-button-success" @click="handleCreate()" />
+          <Button v-if="hasPermission('Crear')" label="Crear" icon="pi pi-plus" class="p-button-success" @click="handleCreate()" />
         </div>
       </template>
       <Column v-for="(column, index) in columns" :key="index" :field="column.field" :header="column.header">
