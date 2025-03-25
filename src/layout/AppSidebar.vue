@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useAuth } from '@/composables/useAuth';
 
 const props = defineProps<{
@@ -19,6 +19,7 @@ const items = [
     label: 'Administracion General',
     icon: 'dolly',
     visibleForRoles: ['Administrador', 'Administrador Empresarial', 'Jefe de Departamento'],
+    to: '/users-ua',
     items: [
       {
         label: 'Compañías',
@@ -50,6 +51,7 @@ const items = [
     label: 'Gestión de Inventario',
     icon: 'boxes-stacked',
     visibleForRoles: ['Administrador', 'Administrador Empresarial', 'Jefe de Departamento', 'Subjefe de Departamento', 'Colaborador'],
+    to: '/inventories-u',
     items: [
       {
         label: 'Inventario',
@@ -84,6 +86,7 @@ const items = [
     label: 'Proveedores',
     icon: 'user',
     visibleForRoles: ['Administrador', 'Administrador Empresarial', 'Jefe de Departamento', 'Subjefe de Departamento', 'Colaborador'],
+    to: '/suppliers-u',
     items: [
       {
         label: 'Proveedores',
@@ -102,6 +105,7 @@ const items = [
     label: 'Ordenes de Compra',
     icon: 'dolly',
     visibleForRoles: ['Administrador', 'Administrador Empresarial', 'Jefe de Departamento', 'Subjefe de Departamento', 'Colaborador'],
+    to: '/purchase-orders-u',
     items: [
       {
         label: 'Ordenes de Compra',
@@ -120,6 +124,7 @@ const items = [
     label: 'Gestión de Facturas',
     icon: 'dolly',
     visibleForRoles: ['Administrador', 'Administrador Empresarial', 'Jefe de Departamento', 'Subjefe de Departamento', 'Colaborador'],
+    to: '/invoices-u',
     items: [
       {
         label: 'Facturas',
@@ -133,6 +138,7 @@ const items = [
     label: 'Sistema',
     icon: 'user',
     visibleForRoles: ['Administrador'],
+    to: '/users-ua',
     items: [
       {
         label: 'Usuarios',
@@ -160,17 +166,49 @@ const items = [
 
 const filteredItems = computed(() => {
   return items
-    .filter((item) => item.visibleForRoles.includes(userRole.value)) // Filtrar bloques
+    .filter((item) => item.visibleForRoles.includes(userRole.value))
     .map((item) => ({
       ...item,
       items: item.items?.filter(
         (subItem) =>
-          !subItem.visibleForRoles || subItem.visibleForRoles.includes(userRole.value) // Filtrar sub-ítems
+          !subItem.visibleForRoles || subItem.visibleForRoles.includes(userRole.value)
       ),
     }));
 });
 
-const expandedKeys = ref({});
+const expandedKeys = ref<Record<string, boolean>>({});
+
+// Cerrar todos los submenús cuando el sidebar se cierra
+watch(() => props.isSidebarActive, (isActive) => {
+  if (!isActive) {
+    expandedKeys.value = {};
+  }
+});
+
+const toggleItem = (itemKey: string) => {
+  if (!props.isSidebarActive) return;
+
+  // Comportamiento de acordeón: cerrar todos los demás
+  const newExpandedKeys: Record<string, boolean> = {};
+  
+  // Si el item no estaba expandido, lo expandimos
+  if (!expandedKeys.value[itemKey]) {
+    newExpandedKeys[itemKey] = true;
+  }
+  
+  expandedKeys.value = newExpandedKeys;
+};
+
+const handleMainItemClick = (event: Event, item: any) => {
+  if (!props.isSidebarActive) {
+    // Sidebar cerrado - permitir navegación
+    return;
+  }
+
+  // Sidebar abierto - manejar expansión
+  event.preventDefault();
+  toggleItem(item.key);
+};
 </script>
 
 <template>
@@ -187,64 +225,75 @@ const expandedKeys = ref({});
         </button>
       </RouterLink>
 
-      <div v-if="props.isSidebarActive">
-        <PanelMenu :model="filteredItems">
-          <template #item="{ item }">
-            <template v-if="item.to">
-              <RouterLink :to="item.to">
-                <button style="cursor: pointer;"
-                  class="flex items-center transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none p-4 sidebar"
-                  :class="sidebarClass">
-                  <font-awesome-icon :icon="['fas', item.icon]" />
-                  <p class="text-sm font-medium text-gray-700 capitalize dark:text-white sidebar">
-                    {{ item.label }}
-                  </p>
-                </button>
-              </RouterLink>
-            </template>
-            <template v-else>
-              <button style="cursor: pointer;"
+      <PanelMenu :model="filteredItems" :expandedKeys="expandedKeys">
+        <template #item="{ item }">
+          <!-- Ítems principales (con key) -->
+          <template v-if="item.key">
+            <RouterLink 
+              :to="item.to" 
+              @click="(e) => handleMainItemClick(e, item)"
+              custom
+              v-slot="{ navigate, isActive }"
+            >
+              <button 
+                style="cursor: pointer;"
+                class="flex items-center transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none p-4 sidebar w-full"
+                :class="[sidebarClass, { 'bg-gray-100 dark:bg-gray-800': isActive }]"
+                @click="navigate"
+              >
+                <font-awesome-icon :icon="['fas', item.icon]" />
+                <p class="text-sm font-medium text-gray-700 capitalize dark:text-white sidebar">
+                  {{ item.label }}
+                </p>
+                <!-- Flecha para indicar que es desplegable (solo cuando sidebar está abierto) -->
+                <span v-if="props.isSidebarActive && item.items" class="ml-auto">
+                  <font-awesome-icon 
+                    :icon="['fas', expandedKeys[item.key] ? 'chevron-up' : 'chevron-down']" 
+                    class="text-xs"
+                  />
+                </span>
+              </button>
+            </RouterLink>
+          </template>
+          
+          <!-- Sub-ítems (sin key) -->
+          <template v-else>
+            <RouterLink v-if="item.to" :to="item.to" custom v-slot="{ navigate, isActive }">
+              <button 
+                style="cursor: pointer;"
                 class="flex items-center transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none p-4 sidebar"
-                :class="sidebarClass">
+                :class="[sidebarClass, { 'bg-gray-100 dark:bg-gray-800': isActive }]"
+                @click="navigate"
+              >
                 <font-awesome-icon :icon="['fas', item.icon]" />
                 <p class="text-sm font-medium text-gray-700 capitalize dark:text-white sidebar">
                   {{ item.label }}
                 </p>
               </button>
-            </template>
+            </RouterLink>
+            <button v-else style="cursor: pointer;"
+              class="flex items-center transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none p-4 sidebar"
+              :class="sidebarClass">
+              <font-awesome-icon :icon="['fas', item.icon]" />
+              <p class="text-sm font-medium text-gray-700 capitalize dark:text-white sidebar">
+                {{ item.label }}
+              </p>
+            </button>
           </template>
-        </PanelMenu>
-      </div>
-      <div v-else>
-        <PanelMenu :model="filteredItems" :expandedKeys="expandedKeys">
-          <template #item="{ item }">
-            <template v-if="item.to">
-              <RouterLink :to="item.to">
-                <button style="cursor: pointer;"
-                  class="flex items-center transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none p-4 sidebar"
-                  :class="sidebarClass">
-                  <font-awesome-icon :icon="['fas', item.icon]" />
-                  <p class="text-sm font-medium text-gray-700 capitalize dark:text-white sidebar">
-                    {{ item.label }}
-                  </p>
-                </button>
-              </RouterLink>
-            </template>
-            <template v-else>
-              <button style="cursor: pointer;"
-                class="flex items-center transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none p-4 sidebar"
-                :class="sidebarClass">
-                <font-awesome-icon :icon="['fas', item.icon]" />
-                <p class="text-sm font-medium text-gray-700 capitalize dark:text-white sidebar">
-                  {{ item.label }}
-                </p>
-              </button>
-            </template>
-          </template>
-        </PanelMenu>
-      </div>
+        </template>
+      </PanelMenu>
     </div>
   </aside>
 </template>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+/* Estilos para resaltar el ítem activo */
+.router-link-active {
+  button {
+    background-color: #f3f4f6; /* bg-gray-100 */
+    .dark & {
+      background-color: #1f2937; /* dark:bg-gray-800 */
+    }
+  }
+}
+</style>

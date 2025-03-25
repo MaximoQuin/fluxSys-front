@@ -55,10 +55,6 @@
           <template #content>
             <div class="grid grid-cols-2 gap-4">
               <div class="flex flex-col">
-                <span class="text-sm font-medium text-gray-500">ID</span>
-                <span class="font-semibold text-lg">{{ currentInvoice.id_invoice }}</span>
-              </div>
-              <div class="flex flex-col">
                 <span class="text-sm font-medium text-gray-500">Nombre</span>
                 <span class="font-semibold">{{ currentInvoice.name_invoice }}</span>
               </div>
@@ -291,7 +287,6 @@ const showFormModal = computed(() => isEditing.value || isCreating.value);
 
 // Columnas para la tabla
 const mappedColumns = [
-  { field: 'id_invoice', header: 'ID', sortable: true },
   { field: 'name_invoice', header: 'Nombre', sortable: true },
   { field: 'name_purchase_order', header: 'Orden de Compra', sortable: true },
   { field: 'name_supplier', header: 'Proveedor', sortable: true },
