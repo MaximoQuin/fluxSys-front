@@ -174,7 +174,7 @@ const expandedKeys = ref({});
 </script>
 
 <template>
-  <aside class="flex my-2 mx-2 min-h-[95vh]">
+  <aside class="flex mr-2 min-h-[95vh]">
     <div class="flex flex-col py-8 px-5 bg-white dark:bg-gray-900 dark:border-gray-700 rounded-lg gap-4">
       <RouterLink to="/">
         <button style="cursor: pointer;"

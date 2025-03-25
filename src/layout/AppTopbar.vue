@@ -2,12 +2,72 @@
 import { useAuthStore } from '../stores/authStore';
 import { useRouter } from 'vue-router';
 
+import { computed, ref } from "vue";
+import { useConfirm } from "primevue/useconfirm";
+import { useToast } from "primevue/usetoast";
+
+const confirm = useConfirm();
+const toast = useToast();
+
 const authStore = useAuthStore();
 const router = useRouter();
 
+const user = computed(() => authStore.user);
+
+const profile = ref(false);
+
+const menu = ref();
+const items = ref([
+  {
+    // label: 'Opciones',
+    items: [
+      {
+        label: 'Perfil',
+        icon: 'pi pi-user',
+        command: () => {
+          profile.value = true;
+        }
+      },
+      {
+        label: 'Cerrar sesión',
+        icon: 'pi pi-sign-out',
+        command: () => {
+          handleLogout();
+        }
+      }
+    ]
+  }
+]);
+
+// const isOpen = ref(false);
+
 const handleLogout = async () => {
-  await authStore.logout();
-  router.push('/login');
+  confirm.require({
+    message: '¿Estás seguro de cerrar sesión?',
+    header: 'Confirmar cierre de sesión',
+    icon: 'pi pi-exclamation-triangle',
+    acceptLabel: 'Salir',
+    rejectLabel: 'Cancelar',
+    accept: async () => {
+      try {
+        await authStore.logout();
+        router.push('/login');
+        toast.add({
+          severity: 'success',
+          summary: 'Éxito',
+          detail: 'Sesión cerrada correctamente',
+          life: 3000
+        });
+      } catch (error) {
+        toast.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Error al cerrar sesión',
+          life: 3000
+        });
+      }
+    }
+  });
 };
 
 
@@ -18,55 +78,35 @@ const emit = defineEmits<{
 const toggleSidebar = () => {
   emit('toggle-sidebar');
 };
+
+const toggle = (event) => {
+  menu.value.toggle(event);
+  // isOpen.value = !isOpen.value;
+};
+
+// const activeClass = computed(() => (isOpen.value ? 'active-true' : 'active-false'));
+
 </script>
 
 <template>
   <!-- component -->
-  <nav class=" bg-white flex relative justify-between items-center px-8 h-20 my-2 mr-2 rounded-lg">
+  <nav class=" bg-white dark:bg-gray-900 flex relative justify-between items-center px-8 h-20 mb-2 rounded-lg">
     <div class="flex mr-4 items-center">
       <div class="block relative">
         <button type="button" class="hidden md:inline-block py-2 px-3 hover:bg-gray-200 rounded-full relative"
           @click="toggleSidebar" style="cursor: pointer;">
           <div class="flex items-center h-5">
-            <div class="_xpkakx">
-              <font-awesome-icon :icon="['fas', 'bars']" />
-            </div>
+            <i class="pi pi-bars text-gray-900 dark:text-white"></i>
           </div>
         </button>
       </div>
     </div>
 
-    <!-- logo -->
-    <!-- <div class="inline-flex">
-      <a class="_o6689fn" href="/">
-        <div class="hidden md:block">
-          <img class="w-auto h-6" src="@/assets/logo.svg" alt="">
-        </div>
-        <div class="block md:hidden">
-          <img class="w-auto h-6" src="@/assets/logo.svg" alt="">
-        </div>
-      </a>
-    </div> -->
-    <!-- end logo -->
-
-    <!-- search bar -->
-    <div class="hidden sm:block flex-shrink flex-grow-0 justify-start px-2">
-      <div class="inline-block">
-        <div class="max-w-full flex items-center">
-          <input type="text" placeholder="Search product" class="relative border rounded-full px-4  py-1">
-          <font-awesome-icon :icon="['fab', 'searchengin']" class="relative -left-8" />
-        </div>
-      </div>
-    </div>
-    <!-- end search bar -->
-
-    <button @click="handleLogout" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 active:scale-90 transition">Cerrar sesion</button>
-
     <!-- login -->
     <div class="flex-initial">
       <div class="flex justify-end items-center relative">
 
-        <div class="flex mr-4 items-center">
+        <!-- <div class="flex mr-4 items-center">
           <div class="block relative">
             <button type="button" class="inline-block py-2 px-3 hover:bg-gray-200 rounded-full relative"
               style="cursor: pointer;">
@@ -82,25 +122,63 @@ const toggleSidebar = () => {
               </div>
             </button>
           </div>
-        </div>
+        </div> -->
+
+        <Dialog v-model:visible="profile" modal header="Perfil" :style="{ width: '30rem' }">
+          <div>
+            <!-- <h2 class="text-2xl font-semibold mb-6">Información del Usuario</h2> -->
+
+            <div class="space-y-4">
+              <div>
+                <p class="text-sm text-gray-500">Nombre:</p>
+                <p class="text-lg font-medium">{{ user?.name_user }}</p>
+              </div>
+
+              <div>
+                <p class="text-sm text-gray-500">Correo Electrónico:</p>
+                <p class="text-lg font-medium">{{ user?.mail_user }}</p>
+              </div>
+
+              <div>
+                <p class="text-sm text-gray-500">Teléfono:</p>
+                <p class="text-lg font-medium">{{ user?.phone_user }}</p>
+              </div>
+
+              <div>
+                <p class="text-sm text-gray-500">Empresa:</p>
+                <p class="text-lg font-medium">{{ user?.company?.name_company }}</p>
+              </div>
+
+              <div>
+                <p class="text-sm text-gray-500">Departamento:</p>
+                <p class="text-lg font-medium">{{ user?.department?.name_department }}</p>
+              </div>
+
+              <div>
+                <p class="text-sm text-gray-500">Puesto:</p>
+                <p class="text-lg font-medium">{{ user?.position?.name_position }}</p>
+              </div>
+
+              <div>
+                <p class="text-sm text-gray-500">Rol:</p>
+                <p class="text-lg font-medium">{{ user?.role?.name_role }}</p>
+              </div>
+            </div>
+          </div>
+
+        </Dialog>
+
+        <ConfirmDialog></ConfirmDialog>
 
         <div class="block">
           <div class="inline relative">
-            <button type="button" class="inline-flex items-center relative px-2 border rounded-full hover:shadow-lg"
-              style="cursor: pointer;">
-              <div class="pl-1">
-                <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="presentation"
-                  focusable="false"
-                  style="display: block; fill: none; height: 16px; width: 16px; stroke: currentcolor; stroke-width: 3; overflow: visible;">
-                  <g fill="none" fill-rule="nonzero">
-                    <path d="m2 16h28"></path>
-                    <path d="m2 24h28"></path>
-                    <path d="m2 8h28"></path>
-                  </g>
-                </svg>
-              </div>
 
-              <div class="block flex-grow-0 flex-shrink-0 h-10 w-12 pl-5">
+            <button type="button" class="flex gap-3 items-center relative border rounded-full hover:shadow-lg px-3"
+              style="cursor: pointer;" @click="toggle" aria-haspopup="true" aria-controls="overlay_menu">
+              <!-- <i class="pi pi-bars active" :class="activeClass"></i> -->
+              <i class="pi pi-bars active"></i>
+
+              <div class="block flex-grow-0 flex-shrink-0 h-10 w-6">
                 <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="presentation"
                   focusable="false" style="display: block; height: 100%; width: 100%; fill: currentcolor;">
                   <path
@@ -109,6 +187,7 @@ const toggleSidebar = () => {
                 </svg>
               </div>
             </button>
+            <Menu ref="menu" id="overlay_menu" :model="items" :popup="true" />
           </div>
         </div>
       </div>
@@ -116,3 +195,19 @@ const toggleSidebar = () => {
     <!-- end login -->
   </nav>
 </template>
+
+<style>
+.active {
+  width: 100%;
+  overflow: hidden;
+  transition: max-width 0.4s ease-in-out;
+}
+
+.active-true {
+  max-width: 16px;
+}
+
+.active-false {
+  max-width: 0px;
+}
+</style>
