@@ -20,158 +20,190 @@
       </button>
     </div>
 
-    <!-- Tabla de puestos -->
-    <div class="overflow-x-auto">
-      <table class="min-w-full bg-white rounded-xl shadow-md overflow-hidden">
-        <thead>
-          <tr class="bg-gray-100 text-left">
-            <th class="py-3 px-4 border-b">ID</th>
-            <th class="py-3 px-4 border-b">Nombre</th>
-            <th class="py-3 px-4 border-b">Compañía</th>
-            <th class="py-3 px-4 border-b">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="position in filteredPositions"
-            :key="position.id_position"
-            class="hover:bg-gray-50 transition-colors duration-200"
-          >
-            <td class="py-3 px-4 border-b">{{ position.id_position }}</td>
-            <td class="py-3 px-4 border-b">
-              <span v-if="!isEditing(position.id_position)">{{ position.name_position }}</span>
-              <div v-else class="flex items-center">
-                <input
-                  v-model="editingName"
-                  class="border rounded px-2 py-1"
-                />
-                <button
-                  @click="saveEdit(position.id_position)"
-                  class="ml-2 bg-green-500 hover:bg-green-600 text-white px-4 py-1 rounded shadow-sm"
-                >
-                  Aceptar
-                </button>
-              </div>
-            </td>
-            <td class="py-3 px-4 border-b">{{ position.name_company }}</td>
-            <td class="py-3 px-4 border-b space-x-2">
-              <template v-if="showActive && !isEditing(position.id_position)">
-                <button
-                  @click="startEdit(position.id_position, position.name_position)"
-                  class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded shadow-sm"
-                >
-                  Editar
-                </button>
-                <button
-                  @click="removePosition(position.id_position)"
-                  class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded shadow-sm"
-                >
-                  Eliminar
-                </button>
-              </template>
-              <template v-else-if="!isEditing(position.id_position)">
-                <button
-                  @click="restoreDeletedPosition(position.id_position)"
-                  class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded shadow-sm"
-                >
-                  Restaurar
-                </button>
-              </template>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <!-- Tabla de Puestos con componente reutilizable -->
+    <TableComponent
+      :loader="positionStore.loading"
+      :columns="columns"
+      :data="filteredPositions"
+      id="id_position"
+      :flagRestore="showActive"
+      :currentUserCompany="authStore.user?.company?.name_company || ''"
+      @actionSee="handleSee"
+      @actionCreate="handleCreate"
+      @actionUpdate="handleUpdate"
+      @actionDanger="handleRemove"
+      @actionRestore="handleRestore"
+    />
 
-    <!-- Cargando -->
-    <div v-if="loading" class="mt-4 text-gray-600">
-      Cargando...
-    </div>
-
-    <!-- Crear Nuevo Puesto -->
-    <div class="mt-10 bg-white rounded-xl shadow-md p-6">
-      <h2 class="text-xl font-semibold text-gray-800 mb-4">Crear Puesto</h2>
-      <div class="flex items-center space-x-4">
-        <input
-          v-model="newPositionName"
-          type="text"
-          placeholder="Nombre del puesto"
-          class="flex-1 border border-gray-300 rounded px-4 py-2"
-        />
-        <button
-          @click="createPosition"
-          class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded shadow-md"
-        >
-          Crear
-        </button>
+    <!-- Modal Detalles -->
+    <Dialog v-model:visible="visibleDetails" modal header="Detalles del Puesto" :style="{ width: '40rem' }">
+      <div class="flex flex-col gap-4">
+        <div class="flex flex-col">
+          <span class="text-sm font-medium text-gray-500">Nombre del puesto</span>
+          <span class="font-semibold">{{ currentPosition?.name_position }}</span>
+        </div>
+        <div class="flex flex-col">
+          <span class="text-sm font-medium text-gray-500">Compañía</span>
+          <span class="font-semibold">{{ currentPosition?.name_company }}</span>
+        </div>
       </div>
-    </div>
+    </Dialog>
+
+    <!-- Modal Crear/Editar -->
+    <Dialog v-model:visible="visibleForm" modal :header="isEdit ? 'Editar Puesto' : 'Crear Puesto'" :style="{ width: '30rem' }">
+      <div class="flex flex-col gap-3">
+        <label for="name" class="font-semibold">Nombre del puesto *</label>
+        <InputText
+          id="name"
+          v-model="form.name_position"
+          :class="{ 'p-invalid': nameError }"
+          autocomplete="off"
+        />
+        <small v-if="nameError" class="p-error">{{ nameError }}</small>
+
+        <div class="flex justify-end gap-2 mt-4">
+          <Button label="Cancelar" severity="danger" @click="visibleForm = false" />
+          <Button
+            label="Guardar"
+            severity="info"
+            :disabled="!!nameError"
+            @click="isEdit ? updatePosition() : createPosition()"
+          />
+        </div>
+      </div>
+    </Dialog>
+
+    <!-- Confirmación -->
+    <ConfirmDialog />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { usePositionStore } from '@/stores/positionStore';
+import { useAuthStore } from '@/stores/authStore';
+import { useToast } from 'primevue/usetoast';
+import { useConfirm } from 'primevue/useconfirm';
+import TableComponent from '@/components/TableComponent.vue';
+
+const toast = useToast();
+const confirm = useConfirm();
 
 const positionStore = usePositionStore();
-const showActive = ref(true);
-const editingId = ref<number | null>(null);
-const editingName = ref('');
-const newPositionName = ref('');
+const authStore = useAuthStore();
 
-const filteredPositions = computed(() => {
-  return positionStore.positions.filter(position =>
-    showActive.value ? !position.delete_log_position : position.delete_log_position
-  );
+const showActive = ref(true);
+const visibleDetails = ref(false);
+const visibleForm = ref(false);
+const isEdit = ref(false);
+const currentPosition = ref<any>(null);
+const editingId = ref<number | null>(null);
+
+const form = ref({
+  name_position: ''
 });
 
-const isEditing = (id: number) => editingId.value === id;
+const nameError = computed(() => {
+  const name = form.value.name_position?.trim() || '';
+  if (!name) return 'El nombre es obligatorio';
+  if (name.length < 3) return 'Mínimo 3 caracteres';
+  if (name.length > 100) return 'Máximo 100 caracteres';
+  return null;
+});
 
-const startEdit = (id: number, name: string) => {
-  editingId.value = id;
-  editingName.value = name;
-};
+const filteredPositions = computed(() =>
+  positionStore.positions.filter(p =>
+    showActive.value ? !p.delete_log_position : p.delete_log_position
+  )
+);
 
-const saveEdit = async (id: number) => {
-  if (editingName.value.trim()) {
-    await positionStore.editPosition(id, editingName.value);
-    editingId.value = null;
-    editingName.value = '';
-    await positionStore.fetchPositions();
-  }
-};
-
-const showActivePositions = () => {
-  showActive.value = true;
-};
-
-const showDeletedPositions = () => {
-  showActive.value = false;
-};
-
-const removePosition = async (id: number) => {
-  await positionStore.removePosition(id);
-  await positionStore.fetchPositions();
-};
-
-const restoreDeletedPosition = async (id: number) => {
-  await positionStore.restoreDeletedPosition(id);
-  await positionStore.fetchPositions();
-};
-
-const createPosition = async () => {
-  if (newPositionName.value.trim()) {
-    await positionStore.addPosition(newPositionName.value);
-    newPositionName.value = '';
-    await positionStore.fetchPositions();
-  }
-};
+const columns = [
+  { field: 'id_position', header: 'ID' },
+  { field: 'name_position', header: 'Nombre' },
+  { field: 'name_company', header: 'Compañía' }
+];
 
 onMounted(() => {
   positionStore.fetchPositions();
 });
+
+const showActivePositions = () => (showActive.value = true);
+const showDeletedPositions = () => (showActive.value = false);
+
+const handleSee = async (id: number) => {
+  await positionStore.fetchPositionById(id);
+  currentPosition.value = positionStore.currentPosition;
+  visibleDetails.value = true;
+};
+
+const handleCreate = () => {
+  isEdit.value = false;
+  form.value.name_position = '';
+  visibleForm.value = true;
+};
+
+const handleUpdate = (id: number) => {
+  const pos = positionStore.positions.find(p => p.id_position === id);
+  if (pos) {
+    isEdit.value = true;
+    editingId.value = id;
+    form.value.name_position = pos.name_position;
+    visibleForm.value = true;
+  }
+};
+
+const createPosition = async () => {
+  if (nameError.value) return;
+  try {
+    await positionStore.addPosition(form.value.name_position);
+    toast.add({ severity: 'success', summary: 'Éxito', detail: 'Puesto creado', life: 3000 });
+    visibleForm.value = false;
+    positionStore.fetchPositions();
+  } catch (error) {
+    toast.add({ severity: 'error', summary: 'Error', detail: 'Error al crear', life: 3000 });
+  }
+};
+
+const updatePosition = async () => {
+  if (!editingId.value || nameError.value) return;
+  try {
+    await positionStore.editPosition(editingId.value, form.value.name_position);
+    toast.add({ severity: 'success', summary: 'Éxito', detail: 'Puesto actualizado', life: 3000 });
+    visibleForm.value = false;
+    positionStore.fetchPositions();
+  } catch (error) {
+    toast.add({ severity: 'error', summary: 'Error', detail: 'Error al actualizar', life: 3000 });
+  }
+};
+
+const handleRemove = (id: number) => {
+  confirm.require({
+    message: '¿Estás seguro de eliminar este puesto?',
+    header: 'Confirmar',
+    icon: 'pi pi-exclamation-triangle',
+    accept: async () => {
+      await positionStore.removePosition(id);
+      toast.add({ severity: 'success', summary: 'Eliminado', detail: 'Puesto eliminado', life: 3000 });
+      positionStore.fetchPositions();
+    }
+  });
+};
+
+const handleRestore = async (id: number) => {
+  try {
+    await positionStore.restoreDeletedPosition(id);
+    toast.add({ severity: 'success', summary: 'Restaurado', detail: 'Puesto restaurado', life: 3000 });
+    positionStore.fetchPositions();
+  } catch (error) {
+    toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo restaurar', life: 3000 });
+  }
+};
 </script>
 
 <style scoped>
-/* No necesitas estilos adicionales, todo está manejado con Tailwind */
+.p-error {
+  color: var(--red-500);
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
 </style>
