@@ -65,6 +65,45 @@
       </div>
     </Dialog>
 
+    <!-- Modal de detalles del departamento -->
+    <Dialog
+      v-model:visible="visibleDetails"
+      modal
+      header="Detalles del Departamento"
+      :style="{ width: '40rem' }"
+    >
+      <div v-if="currentDepartment" class="grid grid-cols-1 gap-6">
+        <Card>
+          <template #title>
+            <div class="flex items-center gap-3">
+              <i class="pi pi-sitemap text-blue-500" style="font-size: 1.5rem"></i>
+              <span>Información del Departamento</span>
+            </div>
+          </template>
+          <template #content>
+            <div class="grid grid-cols-2 gap-4">
+              <div class="flex flex-col">
+                <span class="text-sm font-medium text-gray-500">Nombre</span>
+                <span class="font-semibold text-lg">{{ currentDepartment.name_deparment }}</span>
+              </div>
+              <div class="flex flex-col">
+                <span class="text-sm font-medium text-gray-500">Compañía</span>
+                <span class="font-semibold text-lg">{{ currentDepartment.name_company }}</span>
+              </div>
+              <div class="flex flex-col col-span-2">
+                <span class="text-sm font-medium text-gray-500">Estado</span>
+                <Tag
+                  :value="currentDepartment.delete_log_department ? 'Eliminado' : 'Activo'"
+                  :severity="currentDepartment.delete_log_department ? 'danger' : 'success'"
+                  class="text-sm w-fit"
+                />
+              </div>
+            </div>
+          </template>
+        </Card>
+      </div>
+    </Dialog>
+
     <!-- Confirmación -->
     <ConfirmDialog />
   </div>
@@ -87,6 +126,8 @@ const visibleForm = ref(false);
 const isEdit = ref(false);
 const editingId = ref<number | null>(null);
 const formDepartment = ref('');
+const visibleDetails = ref(false);
+const currentDepartment = ref<any | null>(null);
 
 // Columnas para la tabla
 const mappedColumns = [
@@ -199,7 +240,8 @@ const restoreDeletedDepartment = async (id: number) => {
 const handleSee = async (id: number) => {
   const dept = departmentStore.departments.find(d => d.id_department === id);
   if (dept) {
-    toast.add({ summary: 'Detalle', detail: `Nombre: ${dept.name_deparment}`, life: 3000 });
+    currentDepartment.value = dept;
+    visibleDetails.value = true;
   }
 };
 
