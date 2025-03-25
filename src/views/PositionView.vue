@@ -27,13 +27,13 @@
       :data="filteredData"
       id="id_position"
       :flagRestore="showActive"
-      :currentUserCompany="authStore.user?.company?.name_company || ''"
+      :currentUserCompany="''"
       @actionSee="handleSee"
       @actionCreate="handleCreate"
       @actionUpdate="handleUpdate"
       @actionDanger="handleRemove"
       @actionRestore="handleRestore"
-    />
+    ></TableComponent>
 
     <!-- Modal Detalles -->
     <Dialog v-model:visible="visibleDetails" modal header="Detalles del Puesto" :style="{ width: '30rem' }">
@@ -48,7 +48,7 @@
     <Dialog v-model:visible="visibleForm" modal :header="isEdit ? 'Editar Puesto' : 'Crear Puesto'" :style="{ width: '30rem' }">
       <div class="flex flex-col gap-3">
         <label class="font-semibold">Nombre del puesto *</label>
-        <InputText v-model="formPositionName" :class="{ 'p-invalid': nameError }" />
+        <InputText v-model="formPositionName" :class="{ 'p-invalid': nameError }"></InputText>
         <small v-if="nameError" class="p-error">{{ nameError }}</small>
 
         <label class="font-semibold">Compañía *</label>
@@ -59,18 +59,18 @@
           optionValue="id_company"
           placeholder="Seleccione una compañía"
           :class="{ 'p-invalid': companyError }"
-        />
+        ></Dropdown>
         <small v-if="companyError" class="p-error">{{ companyError }}</small>
 
         <div class="flex justify-end gap-2 mt-4">
-          <Button label="Cancelar" severity="danger" @click="visibleForm = false" />
-          <Button label="Guardar" severity="info" :disabled="!isFormValid" @click="submitForm" />
+          <Button label="Cancelar" severity="danger" @click="visibleForm = false"></Button>
+          <Button label="Guardar" severity="info" :disabled="!isFormValid" @click="submitForm"></Button>
         </div>
       </div>
     </Dialog>
 
     <!-- Confirmación -->
-    <ConfirmDialog />
+    <ConfirmDialog></ConfirmDialog>
   </div>
 </template>
 
