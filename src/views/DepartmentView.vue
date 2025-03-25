@@ -3,7 +3,7 @@
     <h1 class="text-2xl font-bold mb-4">Gestión de Departamentos</h1>
 
     <!-- Filtros -->
-<div class="mb-4">
+    <div class="mb-4">
       <button
         @click="showActiveDepartments"
         :class="{ 'bg-blue-500 text-white': showActive, 'bg-gray-200': !showActive }"
@@ -44,14 +44,23 @@
     >
       <div class="flex flex-col gap-4">
         <label for="name" class="font-semibold">Nombre del departamento:</label>
-        <InputText
-          v-model="formDepartment"
-          id="name"
-          :class="{ 'p-invalid': departmentError }"
-        />
+        <InputText v-model="formDepartment" id="name" :class="{ 'p-invalid': departmentError }" />
         <small v-if="departmentError" class="p-error">
           {{ departmentError }}
         </small>
+      </div>
+
+      <!-- Solo visible si es Administrador -->
+      <div v-if="isAdmin" class="flex flex-col gap-2">
+        <label for="company" class="font-semibold">Seleccionar Compañía:</label>
+        <Dropdown
+          v-model="selectedCompanyId"
+          :options="companyStore.companies"
+          optionLabel="name_company"
+          optionValue="id_company"
+          placeholder="Seleccione una compañía"
+          class="w-full"
+        />
       </div>
 
       <div class="flex justify-end gap-2 mt-4">
@@ -110,58 +119,68 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
-import { useDepartmentStore } from '@/stores/departmentStore';
-import TableComponent from '@/components/TableComponent.vue';
-import { useConfirm } from 'primevue/useconfirm';
-import { useToast } from 'primevue/usetoast';
+import { ref, computed, onMounted } from 'vue'
+import { useDepartmentStore } from '@/stores/departmentStore'
+import { useCompanyStore } from '@/stores/companyStore'
+import { useAuthStore } from '@/stores/authStore'
+import TableComponent from '@/components/TableComponent.vue'
+import { useConfirm } from 'primevue/useconfirm'
+import { useToast } from 'primevue/usetoast'
 
-const departmentStore = useDepartmentStore();
-const confirm = useConfirm();
-const toast = useToast();
+const departmentStore = useDepartmentStore()
+const companyStore = useCompanyStore()
+const authStore = useAuthStore()
+const confirm = useConfirm()
+const toast = useToast()
 
 // Estado local
-const showActive = ref(true);
-const visibleForm = ref(false);
-const isEdit = ref(false);
-const editingId = ref<number | null>(null);
-const formDepartment = ref('');
-const visibleDetails = ref(false);
-const currentDepartment = ref<any | null>(null);
+const showActive = ref(true)
+const visibleForm = ref(false)
+const isEdit = ref(false)
+const editingId = ref<number | null>(null)
+const formDepartment = ref('')
+const visibleDetails = ref(false)
+const currentDepartment = ref<any | null>(null)
+const selectedCompanyId = ref<number | null>(null)
 
 // Columnas para la tabla
 const mappedColumns = [
-  { field: 'id_department', header: 'ID' },
   { field: 'name_deparment', header: 'Nombre' },
-  { field: 'name_company', header: 'Compañía' }
-];
+  { field: 'name_company', header: 'Compañía' },
+]
 
 // Computeds
 const filteredDepartments = computed(() =>
-  departmentStore.departments.filter(dept =>
-    showActive.value ? !dept.delete_log_department : dept.delete_log_department
-  )
-);
+  departmentStore.departments.filter((dept) =>
+    showActive.value ? !dept.delete_log_department : dept.delete_log_department,
+  ),
+)
 
 const departmentError = computed(() => {
-  const name = formDepartment.value.trim();
-  if (!name) return 'El nombre es obligatorio';
-  if (name.length < 3) return 'Debe tener al menos 3 caracteres';
-  if (name.length > 100) return 'Máximo 100 caracteres';
-  return null;
+  const name = formDepartment.value.trim()
+  if (!name) return 'El nombre es obligatorio'
+  if (name.length < 3) return 'Debe tener al menos 3 caracteres'
+  if (name.length > 100) return 'Máximo 100 caracteres'
+  return null
+})
+
+const isFormValid = computed(() => {
+  const nameValid = !departmentError.value;
+  const companyValid = !isAdmin.value || !!selectedCompanyId.value; 
+  return nameValid && companyValid;
 });
 
-const isFormValid = computed(() => !departmentError.value);
+const isAdmin = computed(() => authStore.user?.role?.name_role === 'Administrador')
 
 // Métodos
-const showActiveDepartments = () => (showActive.value = true);
-const showDeletedDepartments = () => (showActive.value = false);
+const showActiveDepartments = () => (showActive.value = true)
+const showDeletedDepartments = () => (showActive.value = false)
 
 const handleCreate = () => {
-  isEdit.value = false;
-  formDepartment.value = '';
-  visibleForm.value = true;
-};
+  isEdit.value = false
+  formDepartment.value = ''
+  visibleForm.value = true
+}
 
 const handleUpdate = (id: number) => {
   const dept = departmentStore.departments.find(d => d.id_department === id);
@@ -169,28 +188,73 @@ const handleUpdate = (id: number) => {
     isEdit.value = true;
     editingId.value = id;
     formDepartment.value = dept.name_deparment;
+    if (isAdmin.value) {
+      selectedCompanyId.value = dept.id_company;
+    }
     visibleForm.value = true;
   }
 };
 
 const updateDepartment = async () => {
   if (!isFormValid.value || !editingId.value) return;
-  await departmentStore.editDepartment(editingId.value, formDepartment.value);
+
+  if (isAdmin.value) {
+    if (!selectedCompanyId.value) {
+      toast.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'Debe seleccionar una compañía',
+        life: 3000
+      });
+      return;
+    }
+
+    const originalCompanyId = authStore.user?.company?.id_company;
+    authStore.user.company.id_company = selectedCompanyId.value;
+
+    await departmentStore.editDepartment(editingId.value, formDepartment.value);
+
+    // Restaurar
+    authStore.user.company.id_company = originalCompanyId;
+  } else {
+    await departmentStore.editDepartment(editingId.value, formDepartment.value);
+  }
+
   toast.add({ severity: 'success', summary: 'Actualizado', detail: 'Departamento actualizado', life: 3000 });
   visibleForm.value = false;
   editingId.value = null;
   formDepartment.value = '';
+  selectedCompanyId.value = null;
   await departmentStore.fetchDepartments();
 };
 
 const createDepartment = async () => {
-  if (!isFormValid.value) return;
-  await departmentStore.addDepartment(formDepartment.value);
-  toast.add({ severity: 'success', summary: 'Creado', detail: 'Departamento creado', life: 3000 });
-  visibleForm.value = false;
-  formDepartment.value = '';
-  await departmentStore.fetchDepartments();
-};
+  if (!isFormValid.value) return
+
+  if (isAdmin.value) {
+    if (!selectedCompanyId.value) {
+      toast.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'Debe seleccionar una compañía',
+        life: 3000,
+      })
+      return
+    }
+    const originalCompanyId = authStore.user?.company?.id_company
+    authStore.user.company.id_company = selectedCompanyId.value
+    await departmentStore.addDepartment(formDepartment.value)
+    authStore.user.company.id_company = originalCompanyId
+  } else {
+    await departmentStore.addDepartment(formDepartment.value)
+  }
+
+  toast.add({ severity: 'success', summary: 'Creado', detail: 'Departamento creado', life: 3000 })
+  visibleForm.value = false
+  formDepartment.value = ''
+  selectedCompanyId.value = null
+  await departmentStore.fetchDepartments()
+}
 
 const confirmDelete = (id: number) => {
   confirm.require({
@@ -201,53 +265,58 @@ const confirmDelete = (id: number) => {
     rejectProps: {
       label: 'Cancelar',
       severity: 'secondary',
-      outlined: true
+      outlined: true,
     },
     acceptProps: {
       label: 'Eliminar',
-      severity: 'danger'
+      severity: 'danger',
     },
     accept: async () => {
       try {
-        await departmentStore.removeDepartment(id);
-        await departmentStore.fetchDepartments();
+        await departmentStore.removeDepartment(id)
+        await departmentStore.fetchDepartments()
         toast.add({
           severity: 'success',
           summary: 'Éxito',
           detail: 'Departamento eliminado correctamente',
-          life: 3000
-        });
+          life: 3000,
+        })
       } catch (error) {
         toast.add({
           severity: 'error',
           summary: 'Error',
           detail: 'Error al eliminar el departamento',
-          life: 3000
-        });
+          life: 3000,
+        })
       }
     },
-    reject: () => {}
-  });
-};
-
+    reject: () => {},
+  })
+}
 
 const restoreDeletedDepartment = async (id: number) => {
-  await departmentStore.restoreDeletedDepartment(id);
-  toast.add({ severity: 'success', summary: 'Restaurado', detail: 'Departamento restaurado', life: 3000 });
-  await departmentStore.fetchDepartments();
-};
+  await departmentStore.restoreDeletedDepartment(id)
+  toast.add({
+    severity: 'success',
+    summary: 'Restaurado',
+    detail: 'Departamento restaurado',
+    life: 3000,
+  })
+  await departmentStore.fetchDepartments()
+}
 
 const handleSee = async (id: number) => {
-  const dept = departmentStore.departments.find(d => d.id_department === id);
+  const dept = departmentStore.departments.find((d) => d.id_department === id)
   if (dept) {
-    currentDepartment.value = dept;
-    visibleDetails.value = true;
+    currentDepartment.value = dept
+    visibleDetails.value = true
   }
-};
+}
 
 onMounted(() => {
-  departmentStore.fetchDepartments();
-});
+  departmentStore.fetchDepartments()
+  companyStore.fetchCompanies()
+})
 </script>
 
 <style scoped>
