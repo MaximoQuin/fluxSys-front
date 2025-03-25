@@ -4,36 +4,20 @@
 
     <!-- Filtros mejorados -->
     <div class="mb-4">
-      <button
-        @click="showActiveCompanies"
-        :class="{ 'bg-blue-500 text-white': showActive, 'bg-gray-200': !showActive }"
-        class="px-4 py-2 rounded-l transition-colors duration-200"
-      >
+      <button @click="showActiveCompanies" :class="{ 'bg-blue-500 text-white': showActive, 'bg-gray-200': !showActive }"
+        class="px-4 py-2 rounded-l transition-colors duration-200">
         Activas
       </button>
-      <button
-        @click="showDeletedCompanies"
-        :class="{ 'bg-red-500 text-white': !showActive, 'bg-gray-200': showActive }"
-        class="px-4 py-2 rounded-r transition-colors duration-200"
-      >
+      <button @click="showDeletedCompanies" :class="{ 'bg-red-500 text-white': !showActive, 'bg-gray-200': showActive }"
+        class="px-4 py-2 rounded-r transition-colors duration-200">
         Eliminadas
       </button>
     </div>
 
     <!-- Tabla de empresas -->
-    <TableComponent 
-      :loader="companyStore.loading" 
-      :columns="mappedColumns" 
-      :data="filteredCompanies" 
-      id="id_company"
-      :flagRestore="showActive" 
-      @actionSee="handleSee" 
-      @actionCreate="handleCreate" 
-      @actionUpdate="handleUpdate"
-      @actionDanger="handleRemove" 
-      @actionRestore="restoreDeletedCompany" 
-      :currentUserCompany="currentUserCompany"
-    />
+    <TableComponent :loader="companyStore.loading" :columns="mappedColumns" :data="filteredCompanies" id="id_company"
+      :flagRestore="showActive" @actionSee="handleSee" @actionCreate="handleCreate" @actionUpdate="handleUpdate"
+      @actionDanger="handleRemove" @actionRestore="restoreDeletedCompany" :currentUserCompany="currentUserCompany" />
 
     <!-- Modal de detalles mejorado -->
     <Dialog v-model:visible="visibleDetails" modal header="Detalles de la Compañía" :style="{ width: '50rem' }">
@@ -53,33 +37,26 @@
               </div>
               <div class="flex flex-col">
                 <span class="text-sm font-medium text-gray-500">Estado</span>
-                <Tag 
-                  :value="currentCompany.delete_log_company ? 'Eliminada' : 'Activa'" 
-                  :severity="currentCompany.delete_log_company ? 'danger' : 'success'" 
-                  class="text-sm"
-                />
+                <Tag :value="currentCompany.delete_log_company ? 'Eliminada' : 'Activa'"
+                  :severity="currentCompany.delete_log_company ? 'danger' : 'success'" class="text-sm" />
               </div>
             </div>
           </template>
         </Card>
 
-        
+
       </div>
     </Dialog>
 
     <!-- Modal de formulario con validaciones -->
-    <Dialog v-model:visible="visibleForm" modal :header="isEdit ? 'Editar Compañía' : 'Crear Compañía'" :style="{ width: '40rem' }">
+    <Dialog v-model:visible="visibleForm" modal :header="isEdit ? 'Editar Compañía' : 'Crear Compañía'"
+      :style="{ width: '40rem' }">
       <div class="flex flex-col gap-4">
         <div class="flex flex-col gap-2">
           <label for="companyName" class="font-semibold">Nombre de la compañía*</label>
-          <InputText
-            v-model="formCompany.name_company"
-            id="companyName"
-            autocomplete="off"
-            :class="{ 'p-invalid': nameError }"
-            @keypress="preventInvalidChars"
-            placeholder="Ingrese el nombre (solo letras y espacios)"
-          />
+          <InputText v-model="formCompany.name_company" id="companyName" autocomplete="off"
+            :class="{ 'p-invalid': nameError }" @keypress="preventInvalidChars"
+            placeholder="Ingrese el nombre (solo letras y espacios)" />
           <small v-if="nameError" class="p-error">
             {{ nameError }}
           </small>
@@ -90,21 +67,9 @@
       </div>
 
       <div class="flex justify-end gap-2 mt-4">
-        <Button 
-          type="button" 
-          label="Cancelar" 
-          severity="secondary" 
-          outlined
-          @click="closeForm"
-        />
-        <Button 
-          type="button" 
-          label="Guardar" 
-          severity="primary"
-          :disabled="!isFormValid"
-          @click="submitForm"
-          :loading="loadingSubmit"
-        />
+        <Button type="button" label="Cancelar" severity="secondary" outlined @click="closeForm" />
+        <Button type="button" label="Guardar" severity="primary" :disabled="!isFormValid" @click="submitForm"
+          :loading="loadingSubmit" />
       </div>
     </Dialog>
 
@@ -150,17 +115,17 @@ const mappedColumns = [
 // Validaciones según CompanyViewModel
 const nameError = computed(() => {
   const name = formCompany.value.name_company || '';
-  
+
   if (!name.trim()) return 'El nombre es requerido';
   if (name.length < 3) return 'Mínimo 3 caracteres';
   if (name.length > 50) return 'Máximo 50 caracteres';
-  
+
   // Validación de patrón: solo letras y espacios
   const validPattern = /^[a-zA-Z\s]+$/;
   if (!validPattern.test(name)) {
     return 'Solo se permiten letras y espacios';
   }
-  
+
   return null;
 });
 
@@ -172,7 +137,7 @@ const isFormValid = computed(() => {
 const preventInvalidChars = (e: KeyboardEvent) => {
   const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', ' '];
   if (allowedKeys.includes(e.key)) return;
-  
+
   const validChar = /^[a-zA-Z]$/;
   if (!validChar.test(e.key)) {
     e.preventDefault();
@@ -229,7 +194,7 @@ const closeForm = () => {
 
 const submitForm = async () => {
   if (!isFormValid.value) return;
-  
+
   loadingSubmit.value = true;
   try {
     if (isEdit.value && editingId.value) {
@@ -268,8 +233,16 @@ const handleRemove = (id: number) => {
     message: '¿Estás seguro de eliminar esta compañía?',
     header: 'Confirmar Eliminación',
     icon: 'pi pi-exclamation-triangle',
-    acceptLabel: 'Eliminar',
     rejectLabel: 'Cancelar',
+    rejectProps: {
+      label: 'Cancelar',
+      severity: 'secondary',
+      outlined: true
+    },
+    acceptProps: {
+      label: 'Eliminar',
+      severity: 'danger'
+    },
     accept: async () => {
       try {
         await companyStore.removeCompany(id);

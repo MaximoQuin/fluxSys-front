@@ -17,31 +17,31 @@ const items = [
   {
     key: 'Compañías',
     label: 'Administracion General',
-    icon: 'dolly',
+    icon: 'home',
     visibleForRoles: ['Administrador', 'Administrador Empresarial', 'Jefe de Departamento'],
     to: '/users-ua',
     items: [
       {
         label: 'Compañías',
-        icon: 'table-list',
+        icon: 'building',
         to: '/companies-a',
         visibleForRoles: ['Administrador'],
       },
       {
         label: 'Usuarios',
-        icon: 'table-list',
+        icon: 'users',
         to: '/users-ua',
         visibleForRoles: ['Administrador Empresarial'],
       },
       {
         label: 'Departamentos',
-        icon: 'table-list',
+        icon: 'building',
         to: '/departments-u',
         visibleForRoles: ['Administrador', 'Administrador Empresarial'],
       },
       {
         label: 'Posiciones',
-        icon: 'table-list',
+        icon: 'briefcase',
         to: '/positions-u',
       },
     ],
@@ -60,22 +60,22 @@ const items = [
       },
       {
         label: 'Categorias',
-        icon: 'table-list',
+        icon: 'table-columns',
         to: '/ca-products-u',
       },
       {
         label: 'Tipos de Movimientos',
-        icon: 'table-list',
+        icon: 'arrows-turn-to-dots',
         to: '/movements-types-u',
       },
       {
         label: 'Estados de Productos',
-        icon: 'table-list',
+        icon: 'circle-info',
         to: '/states-u',
       },
       {
         label: 'Movimientos de Inventario',
-        icon: 'table-list',
+        icon: 'arrows-turn-to-dots',
         to: '/inv-movements-ua',
         visibleForRoles: ['Administrador', 'Administrador Empresarial', 'Jefe de Departamento', 'Subjefe de Departamento'],
       },
@@ -84,18 +84,18 @@ const items = [
   {
     key: 'Proveedores',
     label: 'Proveedores',
-    icon: 'user',
+    icon: 'users',
     visibleForRoles: ['Administrador', 'Administrador Empresarial', 'Jefe de Departamento', 'Subjefe de Departamento', 'Colaborador'],
     to: '/suppliers-u',
     items: [
       {
         label: 'Proveedores',
-        icon: 'table-list',
+        icon: 'users',
         to: '/suppliers-u',
       },
       {
         label: 'Categorias',
-        icon: 'table-list',
+        icon: 'table-columns',
         to: '/ca-suppliers-u',
       },
     ],
@@ -109,12 +109,12 @@ const items = [
     items: [
       {
         label: 'Ordenes de Compra',
-        icon: 'table-list',
+        icon: 'cart-shopping',
         to: '/purchase-orders-u',
       },
       {
         label: 'Categorias',
-        icon: 'table-list',
+        icon: 'table-columns',
         to: '/ca-purchase-orders-u',
       },
     ],
@@ -122,13 +122,13 @@ const items = [
   {
     key: 'Facturas',
     label: 'Gestión de Facturas',
-    icon: 'dolly',
+    icon: 'file-invoice-dollar',
     visibleForRoles: ['Administrador', 'Administrador Empresarial', 'Jefe de Departamento', 'Subjefe de Departamento', 'Colaborador'],
     to: '/invoices-u',
     items: [
       {
         label: 'Facturas',
-        icon: 'table-list',
+        icon: 'file-invoice',
         to: '/invoices-u',
       },
     ],
@@ -136,28 +136,28 @@ const items = [
   {
     key: 'Administración',
     label: 'Sistema',
-    icon: 'user',
+    icon: 'desktop',
     visibleForRoles: ['Administrador'],
     to: '/users-ua',
     items: [
       {
         label: 'Usuarios',
-        icon: 'table-list',
+        icon: 'users',
         to: '/users-ua',
       },
       {
         label: 'Auditorias',
-        icon: 'table-list',
+        icon: 'search',
         to: '/audits-a',
       },
       {
         label: 'Visor de Eventos',
-        icon: 'table-list',
+        icon: 'calendar',
         to: '/errors-a',
       },
       {
         label: 'Movimientos de Inventario',
-        icon: 'table-list',
+        icon: 'arrows-turn-to-dots',
         to: '/inv-movements-ua',
       },
     ],
@@ -190,12 +190,12 @@ const toggleItem = (itemKey: string) => {
 
   // Comportamiento de acordeón: cerrar todos los demás
   const newExpandedKeys: Record<string, boolean> = {};
-  
+
   // Si el item no estaba expandido, lo expandimos
   if (!expandedKeys.value[itemKey]) {
     newExpandedKeys[itemKey] = true;
   }
-  
+
   expandedKeys.value = newExpandedKeys;
 };
 
@@ -218,7 +218,7 @@ const handleMainItemClick = (event: Event, item: any) => {
         <button style="cursor: pointer;"
           class="flex items-center transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none p-4 sidebar"
           :class="sidebarClass">
-          <img class="w-auto h-6" src="@/assets/logo.svg" alt="">
+          <img class="w-auto h-6" src="@/assets/logo.webp" alt="">
           <p class="text-sm font-medium text-gray-700 capitalize dark:text-white sidebar">
             FLUX-SYS
           </p>
@@ -229,42 +229,30 @@ const handleMainItemClick = (event: Event, item: any) => {
         <template #item="{ item }">
           <!-- Ítems principales (con key) -->
           <template v-if="item.key">
-            <RouterLink 
-              :to="item.to" 
-              @click="(e) => handleMainItemClick(e, item)"
-              custom
-              v-slot="{ navigate, isActive }"
-            >
-              <button 
-                style="cursor: pointer;"
+            <RouterLink :to="item.to" @click="(e) => handleMainItemClick(e, item)" custom
+              v-slot="{ navigate, isActive }">
+              <button style="cursor: pointer;"
                 class="flex items-center transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none p-4 sidebar w-full"
-                :class="[sidebarClass, { 'bg-gray-100 dark:bg-gray-800': isActive }]"
-                @click="navigate"
-              >
+                :class="[sidebarClass, { 'bg-gray-100 dark:bg-gray-800': isActive }]" @click="navigate">
                 <font-awesome-icon :icon="['fas', item.icon]" />
                 <p class="text-sm font-medium text-gray-700 capitalize dark:text-white sidebar">
                   {{ item.label }}
                 </p>
                 <!-- Flecha para indicar que es desplegable (solo cuando sidebar está abierto) -->
-                <span v-if="props.isSidebarActive && item.items" class="ml-auto">
-                  <font-awesome-icon 
-                    :icon="['fas', expandedKeys[item.key] ? 'chevron-up' : 'chevron-down']" 
-                    class="text-xs"
-                  />
-                </span>
+                <!-- <span  class="ml-auto"> -->
+                <font-awesome-icon v-if="props.isSidebarActive && item.items"
+                  :icon="['fas', expandedKeys[item.key] ? 'chevron-up' : 'chevron-down']" class="ml-auto text-xs" />
+                <!-- </span> -->
               </button>
             </RouterLink>
           </template>
-          
+
           <!-- Sub-ítems (sin key) -->
           <template v-else>
             <RouterLink v-if="item.to" :to="item.to" custom v-slot="{ navigate, isActive }">
-              <button 
-                style="cursor: pointer;"
+              <button style="cursor: pointer;"
                 class="flex items-center transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none p-4 sidebar"
-                :class="[sidebarClass, { 'bg-gray-100 dark:bg-gray-800': isActive }]"
-                @click="navigate"
-              >
+                :class="[sidebarClass, { 'bg-gray-100 dark:bg-gray-800': isActive }]" @click="navigate">
                 <font-awesome-icon :icon="['fas', item.icon]" />
                 <p class="text-sm font-medium text-gray-700 capitalize dark:text-white sidebar">
                   {{ item.label }}
@@ -290,9 +278,12 @@ const handleMainItemClick = (event: Event, item: any) => {
 /* Estilos para resaltar el ítem activo */
 .router-link-active {
   button {
-    background-color: #f3f4f6; /* bg-gray-100 */
+    background-color: #f3f4f6;
+
+    /* bg-gray-100 */
     .dark & {
-      background-color: #1f2937; /* dark:bg-gray-800 */
+      background-color: #1f2937;
+      /* dark:bg-gray-800 */
     }
   }
 }

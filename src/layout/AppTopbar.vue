@@ -3,10 +3,10 @@ import { useAuthStore } from '../stores/authStore';
 import { useRouter } from 'vue-router';
 
 import { computed, ref } from "vue";
-import { useConfirm } from "primevue/useconfirm";
+// import { useConfirm } from "primevue/useconfirm";
 import { useToast } from "primevue/usetoast";
 
-const confirm = useConfirm();
+// const confirm = useConfirm();
 const toast = useToast();
 
 const authStore = useAuthStore();
@@ -42,32 +42,32 @@ const items = ref([
 // const isOpen = ref(false);
 
 const handleLogout = async () => {
-  confirm.require({
-    message: '¿Estás seguro de cerrar sesión?',
-    header: 'Confirmar cierre de sesión',
-    icon: 'pi pi-exclamation-triangle',
-    acceptLabel: 'Salir',
-    rejectLabel: 'Cancelar',
-    accept: async () => {
-      try {
-        await authStore.logout();
-        router.push('/login');
-        toast.add({
-          severity: 'success',
-          summary: 'Éxito',
-          detail: 'Sesión cerrada correctamente',
-          life: 3000
-        });
-      } catch (error) {
-        toast.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: 'Error al cerrar sesión',
-          life: 3000
-        });
-      }
-    }
-  });
+  // confirm.require({
+  //   message: '¿Estás seguro de cerrar sesión?',
+  //   header: 'Confirmar cierre de sesión',
+  //   icon: 'pi pi-exclamation-triangle',
+  //   acceptLabel: 'Salir',
+  //   rejectLabel: 'Cancelar',
+  //   accept: async () => {
+  try {
+    await authStore.logout();
+    router.push('/login');
+    toast.add({
+      severity: 'success',
+      summary: 'Éxito',
+      detail: 'Sesión cerrada correctamente',
+      life: 3000
+    });
+  } catch (error) {
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: 'Error al cerrar sesión',
+      life: 3000
+    });
+  }
+  // }
+  // });
 };
 
 
@@ -167,8 +167,6 @@ const toggle = (event) => {
           </div>
 
         </Dialog>
-
-        <ConfirmDialog></ConfirmDialog>
 
         <div class="block">
           <div class="inline relative">
