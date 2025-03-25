@@ -302,4 +302,12 @@ const handleRestore = (id: number) => {
   font-size: 0.875rem;
   margin-top: 0.25rem;
 }
+.p-invalid {
+  border-color: var(--red-500) !important;
+}
+.p-error {
+  color: var(--red-500);
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
 </style>

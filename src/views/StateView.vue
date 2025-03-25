@@ -293,6 +293,7 @@ const handleRestore = (id: number) => {
 };
 </script>
 
+
 <style scoped>
 .p-invalid {
   border-color: var(--red-500) !important;
