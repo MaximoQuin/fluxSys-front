@@ -1,187 +1,344 @@
 <template>
-  <div class="container mx-auto p-4">
+    <div class="container mx-auto p-4">
       <h1 class="text-2xl font-bold mb-4">Gestión de Tipos de Movimiento</h1>
-
+  
       <!-- Filtros -->
-      <div class="mb-4">
-          <button @click="showActiveMovements"
-              :class="{'bg-blue-500 text-white': showActive, 'bg-gray-200': !showActive}" class="px-4 py-2 rounded-l">
-              Activos
-          </button>
-          <button @click="showDeletedMovements"
-              :class="{'bg-red-500 text-white': !showActive, 'bg-gray-200': showActive}" class="px-4 py-2 rounded-r">
-              Eliminados
-          </button>
+      <div class="flex mb-6">
+        <button
+          @click="setActive(true)"
+          :class="showActive ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'"
+          class="px-4 py-2 rounded-l shadow-md hover:bg-blue-700"
+        >
+          Activos
+        </button>
+        <button
+          @click="setActive(false)"
+          :class="!showActive ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-800'"
+          class="px-4 py-2 rounded-r shadow-md hover:bg-red-600"
+        >
+          Eliminados
+        </button>
       </div>
-
-      <!-- Tabla de tipos de movimiento -->
-      <table class="min-w-full bg-black">
-          <thead>
-              <tr>
-                  <th class="py-2 px-4 border-b">ID</th>
-                  <th class="py-2 px-4 border-b">Nombre</th>
-                  <th class="py-2 px-4 border-b">Compañía</th>
-                  <th class="py-2 px-4 border-b">Clasificación</th>
-                  <th class="py-2 px-4 border-b">Acciones</th>
-              </tr>
-          </thead>
-          <tbody>
-              <tr v-for="movement in filteredMovements" :key="movement.id_movement_type" class="hover:bg-gray-50">
-                  <td class="py-2 px-4 border-b">{{ movement.id_movement_type }}</td>
-                  <td class="py-2 px-4 border-b">
-                      <span v-if="!isEditing(movement.id_movement_type)">{{ movement.name_movement_type }}</span>
-                      <div v-else class="flex items-center">
-                          <input v-model="editingName" class="border rounded px-2 py-1" />
-                          <select v-model="editingClasificationId" class="border rounded px-2 py-1 ml-2">
-                              <option :value="null" disabled>Escoge una Clasificación</option>
-                              <option v-for="clasification in movementTypeStore.clasificationMovements"
-                                  :key="clasification.id_clasification_movement"
-                                  :value="clasification.id_clasification_movement">
-                                  {{ clasification.name_clasification_movement }}
-                              </option>
-                          </select>
-                          <button @click="saveEdit(movement.id_movement_type)"
-                              class="bg-green-500 text-white px-4 py-2 rounded ml-2">
-                              Aceptar
-                          </button>
-                          <button @click="cancelEdit" class="bg-gray-500 text-white px-4 py-2 rounded ml-2">
-                              Cancelar
-                          </button>
-                      </div>
-                  </td>
-                  <td class="py-2 px-4 border-b">{{ movement.name_company }}</td>
-                  <td class="py-2 px-4 border-b">{{ movement.name_clasification_movement }}</td>
-                  <td class="py-2 px-4 border-b">
-                      <button v-if="showActive && !isEditing(movement.id_movement_type)"
-                          @click="startEdit(movement)"
-                          class="bg-yellow-500 text-white px-4 py-2 rounded mr-2">
-                          Editar
-                      </button>
-                      <button v-if="showActive && !isEditing(movement.id_movement_type)"
-                          @click="removeMovementType(movement.id_movement_type)"
-                          class="bg-red-500 text-white px-4 py-2 rounded">
-                          Eliminar
-                      </button>
-                      <button v-else-if="!isEditing(movement.id_movement_type)"
-                          @click="restoreDeletedMovementType(movement.id_movement_type)"
-                          class="bg-green-500 text-white px-4 py-2 rounded">
-                          Restaurar
-                      </button>
-                  </td>
-              </tr>
-          </tbody>
-      </table>
-
-      <!-- Cargando -->
-      <div v-if="loading" class="mt-4">
-          Cargando...
-      </div>
-
-      <!-- Crear Nuevo Tipo de Movimiento -->
-      <div class="mt-4">
-          <h2 class="text-xl font-bold">Crear Tipo de Movimiento</h2>
-          <div class="flex items-center mt-2">
-              <input v-model="newMovementName" type="text" placeholder="Nombre del tipo de movimiento"
-                  class="border rounded px-4 py-2 mr-2" />
-              <select v-model="newClasificationId" class="border rounded px-4 py-2 mr-2">
-                  <option :value="null" disabled>Escoge una Clasificación</option>
-                  <option v-for="clasification in movementTypeStore.clasificationMovements"
-                      :key="clasification.id_clasification_movement" :value="clasification.id_clasification_movement">
-                      {{ clasification.name_clasification_movement }}
-                  </option>
-              </select>
-              <button @click="createMovementType" class="bg-blue-500 text-white px-4 py-2 rounded">
-                  Crear
-              </button>
+  
+      <!-- Tabla -->
+      <TableComponent
+        :loader="movementTypeStore.loading"
+        :columns="columns"
+        :data="filteredMovements"
+        id="id_movement_type"
+        :flagRestore="showActive"
+        :currentUserCompany="0"
+        @actionSee="handleSee"
+        @actionCreate="handleCreate"
+        @actionUpdate="handleUpdate"
+        @actionDanger="handleRemove"
+        @actionRestore="handleRestore"
+      ></TableComponent>
+  
+      <!-- Modal Detalles -->
+      <Dialog v-model:visible="visibleDetails" modal header="Detalles del Tipo de Movimiento" :style="{ width: '30rem' }">
+        <div class="flex flex-col gap-4">
+          <div><strong>Nombre:</strong> {{ currentMovement?.name_movement_type }}</div>
+          <div><strong>Compañía:</strong> {{ currentMovement?.name_company }}</div>
+          <div><strong>Clasificación:</strong> {{ currentMovement?.name_clasification_movement }}</div>
+        </div>
+      </Dialog>
+  
+      <!-- Modal Crear/Editar -->
+      <Dialog v-model:visible="visibleForm" modal :header="isEdit ? 'Editar Tipo de Movimiento' : 'Crear Tipo de Movimiento'" :style="{ width: '30rem' }">
+        <div class="flex flex-col gap-3">
+          <label class="font-semibold">Nombre del tipo *</label>
+          <InputText 
+            v-model="formMovementName" 
+            :class="{ 'p-invalid': nameError }"
+            placeholder="Ingrese el nombre del tipo de movimiento"
+          ></InputText>
+          <small v-if="nameError" class="p-error">{{ nameError }}</small>
+  
+          <label class="font-semibold">Clasificación *</label>
+          <Dropdown
+            v-model="formClasificationId"
+            :options="movementTypeStore.clasificationMovements"
+            optionLabel="name_clasification_movement"
+            optionValue="id_clasification_movement"
+            placeholder="Seleccione una clasificación"
+            :class="{ 'p-invalid': clasificationError }"
+          ></Dropdown>
+          <small v-if="clasificationError" class="p-error">{{ clasificationError }}</small>
+  
+          <!-- Selector de compañía solo para administradores -->
+          <template v-if="authStore.isAdmin">
+            <label class="font-semibold">Compañía *</label>
+            <Dropdown
+              v-model="formCompanyId"
+              :options="companyOptions"
+              optionLabel="name_company"
+              optionValue="id_company"
+              placeholder="Seleccione una compañía"
+              :class="{ 'p-invalid': companyError }"
+            ></Dropdown>
+            <small v-if="companyError" class="p-error">{{ companyError }}</small>
+          </template>
+  
+          <div class="flex justify-end gap-2 mt-4">
+            <Button label="Cancelar" severity="danger" @click="visibleForm = false"></Button>
+            <Button label="Guardar" severity="info" :disabled="!isFormValid" @click="submitForm"></Button>
           </div>
-      </div>
-  </div>
-</template>
-
-<script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
-import { useMovementTypeStore } from '@/stores/movementTypeStore';
-
-const movementTypeStore = useMovementTypeStore();
-const showActive = ref(true);
-const editingId = ref<number | null>(null);
-const editingName = ref('');
-const editingClasificationId = ref<number | null>(null);
-const newMovementName = ref('');
-const newClasificationId = ref<number | null>(null);
-
-const filteredMovements = computed(() => {
-  return movementTypeStore.movementsTypes.filter(movement =>
-      showActive.value ? !movement.delete_log_movement_type : movement.delete_log_movement_type
+        </div>
+      </Dialog>
+  
+      <!-- Confirmación -->
+      <ConfirmDialog></ConfirmDialog>
+      <Toast />
+    </div>
+  </template>
+  
+  <script setup lang="ts">
+  import { ref, computed, onMounted } from 'vue';
+  import { useToast } from 'primevue/usetoast';
+  import { useConfirm } from 'primevue/useconfirm';
+  
+  import TableComponent from '@/components/TableComponent.vue';
+  import Dialog from 'primevue/dialog';
+  import InputText from 'primevue/inputtext';
+  import Dropdown from 'primevue/dropdown';
+  import Button from 'primevue/button';
+  import ConfirmDialog from 'primevue/confirmdialog';
+  import Toast from 'primevue/toast';
+  
+  import { useMovementTypeStore } from '@/stores/movementTypeStore';
+  import { useAuthStore } from '@/stores/authStore';
+  import { useCompanyStore } from '@/stores/companyStore';
+  
+  const toast = useToast();
+  const confirm = useConfirm();
+  
+  const movementTypeStore = useMovementTypeStore();
+  const authStore = useAuthStore();
+  const companyStore = useCompanyStore();
+  
+  const showActive = ref(true);
+  const visibleDetails = ref(false);
+  const visibleForm = ref(false);
+  const isEdit = ref(false);
+  const editingId = ref<number | null>(null);
+  const currentMovement = ref<any>(null);
+  
+  const formMovementName = ref('');
+  const formClasificationId = ref<number | null>(null);
+  const formCompanyId = ref<number | null>(null);
+  
+  // Validaciones
+  const nameError = computed(() => {
+    const name = formMovementName.value.trim();
+    
+    if (!name) return 'El nombre es obligatorio';
+    
+    const specialCharsRegex = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+/;
+    if (specialCharsRegex.test(name)) {
+      return 'No se permiten caracteres especiales';
+    }
+    
+    const validCharsRegex = /^[a-zA-Z\s]+$/;
+    if (!validCharsRegex.test(name)) {
+      return 'Solo se permiten letras y espacios';
+    }
+    
+    if (name.length < 3) return 'Mínimo 3 caracteres';
+    if (name.length > 50) return 'Máximo 50 caracteres';
+    
+    return null;
+  });
+  
+  const clasificationError = computed(() => {
+    return formClasificationId.value === null ? 'La clasificación es obligatoria' : null;
+  });
+  
+  const companyError = computed(() => {
+    return authStore.isAdmin && formCompanyId.value === null ? 'La compañía es obligatoria' : null;
+  });
+  
+  const isFormValid = computed(() => {
+    return !nameError.value && !clasificationError.value && (!authStore.isAdmin || !companyError.value);
+  });
+  
+  const columns = [
+    { field: 'name_movement_type', header: 'Nombre' },
+    { field: 'name_company', header: 'Compañía' },
+    { field: 'name_clasification_movement', header: 'Clasificación' }
+  ];
+  
+  const filteredMovements = computed(() =>
+    movementTypeStore.movementsTypes.filter(m =>
+      showActive.value ? !m.delete_log_movement_type : m.delete_log_movement_type
+    )
   );
-});
-
-const isEditing = (id: number) => {
-  return editingId.value === id;
-};
-
-const startEdit = (movement: MovementType) => {
-  editingId.value = movement.id_movement_type;
-  editingName.value = movement.name_movement_type;
-
-  // Buscar el ID de la clasificación por su nombre
-  const clasification = movementTypeStore.clasificationMovements.find(
-      (clas) => clas.name_clasification_movement === movement.name_clasification_movement
-  );
-
-  // Establecer el ID de la clasificación encontrada
-  editingClasificationId.value = clasification ? clasification.id_clasification_movement : null;
-};
-
-const saveEdit = async (id: number) => {
-  if (editingName.value.trim() && editingClasificationId.value !== null) {
-      await movementTypeStore.editMovementType(id, editingName.value, editingClasificationId.value);
+  
+  const companyOptions = computed(() => companyStore.companies);
+  
+  onMounted(() => {
+    movementTypeStore.fetchMovementsTypes();
+    movementTypeStore.fetchClasificationMovements();
+    companyStore.fetchCompanies();
+  });
+  
+  const setActive = (val: boolean) => (showActive.value = val);
+  
+  const handleSee = (id: number) => {
+    currentMovement.value = movementTypeStore.movementsTypes.find(m => m.id_movement_type === id);
+    visibleDetails.value = true;
+  };
+  
+  const handleCreate = () => {
+    isEdit.value = false;
+    editingId.value = null;
+    formMovementName.value = '';
+    formClasificationId.value = null;
+    
+    if (!authStore.isAdmin) {
+      formCompanyId.value = authStore.user?.company?.id_company || null;
+    } else {
+      formCompanyId.value = null;
+    }
+    
+    visibleForm.value = true;
+  };
+  
+  const handleUpdate = (id: number) => {
+    const movement = movementTypeStore.movementsTypes.find(m => m.id_movement_type === id);
+    if (movement) {
+      isEdit.value = true;
+      editingId.value = id;
+      formMovementName.value = movement.name_movement_type;
+      
+      // Asignar correctamente la clasificación actual
+      const currentClasification = movementTypeStore.clasificationMovements.find(
+        c => c.name_clasification_movement === movement.name_clasification_movement
+      );
+      formClasificationId.value = currentClasification?.id_clasification_movement || null;
+      
+      // Asignar correctamente la compañía actual
+      if (!authStore.isAdmin) {
+        formCompanyId.value = authStore.user?.company?.id_company || null;
+      } else {
+        const currentCompany = companyStore.companies.find(
+          c => c.name_company === movement.name_company
+        );
+        formCompanyId.value = currentCompany?.id_company || null;
+      }
+      
+      visibleForm.value = true;
+    }
+  };
+  
+  const submitForm = async () => {
+    if (!isFormValid.value) return;
+  
+    try {
+      const companyIdToUse = authStore.isAdmin ? formCompanyId.value : authStore.user?.company?.id_company;
+      
+      if (isEdit.value && editingId.value !== null) {
+        await movementTypeStore.editMovementType(
+          editingId.value, 
+          formMovementName.value.trim(),
+          formClasificationId.value,
+          companyIdToUse
+        );
+        toast.add({ 
+          severity: 'success', 
+          summary: 'Actualizado', 
+          detail: 'Tipo de movimiento actualizado correctamente', 
+          life: 3000 
+        });
+      } else {
+        await movementTypeStore.addMovementType(
+          formMovementName.value.trim(),
+          formClasificationId.value,
+          companyIdToUse
+        );
+        toast.add({ 
+          severity: 'success', 
+          summary: 'Creado', 
+          detail: 'Tipo de movimiento creado correctamente', 
+          life: 3000 
+        });
+      }
+      
+      await movementTypeStore.fetchMovementsTypes();
+      visibleForm.value = false;
       editingId.value = null;
-      editingName.value = '';
-      editingClasificationId.value = null;
-      await movementTypeStore.fetchMovementsTypes(); // Refrescar la lista
+      formMovementName.value = '';
+      formClasificationId.value = null;
+      formCompanyId.value = null;
+    } catch (e) {
+      toast.add({ 
+        severity: 'error', 
+        summary: 'Error', 
+        detail: 'Operación fallida', 
+        life: 3000 
+      });
+    }
+  };
+  
+  const handleRemove = (id: number) => {
+    confirm.require({
+      message: '¿Estás seguro de eliminar este tipo de movimiento?',
+      header: 'Confirmar eliminación',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Eliminar',
+      rejectLabel: 'Cancelar',
+      accept: () => {
+        movementTypeStore.removeMovementType(id)
+          .then(() => {
+            movementTypeStore.fetchMovementsTypes();
+            toast.add({ 
+              severity: 'success', 
+              summary: 'Eliminado', 
+              detail: 'Tipo de movimiento eliminado correctamente', 
+              life: 3000 
+            });
+          })
+          .catch(() => {
+            toast.add({ 
+              severity: 'error', 
+              summary: 'Error', 
+              detail: 'No se pudo eliminar el tipo de movimiento', 
+              life: 3000 
+            });
+          });
+      }
+    });
+  };
+  
+  const handleRestore = (id: number) => {
+    movementTypeStore.restoreDeletedMovementType(id)
+      .then(() => {
+        movementTypeStore.fetchMovementsTypes();
+        toast.add({ 
+          severity: 'success', 
+          summary: 'Restaurado', 
+          detail: 'Tipo de movimiento restaurado correctamente', 
+          life: 3000 
+        });
+      })
+      .catch(() => {
+        toast.add({ 
+          severity: 'error', 
+          summary: 'Error', 
+          detail: 'No se pudo restaurar el tipo de movimiento', 
+          life: 3000 
+        });
+      });
+  };
+  </script>
+  
+  <style scoped>
+  .p-invalid {
+    border-color: var(--red-500) !important;
   }
-};
-
-const cancelEdit = () => {
-  editingId.value = null;
-  editingName.value = '';
-  editingClasificationId.value = null;
-};
-
-const showActiveMovements = () => {
-  showActive.value = true;
-};
-
-const showDeletedMovements = () => {
-  showActive.value = false;
-};
-
-const removeMovementType = async (id: number) => {
-  await movementTypeStore.removeMovementType(id);
-  await movementTypeStore.fetchMovementsTypes(); // Refrescar la lista
-};
-
-const restoreDeletedMovementType = async (id: number) => {
-  await movementTypeStore.restoreDeletedMovementType(id);
-  await movementTypeStore.fetchMovementsTypes(); // Refrescar la lista
-};
-
-const createMovementType = async () => {
-  if (newMovementName.value.trim() && newClasificationId.value !== null) {
-      await movementTypeStore.addMovementType(newMovementName.value, newClasificationId.value);
-      newMovementName.value = ''; // Limpiar el campo después de crear el tipo de movimiento
-      newClasificationId.value = null; // Limpiar el campo después de crear el tipo de movimiento
-      await movementTypeStore.fetchMovementsTypes(); // Refrescar la lista
+  .p-error {
+    color: var(--red-500);
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
   }
-};
-
-onMounted(() => {
-  movementTypeStore.fetchMovementsTypes();
-  movementTypeStore.fetchClasificationMovements();
-});
-</script>
-
-<style scoped>
-/* Estilos adicionales si son necesarios */
-</style>
+  </style>
