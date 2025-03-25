@@ -2,7 +2,7 @@
   <div class="container mx-auto p-4">
     <h1 class="text-2xl font-bold mb-6 text-gray-800">Gestión de Puestos</h1>
 
-    <!-- Filtros con contadores -->
+    <!-- Filtros -->
     <div class="flex mb-6">
       <button
         @click="setActive(true)"
@@ -38,45 +38,33 @@
     <!-- Modal Detalles -->
     <Dialog v-model:visible="visibleDetails" modal header="Detalles del Puesto" :style="{ width: '30rem' }">
       <div class="flex flex-col gap-4">
-        <div class="flex flex-col">
-          <span class="text-sm font-medium text-gray-500">ID del Puesto</span>
-          <span class="font-semibold">{{ currentPosition?.id_position || '—' }}</span>
-        </div>
-        <div class="flex flex-col">
-          <span class="text-sm font-medium text-gray-500">Nombre del Puesto</span>
-          <span class="font-semibold">{{ currentPosition?.name_position || '—' }}</span>
-        </div>
-        <div class="flex flex-col">
-          <span class="text-sm font-medium text-gray-500">Compañía</span>
-          <span class="font-semibold">{{ currentPosition?.name_company || '—' }}</span>
-        </div>
-        <div class="flex flex-col" v-if="currentPosition?.created_at">
-          <span class="text-sm font-medium text-gray-500">Creado el</span>
-          <span class="font-semibold">{{ formatDate(currentPosition.created_at) }}</span>
-        </div>
+        <div><strong>ID:</strong> {{ currentPosition?.id_position }}</div>
+        <div><strong>Nombre:</strong> {{ currentPosition?.name_position }}</div>
+        <div><strong>Compañía:</strong> {{ currentPosition?.name_company }}</div>
       </div>
     </Dialog>
 
     <!-- Modal Crear/Editar -->
     <Dialog v-model:visible="visibleForm" modal :header="isEdit ? 'Editar Puesto' : 'Crear Puesto'" :style="{ width: '30rem' }">
       <div class="flex flex-col gap-3">
-        <label for="name" class="font-semibold">Nombre del puesto *</label>
-        <InputText
-          id="name"
-          v-model="form.name_position"
-          :class="{ 'p-invalid': nameError }"
-          autocomplete="off"
-        />
+        <label class="font-semibold">Nombre del puesto *</label>
+        <InputText v-model="formPositionName" :class="{ 'p-invalid': nameError }" />
         <small v-if="nameError" class="p-error">{{ nameError }}</small>
+
+        <label class="font-semibold">Compañía *</label>
+        <Dropdown
+          v-model="formCompanyId"
+          :options="companyOptions"
+          optionLabel="name_company"
+          optionValue="id_company"
+          placeholder="Seleccione una compañía"
+          :class="{ 'p-invalid': companyError }"
+        />
+        <small v-if="companyError" class="p-error">{{ companyError }}</small>
 
         <div class="flex justify-end gap-2 mt-4">
           <Button label="Cancelar" severity="danger" @click="visibleForm = false" />
-          <Button
-            label="Guardar"
-            severity="info"
-            :disabled="!!nameError"
-            @click="isEdit ? updatePosition() : createPosition()"
-          />
+          <Button label="Guardar" severity="info" :disabled="!isFormValid" @click="submitForm" />
         </div>
       </div>
     </Dialog>
@@ -88,92 +76,90 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { usePositionStore } from '@/stores/positionStore';
-import { useAuthStore } from '@/stores/authStore';
 import { useToast } from 'primevue/usetoast';
 import { useConfirm } from 'primevue/useconfirm';
+
 import TableComponent from '@/components/TableComponent.vue';
+import Dialog from 'primevue/dialog';
+import InputText from 'primevue/inputtext';
+import Dropdown from 'primevue/dropdown';
+import Button from 'primevue/button';
+import ConfirmDialog from 'primevue/confirmdialog';
+
+import { usePositionStore } from '@/stores/positionStore';
+import { useAuthStore } from '@/stores/authStore';
+import { useCompanyStore } from '@/stores/companyStore';
 
 const toast = useToast();
 const confirm = useConfirm();
 
 const positionStore = usePositionStore();
 const authStore = useAuthStore();
+const companyStore = useCompanyStore();
 
 const showActive = ref(true);
 const visibleDetails = ref(false);
 const visibleForm = ref(false);
 const isEdit = ref(false);
-const currentPosition = ref<any>(null);
 const editingId = ref<number | null>(null);
+const currentPosition = ref<any>(null);
 
-const form = ref({
-  name_position: ''
-});
+const formPositionName = ref('');
+const formCompanyId = ref<number | null>(null);
 
-// Validación
 const nameError = computed(() => {
-  const name = form.value.name_position?.trim() || '';
+  const name = formPositionName.value.trim();
   if (!name) return 'El nombre es obligatorio';
   if (name.length < 3) return 'Mínimo 3 caracteres';
   if (name.length > 100) return 'Máximo 100 caracteres';
   return null;
 });
 
-// Columnas para la tabla
+const companyError = computed(() => {
+  return formCompanyId.value === null ? 'La compañía es obligatoria' : null;
+});
+
+const isFormValid = computed(() => !nameError.value && !companyError.value);
+
 const columns = [
   { field: 'id_position', header: 'ID' },
   { field: 'name_position', header: 'Nombre' },
   { field: 'name_company', header: 'Compañía' }
 ];
 
-// Filtro para mostrar solo activos o eliminados
 const filteredData = computed(() =>
   positionStore.positions.filter(p =>
-    showActive.value
-      ? p.delete_log_position === false || p.delete_log_position === 0
-      : p.delete_log_position === true || p.delete_log_position === 1
+    showActive.value ? !p.delete_log_position : p.delete_log_position
   )
 );
 
-// Contadores
 const totalActivos = computed(() =>
-  positionStore.positions.filter(p => p.delete_log_position === false || p.delete_log_position === 0).length
+  positionStore.positions.filter(p => !p.delete_log_position).length
 );
 
 const totalEliminados = computed(() =>
-  positionStore.positions.filter(p => p.delete_log_position === true || p.delete_log_position === 1).length
+  positionStore.positions.filter(p => p.delete_log_position).length
 );
 
-// Formateo de fecha
-const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString('es-MX', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
-};
+const companyOptions = computed(() => companyStore.companies);
 
-// Acciones
 onMounted(() => {
   positionStore.fetchPositions();
+  companyStore.fetchCompanies();
 });
 
-const setActive = (active: boolean) => {
-  showActive.value = active;
-};
+const setActive = (val: boolean) => (showActive.value = val);
 
 const handleSee = (id: number) => {
-  const pos = positionStore.positions.find(p => p.id_position === id);
-  if (pos) {
-    currentPosition.value = pos;
-    visibleDetails.value = true;
-  }
+  currentPosition.value = positionStore.positions.find(p => p.id_position === id);
+  visibleDetails.value = true;
 };
 
 const handleCreate = () => {
   isEdit.value = false;
-  form.value.name_position = '';
+  editingId.value = null;
+  formPositionName.value = '';
+  formCompanyId.value = null;
   visibleForm.value = true;
 };
 
@@ -182,60 +168,58 @@ const handleUpdate = (id: number) => {
   if (pos) {
     isEdit.value = true;
     editingId.value = id;
-    form.value.name_position = pos.name_position;
+    formPositionName.value = pos.name_position;
+    // Se asume que el objeto pos contiene la propiedad id_company
+    formCompanyId.value = pos.id_company || null;
     visibleForm.value = true;
   }
 };
 
-const createPosition = async () => {
-  if (nameError.value) return;
+const submitForm = async () => {
+  if (!isFormValid.value) return;
+  // Guarda el id_company original del usuario
+  const originalCompanyId = authStore.user?.company?.id_company;
   try {
-    await positionStore.addPosition(form.value.name_position);
-    toast.add({ severity: 'success', summary: 'Éxito', detail: 'Puesto creado correctamente', life: 3000 });
+    // Actualiza temporalmente el id_company del usuario con el seleccionado
+    if (formCompanyId.value !== null) {
+      authStore.user.company.id_company = formCompanyId.value;
+    }
+    if (isEdit.value && editingId.value !== null) {
+      await positionStore.editPosition(editingId.value, formPositionName.value.trim());
+      toast.add({ severity: 'success', summary: 'Actualizado', detail: 'Puesto actualizado', life: 3000 });
+    } else {
+      await positionStore.addPosition(formPositionName.value.trim());
+      toast.add({ severity: 'success', summary: 'Creado', detail: 'Puesto creado', life: 3000 });
+    }
+    await positionStore.fetchPositions();
     visibleForm.value = false;
-    positionStore.fetchPositions();
-  } catch (error) {
-    toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo crear', life: 3000 });
+    editingId.value = null;
+    formPositionName.value = '';
+    formCompanyId.value = null;
+  } catch (e) {
+    toast.add({ severity: 'error', summary: 'Error', detail: 'Operación fallida', life: 3000 });
+  } finally {
+    // Restaura el id_company original del usuario
+    if (originalCompanyId !== undefined) {
+      authStore.user.company.id_company = originalCompanyId;
+    }
   }
 };
 
-const updatePosition = async () => {
-  if (!editingId.value || nameError.value) return;
-  try {
-    await positionStore.editPosition(editingId.value, form.value.name_position);
-    toast.add({ severity: 'success', summary: 'Éxito', detail: 'Puesto actualizado', life: 3000 });
-    visibleForm.value = false;
-    positionStore.fetchPositions();
-  } catch (error) {
-    toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo actualizar', life: 3000 });
-  }
-};
-
-const handleRemove = (id: number) => {
+const handleRemove = (id: number) =>
   confirm.require({
     message: '¿Deseas eliminar este puesto?',
-    header: 'Confirmar eliminación',
-    icon: 'pi pi-exclamation-triangle',
-    accept: async () => {
-      await positionStore.removePosition(id);
-      toast.add({ severity: 'success', summary: 'Eliminado', detail: 'Puesto eliminado', life: 3000 });
-      positionStore.fetchPositions();
-    }
+    accept: () => positionStore.removePosition(id).then(() => positionStore.fetchPositions())
   });
-};
 
-const handleRestore = async (id: number) => {
-  try {
-    await positionStore.restoreDeletedPosition(id);
-    toast.add({ severity: 'success', summary: 'Restaurado', detail: 'Puesto restaurado', life: 3000 });
-    positionStore.fetchPositions();
-  } catch (error) {
-    toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo restaurar', life: 3000 });
-  }
-};
+const handleRestore = (id: number) =>
+  positionStore.restoreDeletedPosition(id).then(() => positionStore.fetchPositions());
 </script>
 
 <style scoped>
+.p-invalid {
+  border-color: var(--red-500) !important;
+}
 .p-error {
   color: var(--red-500);
   font-size: 0.875rem;
