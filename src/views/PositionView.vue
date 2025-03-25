@@ -1,172 +1,228 @@
 <template>
   <div class="container mx-auto p-4">
-    <h1 class="text-2xl font-bold mb-4">Gestión de Puestos</h1>
+    <h1 class="text-2xl font-bold mb-6 text-gray-800">Gestión de Puestos</h1>
 
     <!-- Filtros -->
-    <div class="mb-4">
+    <div class="flex mb-6">
       <button
-        @click="showActivePositions"
-        :class="{'bg-blue-500 text-white': showActive, 'bg-gray-200': !showActive}"
-        class="px-4 py-2 rounded-l"
+        @click="setActive(true)"
+        :class="showActive ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'"
+        class="px-4 py-2 rounded-l shadow-md hover:bg-blue-700"
       >
-        Activos
+        Activos ({{ totalActivos }})
       </button>
       <button
-        @click="showDeletedPositions"
-        :class="{'bg-red-500 text-white': !showActive, 'bg-gray-200': showActive}"
-        class="px-4 py-2 rounded-r"
+        @click="setActive(false)"
+        :class="!showActive ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-800'"
+        class="px-4 py-2 rounded-r shadow-md hover:bg-red-600"
       >
-        Eliminados
+        Eliminados ({{ totalEliminados }})
       </button>
     </div>
 
-    <!-- Tabla de puestos -->
-    <table class="min-w-full bg-black">
-      <thead>
-        <tr>
-          <th class="py-2 px-4 border-b">ID</th>
-          <th class="py-2 px-4 border-b">Nombre</th>
-          <th class="py-2 px-4 border-b">Compañía</th>
-          <th class="py-2 px-4 border-b">Acciones</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="position in filteredPositions" :key="position.id_position" class="hover:bg-gray-50">
-          <td class="py-2 px-4 border-b">{{ position.id_position }}</td>
-          <td class="py-2 px-4 border-b">
-            <span v-if="!isEditing(position.id_position)">{{ position.name_position }}</span>
-            <div v-else class="flex items-center">
-              <input
-                v-model="editingName"
-                class="border rounded px-2 py-1"
-              />
-              <button
-                @click="saveEdit(position.id_position)"
-                class="bg-green-500 text-white px-4 py-2 rounded ml-2"
-              >
-                Aceptar
-              </button>
-            </div>
-          </td>
-          <td class="py-2 px-4 border-b">{{ position.name_company }}</td>
-          <td class="py-2 px-4 border-b">
-            <button
-              v-if="showActive && !isEditing(position.id_position)"
-              @click="startEdit(position.id_position, position.name_position)"
-              class="bg-yellow-500 text-white px-4 py-2 rounded mr-2"
-            >
-              Editar
-            </button>
-            <button
-              v-if="showActive && !isEditing(position.id_position)"
-              @click="removePosition(position.id_position)"
-              class="bg-red-500 text-white px-4 py-2 rounded"
-            >
-              Eliminar
-            </button>
-            <button
-              v-else-if="!isEditing(position.id_position)"
-              @click="restoreDeletedPosition(position.id_position)"
-              class="bg-green-500 text-white px-4 py-2 rounded"
-            >
-              Restaurar
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <!-- Tabla -->
+    <TableComponent
+      :loader="positionStore.loading"
+      :columns="columns"
+      :data="filteredData"
+      id="id_position"
+      :flagRestore="showActive"
+      :currentUserCompany="''"
+      @actionSee="handleSee"
+      @actionCreate="handleCreate"
+      @actionUpdate="handleUpdate"
+      @actionDanger="handleRemove"
+      @actionRestore="handleRestore"
+    ></TableComponent>
 
-    <!-- Cargando -->
-    <div v-if="loading" class="mt-4">
-      Cargando...
-    </div>
-
-    <!-- Crear Nuevo Puesto -->
-    <div class="mt-4">
-      <h2 class="text-xl font-bold">Crear Puesto</h2>
-      <div class="flex items-center mt-2">
-        <input
-          v-model="newPositionName"
-          type="text"
-          placeholder="Nombre del puesto"
-          class="border rounded px-4 py-2 mr-2"
-        />
-        <button
-          @click="createPosition"
-          class="bg-blue-500 text-white px-4 py-2 rounded"
-        >
-          Crear
-        </button>
+    <!-- Modal Detalles -->
+    <Dialog v-model:visible="visibleDetails" modal header="Detalles del Puesto" :style="{ width: '30rem' }">
+      <div class="flex flex-col gap-4">
+        <div><strong>ID:</strong> {{ currentPosition?.id_position }}</div>
+        <div><strong>Nombre:</strong> {{ currentPosition?.name_position }}</div>
+        <div><strong>Compañía:</strong> {{ currentPosition?.name_company }}</div>
       </div>
-    </div>
+    </Dialog>
+
+    <!-- Modal Crear/Editar -->
+    <Dialog v-model:visible="visibleForm" modal :header="isEdit ? 'Editar Puesto' : 'Crear Puesto'" :style="{ width: '30rem' }">
+      <div class="flex flex-col gap-3">
+        <label class="font-semibold">Nombre del puesto *</label>
+        <InputText v-model="formPositionName" :class="{ 'p-invalid': nameError }"></InputText>
+        <small v-if="nameError" class="p-error">{{ nameError }}</small>
+
+        <label class="font-semibold">Compañía *</label>
+        <Dropdown
+          v-model="formCompanyId"
+          :options="companyOptions"
+          optionLabel="name_company"
+          optionValue="id_company"
+          placeholder="Seleccione una compañía"
+          :class="{ 'p-invalid': companyError }"
+        ></Dropdown>
+        <small v-if="companyError" class="p-error">{{ companyError }}</small>
+
+        <div class="flex justify-end gap-2 mt-4">
+          <Button label="Cancelar" severity="danger" @click="visibleForm = false"></Button>
+          <Button label="Guardar" severity="info" :disabled="!isFormValid" @click="submitForm"></Button>
+        </div>
+      </div>
+    </Dialog>
+
+    <!-- Confirmación -->
+    <ConfirmDialog></ConfirmDialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
+import { useToast } from 'primevue/usetoast';
+import { useConfirm } from 'primevue/useconfirm';
+
+import TableComponent from '@/components/TableComponent.vue';
+import Dialog from 'primevue/dialog';
+import InputText from 'primevue/inputtext';
+import Dropdown from 'primevue/dropdown';
+import Button from 'primevue/button';
+import ConfirmDialog from 'primevue/confirmdialog';
+
 import { usePositionStore } from '@/stores/positionStore';
+import { useAuthStore } from '@/stores/authStore';
+import { useCompanyStore } from '@/stores/companyStore';
+
+const toast = useToast();
+const confirm = useConfirm();
 
 const positionStore = usePositionStore();
-const showActive = ref(true);
-const editingId = ref<number | null>(null);
-const editingName = ref('');
-const newPositionName = ref('');
+const authStore = useAuthStore();
+const companyStore = useCompanyStore();
 
-const filteredPositions = computed(() => {
-  return positionStore.positions.filter(position =>
-    showActive.value ? !position.delete_log_position : position.delete_log_position
-  );
+const showActive = ref(true);
+const visibleDetails = ref(false);
+const visibleForm = ref(false);
+const isEdit = ref(false);
+const editingId = ref<number | null>(null);
+const currentPosition = ref<any>(null);
+
+const formPositionName = ref('');
+const formCompanyId = ref<number | null>(null);
+
+const nameError = computed(() => {
+  const name = formPositionName.value.trim();
+  if (!name) return 'El nombre es obligatorio';
+  if (name.length < 3) return 'Mínimo 3 caracteres';
+  if (name.length > 100) return 'Máximo 100 caracteres';
+  return null;
 });
 
-const isEditing = (id: number) => {
-  return editingId.value === id;
-};
+const companyError = computed(() => {
+  return formCompanyId.value === null ? 'La compañía es obligatoria' : null;
+});
 
-const startEdit = (id: number, name: string) => {
-  editingId.value = id;
-  editingName.value = name;
-};
+const isFormValid = computed(() => !nameError.value && !companyError.value);
 
-const saveEdit = async (id: number) => {
-  if (editingName.value.trim()) {
-    await positionStore.editPosition(id, editingName.value);
-    editingId.value = null;
-    editingName.value = '';
-    await positionStore.fetchPositions(); // Refrescar la lista
-  }
-};
+const columns = [
+  { field: 'id_position', header: 'ID' },
+  { field: 'name_position', header: 'Nombre' },
+  { field: 'name_company', header: 'Compañía' }
+];
 
-const showActivePositions = () => {
-  showActive.value = true;
-};
+const filteredData = computed(() =>
+  positionStore.positions.filter(p =>
+    showActive.value ? !p.delete_log_position : p.delete_log_position
+  )
+);
 
-const showDeletedPositions = () => {
-  showActive.value = false;
-};
+const totalActivos = computed(() =>
+  positionStore.positions.filter(p => !p.delete_log_position).length
+);
 
-const removePosition = async (id: number) => {
-  await positionStore.removePosition(id);
-  await positionStore.fetchPositions(); // Refrescar la lista
-};
+const totalEliminados = computed(() =>
+  positionStore.positions.filter(p => p.delete_log_position).length
+);
 
-const restoreDeletedPosition = async (id: number) => {
-  await positionStore.restoreDeletedPosition(id);
-  await positionStore.fetchPositions(); // Refrescar la lista
-};
-
-const createPosition = async () => {
-  if (newPositionName.value.trim()) {
-    await positionStore.addPosition(newPositionName.value);
-    newPositionName.value = ''; // Limpiar el campo después de crear el puesto
-    await positionStore.fetchPositions(); // Refrescar la lista
-  }
-};
+const companyOptions = computed(() => companyStore.companies);
 
 onMounted(() => {
   positionStore.fetchPositions();
+  companyStore.fetchCompanies();
 });
+
+const setActive = (val: boolean) => (showActive.value = val);
+
+const handleSee = (id: number) => {
+  currentPosition.value = positionStore.positions.find(p => p.id_position === id);
+  visibleDetails.value = true;
+};
+
+const handleCreate = () => {
+  isEdit.value = false;
+  editingId.value = null;
+  formPositionName.value = '';
+  formCompanyId.value = null;
+  visibleForm.value = true;
+};
+
+const handleUpdate = (id: number) => {
+  const pos = positionStore.positions.find(p => p.id_position === id);
+  if (pos) {
+    isEdit.value = true;
+    editingId.value = id;
+    formPositionName.value = pos.name_position;
+    // Se asume que el objeto pos contiene la propiedad id_company
+    formCompanyId.value = pos.id_company || null;
+    visibleForm.value = true;
+  }
+};
+
+const submitForm = async () => {
+  if (!isFormValid.value) return;
+  // Guarda el id_company original del usuario
+  const originalCompanyId = authStore.user?.company?.id_company;
+  try {
+    // Actualiza temporalmente el id_company del usuario con el seleccionado
+    if (formCompanyId.value !== null) {
+      authStore.user.company.id_company = formCompanyId.value;
+    }
+    if (isEdit.value && editingId.value !== null) {
+      await positionStore.editPosition(editingId.value, formPositionName.value.trim());
+      toast.add({ severity: 'success', summary: 'Actualizado', detail: 'Puesto actualizado', life: 3000 });
+    } else {
+      await positionStore.addPosition(formPositionName.value.trim());
+      toast.add({ severity: 'success', summary: 'Creado', detail: 'Puesto creado', life: 3000 });
+    }
+    await positionStore.fetchPositions();
+    visibleForm.value = false;
+    editingId.value = null;
+    formPositionName.value = '';
+    formCompanyId.value = null;
+  } catch (e) {
+    toast.add({ severity: 'error', summary: 'Error', detail: 'Operación fallida', life: 3000 });
+  } finally {
+    // Restaura el id_company original del usuario
+    if (originalCompanyId !== undefined) {
+      authStore.user.company.id_company = originalCompanyId;
+    }
+  }
+};
+
+const handleRemove = (id: number) =>
+  confirm.require({
+    message: '¿Deseas eliminar este puesto?',
+    accept: () => positionStore.removePosition(id).then(() => positionStore.fetchPositions())
+  });
+
+const handleRestore = (id: number) =>
+  positionStore.restoreDeletedPosition(id).then(() => positionStore.fetchPositions());
 </script>
 
 <style scoped>
-/* Estilos adicionales si son necesarios */
+.p-invalid {
+  border-color: var(--red-500) !important;
+}
+.p-error {
+  color: var(--red-500);
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
 </style>
