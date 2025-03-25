@@ -2,29 +2,29 @@
   <div class="container mx-auto p-4">
     <h1 class="text-2xl font-bold mb-6 text-gray-800">Gestión de Puestos</h1>
 
-    <!-- Filtros -->
+    <!-- Filtros con contadores -->
     <div class="flex mb-6">
       <button
-        @click="showActivePositions"
+        @click="setActive(true)"
         :class="showActive ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'"
         class="px-4 py-2 rounded-l shadow-md hover:bg-blue-700"
       >
-        Activos
+        Activos ({{ totalActivos }})
       </button>
       <button
-        @click="showDeletedPositions"
+        @click="setActive(false)"
         :class="!showActive ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-800'"
         class="px-4 py-2 rounded-r shadow-md hover:bg-red-600"
       >
-        Eliminados
+        Eliminados ({{ totalEliminados }})
       </button>
     </div>
 
-    <!-- Tabla de Puestos con componente reutilizable -->
+    <!-- Tabla de puestos -->
     <TableComponent
       :loader="positionStore.loading"
       :columns="columns"
-      :data="filteredPositions"
+      :data="filteredData"
       id="id_position"
       :flagRestore="showActive"
       :currentUserCompany="authStore.user?.company?.name_company || ''"
@@ -36,7 +36,7 @@
     />
 
     <!-- Modal Detalles -->
-    <Dialog v-model:visible="visibleDetails" modal header="Detalles del Puesto" :style="{ width: '40rem' }">
+    <Dialog v-model:visible="visibleDetails" modal header="Detalles del Puesto" :style="{ width: '30rem' }">
       <div class="flex flex-col gap-4">
         <div class="flex flex-col">
           <span class="text-sm font-medium text-gray-500">Nombre del puesto</span>
@@ -103,6 +103,7 @@ const form = ref({
   name_position: ''
 });
 
+// 🔍 Validación
 const nameError = computed(() => {
   const name = form.value.name_position?.trim() || '';
   if (!name) return 'El nombre es obligatorio';
@@ -111,37 +112,56 @@ const nameError = computed(() => {
   return null;
 });
 
-const filteredPositions = computed(() =>
-  positionStore.positions.filter(p =>
-    showActive.value ? !p.delete_log_position : p.delete_log_position
-  )
-);
-
+// 🔍 Columnas de la tabla
 const columns = [
   { field: 'id_position', header: 'ID' },
   { field: 'name_position', header: 'Nombre' },
   { field: 'name_company', header: 'Compañía' }
 ];
 
+// ✅ Datos filtrados según pestaña
+const filteredData = computed(() => {
+  return positionStore.positions.filter(p =>
+    showActive.value
+      ? p.delete_log_position === false || p.delete_log_position === 0
+      : p.delete_log_position === true || p.delete_log_position === 1
+  );
+});
+
+// ✅ Contadores
+const totalActivos = computed(() =>
+  positionStore.positions.filter(p => p.delete_log_position === false || p.delete_log_position === 0).length
+);
+
+const totalEliminados = computed(() =>
+  positionStore.positions.filter(p => p.delete_log_position === true || p.delete_log_position === 1).length
+);
+
+// ✅ Cargar datos
 onMounted(() => {
   positionStore.fetchPositions();
 });
 
-const showActivePositions = () => (showActive.value = true);
-const showDeletedPositions = () => (showActive.value = false);
+// ✅ Cambiar entre pestañas
+const setActive = (active: boolean) => {
+  showActive.value = active;
+};
 
+// ✅ Ver
 const handleSee = async (id: number) => {
   await positionStore.fetchPositionById(id);
   currentPosition.value = positionStore.currentPosition;
   visibleDetails.value = true;
 };
 
+// ✅ Crear
 const handleCreate = () => {
   isEdit.value = false;
   form.value.name_position = '';
   visibleForm.value = true;
 };
 
+// ✅ Editar
 const handleUpdate = (id: number) => {
   const pos = positionStore.positions.find(p => p.id_position === id);
   if (pos) {
@@ -152,18 +172,20 @@ const handleUpdate = (id: number) => {
   }
 };
 
+// ✅ Crear nuevo puesto
 const createPosition = async () => {
   if (nameError.value) return;
   try {
     await positionStore.addPosition(form.value.name_position);
-    toast.add({ severity: 'success', summary: 'Éxito', detail: 'Puesto creado', life: 3000 });
+    toast.add({ severity: 'success', summary: 'Éxito', detail: 'Puesto creado correctamente', life: 3000 });
     visibleForm.value = false;
     positionStore.fetchPositions();
   } catch (error) {
-    toast.add({ severity: 'error', summary: 'Error', detail: 'Error al crear', life: 3000 });
+    toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo crear', life: 3000 });
   }
 };
 
+// ✅ Actualizar puesto
 const updatePosition = async () => {
   if (!editingId.value || nameError.value) return;
   try {
@@ -172,14 +194,15 @@ const updatePosition = async () => {
     visibleForm.value = false;
     positionStore.fetchPositions();
   } catch (error) {
-    toast.add({ severity: 'error', summary: 'Error', detail: 'Error al actualizar', life: 3000 });
+    toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo actualizar', life: 3000 });
   }
 };
 
+// ✅ Eliminar
 const handleRemove = (id: number) => {
   confirm.require({
-    message: '¿Estás seguro de eliminar este puesto?',
-    header: 'Confirmar',
+    message: '¿Deseas eliminar este puesto?',
+    header: 'Confirmar eliminación',
     icon: 'pi pi-exclamation-triangle',
     accept: async () => {
       await positionStore.removePosition(id);
@@ -189,6 +212,7 @@ const handleRemove = (id: number) => {
   });
 };
 
+// ✅ Restaurar
 const handleRestore = async (id: number) => {
   try {
     await positionStore.restoreDeletedPosition(id);
