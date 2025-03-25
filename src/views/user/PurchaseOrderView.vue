@@ -1,458 +1,672 @@
 <template>
-    <div class="container mx-auto p-4">
-      <h1 class="text-2xl font-bold mb-4">Gestión de Órdenes de Compra</h1>
-  
-      <!-- Filtros para mostrar activos/eliminados -->
-      <div class="mb-4">
-        <button
-          @click="showActive = true"
-          :class="{ 'bg-blue-500 text-white': showActive, 'bg-gray-200': !showActive }"
-          class="px-4 py-2 rounded-l"
-        >
-          Activos
-        </button>
-        <button
-          @click="showActive = false"
-          :class="{ 'bg-red-500 text-white': !showActive, 'bg-gray-200': showActive }"
-          class="px-4 py-2 rounded-r"
-        >
-          Eliminados
-        </button>
-      </div>
-  
-      <!-- Botón para crear orden de compra -->
+  <div class="container mx-auto p-4">
+    <h1 class="text-2xl font-bold mb-4">Gestión de Órdenes de Compra</h1>
+
+    <!-- Filtros para mostrar activos/eliminados -->
+    <div class="mb-4">
       <button
-        @click="openCreateModal"
-        class="bg-green-500 text-white px-4 py-2 rounded mb-4"
+        @click="showActive = true"
+        :class="{ 'bg-blue-500 text-white': showActive, 'bg-gray-200': !showActive }"
+        class="px-4 py-2 rounded-l transition-colors duration-200"
       >
-        Crear Orden de Compra
+        Activos
       </button>
-  
-      <!-- Tabla de órdenes de compra -->
-      <table class="min-w-full bg-black">
-        <thead>
-          <tr>
-            <th class="py-2 px-4 border-b">ID</th>
-            <th class="py-2 px-4 border-b">Nombre</th>
-            <th class="py-2 px-4 border-b">Usuario</th>
-            <th class="py-2 px-4 border-b">Proveedor</th>
-            <th class="py-2 px-4 border-b">Categoría</th>
-            <th class="py-2 px-4 border-b">Estado</th>
-            <th class="py-2 px-4 border-b">Tipo de Movimiento</th>
-            <th class="py-2 px-4 border-b">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="order in filteredPurchaseOrders"
-            :key="order.id_purchase_order"
-            class="hover:bg-gray-50"
-          >
-            <td class="py-2 px-4 border-b">{{ order.id_purchase_order }}</td>
-            <td class="py-2 px-4 border-b">{{ order.name_purchase_order }}</td>
-            <td class="py-2 px-4 border-b">{{ order.name_user }}</td>
-            <td class="py-2 px-4 border-b">{{ order.name_supplier }}</td>
-            <td class="py-2 px-4 border-b">{{ order.name_category_purchase_order }}</td>
-            <td class="py-2 px-4 border-b">{{ order.name_state }}</td>
-            <td class="py-2 px-4 border-b">{{ order.name_movement_type }}</td>
-            <td class="py-2 px-4 border-b">
-              <button
-                @click="viewOrder(order)"
-                class="bg-blue-500 text-white px-4 py-2 rounded mr-2"
-              >
-                Ver
-              </button>
-              <button
-                @click="startEdit(order)"
-                class="bg-yellow-500 text-white px-4 py-2 rounded mr-2"
-              >
-                Editar
-              </button>
-              <button
-                v-if="showActive"
-                @click="removeOrder(order.id_purchase_order)"
-                class="bg-red-500 text-white px-4 py-2 rounded mr-2"
-              >
-                Eliminar
-              </button>
-              <button
-                v-else
-                @click="restoreOrder(order.id_purchase_order)"
-                class="bg-green-500 text-white px-4 py-2 rounded"
-              >
-                Restaurar
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-  
-      <!-- Formulario para crear/editar orden de compra -->
-      <div v-if="isEditing || isCreating" class="mt-4">
-        <h2 class="text-xl font-bold mb-4">{{ isEditing ? 'Editar Orden de Compra' : 'Crear Orden de Compra' }}</h2>
-        <form @submit.prevent="saveEdit()">
-          <input
-            v-model="form.name_purchase_order"
-            placeholder="Nombre de la orden"
-            class="border rounded px-4 py-2 mb-2 w-full"
-            required
-          />
-  
-          <!-- Select de categorías -->
-          <select
-            v-if="categoryPurchaseOrderStore.categoriesPurchaseOrders.length > 0"
-            v-model="form.id_category_purchase_order_Id"
-            class="border rounded px-4 py-2 mb-2 w-full"
-            required
-          >
-            <option value="" disabled>Seleccione una categoría</option>
-            <option
-              v-for="category in categoryPurchaseOrderStore.categoriesPurchaseOrders"
-              :key="category.id_category_purchase_order"
-              :value="category.id_category_purchase_order"
-            >
-              {{ category.name_category_purchase_order }}
-            </option>
-          </select>
-  
-          <!-- Select de proveedores -->
-          <select
-            v-if="supplierStore.suppliers.length > 0"
-            v-model="form.id_supplier_Id"
-            class="border rounded px-4 py-2 mb-2 w-full"
-            required
-          >
-            <option value="" disabled>Seleccione un proveedor</option>
-            <option
-              v-for="supplier in supplierStore.suppliers"
-              :key="supplier.id_supplier"
-              :value="supplier.id_supplier"
-            >
-              {{ supplier.name_supplier }}
-            </option>
-          </select>
-  
-          <!-- Select de estados -->
-          <select
-            v-if="stateStore.states.length > 0"
-            v-model="form.id_state_Id"
-            class="border rounded px-4 py-2 mb-2 w-full"
-            required
-          >
-            <option value="" disabled>Seleccione un estado</option>
-            <option
-              v-for="state in stateStore.states"
-              :key="state.id_state"
-              :value="state.id_state"
-            >
-              {{ state.name_state }}
-            </option>
-          </select>
-  
-          <!-- Select de tipos de movimiento -->
-          <select
-            v-if="movementTypeStore.movementsTypes.length > 0"
-            v-model="form.id_movement_type_Id"
-            class="border rounded px-4 py-2 mb-2 w-full"
-            required
-          >
-            <option value="" disabled>Seleccione un tipo de movimiento</option>
-            <option
-              v-for="movementType in movementTypeStore.movementsTypes"
-              :key="movementType.id_movement_type"
-              :value="movementType.id_movement_type"
-            >
-              {{ movementType.name_movement_type }}
-            </option>
-          </select>
-  
-          <!-- Lista de productos asociados -->
-          <div class="mb-4">
-            <h3 class="font-bold mb-2">Productos Asociados</h3>
-            <div v-for="(product, index) in form.products" :key="index" class="flex gap-2 mb-2">
-              <select
-                v-model="product.id_inventory_product_Id"
-                class="border rounded px-4 py-2"
-                required
-              >
-                <option value="" disabled>Seleccione un producto</option>
-                <option
-                  v-for="inventoryProduct in inventoryStore.inventories"
-                  :key="inventoryProduct.id_inventory_product"
-                  :value="inventoryProduct.id_inventory_product"
-                >
-                  {{ inventoryProduct.name_product }}
-                </option>
-              </select>
-              <input
-                v-model="product.quantity"
-                type="number"
-                placeholder="Cantidad"
-                class="border rounded px-4 py-2"
-                required
-              />
-              <button
-                type="button"
-                @click="removeProduct(index)"
-                class="bg-red-500 text-white px-4 py-2 rounded"
-              >
-                Eliminar
-              </button>
-            </div>
-            <button
-              type="button"
-              @click="addProduct"
-              class="bg-blue-500 text-white px-4 py-2 rounded mb-4"
-            >
-              Añadir Producto
-            </button>
-          </div>
-  
-          <!-- Botones del formulario -->
-          <div class="flex justify-end gap-2">
-            <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded">
-              {{ isEditing ? 'Guardar Cambios' : 'Crear Orden de Compra' }}
-            </button>
-            <button
-              type="button"
-              @click="cancelEdit"
-              class="bg-gray-500 text-white px-4 py-2 rounded"
-            >
-              Cancelar
-            </button>
-          </div>
-        </form>
-      </div>
-  
-      <!-- Vista de solo lectura para ver orden de compra -->
-      <div v-if="isViewing" class="mt-4">
-        <h2 class="text-xl font-bold mb-4">Información de la Orden de Compra</h2>
-        <div class="bg-white p-6 rounded-lg shadow">
-          <p><strong>Nombre:</strong> {{ currentOrder.name_purchase_order }}</p>
-          <p><strong>Usuario:</strong> {{ currentOrder.name_user }}</p>
-          <p><strong>Proveedor:</strong> {{ currentOrder.name_supplier }}</p>
-          <p><strong>Categoría:</strong> {{ currentOrder.name_category_purchase_order }}</p>
-          <p><strong>Estado:</strong> {{ currentOrder.name_state }}</p>
-          <p><strong>Tipo de Movimiento:</strong> {{ currentOrder.name_movement_type }}</p>
-          <p><strong>Cantidad de productos:</strong> {{ currentOrder?.amount_items_in_the_order }}</p>
-          <p><strong>Precio total:</strong> {{ currentOrder?.total_price_products }}</p>
-          <h3 class="font-bold mt-4">Productos Asociados</h3>
-          <ul>
-            <li
-              v-for="product in currentOrder.products"
-              :key="product.id_inventory_product"
-              class="mb-2"
-            >
-              {{ product.name_product }} - Cantidad: {{ product.quantity }} - Precio Unitario: ${{ product.price }}
-            </li>
-          </ul>
-          <button
-            @click="closeView"
-            class="bg-gray-500 text-white px-4 py-2 rounded mt-4"
-          >
-            Cerrar
-          </button>
-        </div>
-      </div>
+      <button
+        @click="showActive = false"
+        :class="{ 'bg-red-500 text-white': !showActive, 'bg-gray-200': showActive }"
+        class="px-4 py-2 rounded-r transition-colors duration-200"
+      >
+        Eliminados
+      </button>
     </div>
-  </template>
+
+    <!-- Tabla de órdenes de compra usando el componente Table -->
+    <TableComponent
+      :loader="purchaseOrderStore.loading"
+      :columns="mappedColumns"
+      :data="filteredPurchaseOrders"
+      id="id_purchase_order"
+      :flagRestore="showActive"
+      :currentUserId="0"
+      @actionSee="viewOrder"
+      @actionCreate="openCreateModal"
+      @actionUpdate="startEdit"
+      @actionDanger="removeOrder"
+      @actionRestore="restoreOrder"
+    />
+
+    <!-- Modal de detalles de la orden de compra -->
+    <Dialog 
+      v-model:visible="isViewing" 
+      modal 
+      header="Detalles de la Orden de Compra" 
+      :style="{ width: '50rem' }"
+      :closable="true"
+      @update:visible="val => isViewing = val"
+    >
+      <div v-if="currentOrder" class="grid grid-cols-1 gap-6">
+        <Card>
+          <template #title>
+            <div class="flex items-center gap-3">
+              <i class="pi pi-shopping-cart text-primary" style="font-size: 1.5rem"></i>
+              <span>Información de la Orden</span>
+            </div>
+          </template>
+          <template #content>
+            <div class="grid grid-cols-2 gap-4">
+              <div class="flex flex-col">
+                <span class="text-sm font-medium text-gray-500">Nombre</span>
+                <span class="font-semibold">{{ currentOrder.name_purchase_order }}</span>
+              </div>
+              <div class="flex flex-col">
+                <span class="text-sm font-medium text-gray-500">Usuario</span>
+                <span class="font-semibold">{{ currentOrder.name_user }}</span>
+              </div>
+              <div class="flex flex-col">
+                <span class="text-sm font-medium text-gray-500">Proveedor</span>
+                <span class="font-semibold">{{ currentOrder.name_supplier }}</span>
+              </div>
+              <div class="flex flex-col">
+                <span class="text-sm font-medium text-gray-500">Categoría</span>
+                <span class="font-semibold">{{ currentOrder.name_category_purchase_order }}</span>
+              </div>
+              <div class="flex flex-col">
+                <span class="text-sm font-medium text-gray-500">Estado</span>
+                <Tag 
+                  :value="currentOrder.name_state" 
+                  :severity="getStateSeverity(currentOrder.name_state)" 
+                  class="text-sm"
+                />
+              </div>
+              <div class="flex flex-col">
+                <span class="text-sm font-medium text-gray-500">Tipo de Movimiento</span>
+                <span class="font-semibold">{{ currentOrder.name_movement_type }}</span>
+              </div>
+              <div class="flex flex-col">
+                <span class="text-sm font-medium text-gray-500">Precio Total</span>
+                <span class="font-semibold">${{ currentOrder.total_price_products }}</span>
+              </div>
+              <div class="flex flex-col">
+                <span class="text-sm font-medium text-gray-500">Cantidad de Productos</span>
+                <span class="font-semibold">{{ currentOrder.amount_items_in_the_order }}</span>
+              </div>
+              
+              <!-- Lista desplegable de productos con paginador -->
+              <div class="col-span-2">
+                <Accordion>
+                  <AccordionTab header="Productos Asociados">
+                    <DataTable 
+                      :value="currentOrder.products" 
+                      class="p-datatable-sm"
+                      paginator 
+                      :rows="5" 
+                      :rowsPerPageOptions="[5, 10, 20]"
+                    >
+                      <Column field="name_product" header="Producto" sortable></Column>
+                      <Column field="quantity" header="Cantidad" sortable></Column>
+                      <Column field="price" header="Precio Unitario" sortable>
+                        <template #body="{data}">
+                          ${{ data.price }}
+                        </template>
+                      </Column>
+                      <Column header="Subtotal" sortable>
+                        <template #body="{data}">
+                          ${{ (data.quantity * data.price).toFixed(2) }}
+                        </template>
+                      </Column>
+                    </DataTable>
+                  </AccordionTab>
+                </Accordion>
+              </div>
+            </div>
+          </template>
+        </Card>
+      </div>
+    </Dialog>
+
+    <!-- Modal de editar/crear -->
+    <Dialog 
+      v-model:visible="showFormModal"
+      modal 
+      :header="isEditing ? 'Editar Orden de Compra' : 'Crear Orden de Compra'" 
+      :style="{ width: '50rem' }"
+      :closable="true"
+      @update:visible="val => { if (!val) cancelEdit() }"
+    >
+      <form @submit.prevent="saveEdit()" class="grid grid-cols-2 gap-4">
+        <!-- Nombre -->
+        <div class="flex flex-col gap-2">
+          <label for="name" class="font-semibold">Nombre:*</label>
+          <InputText 
+            v-model="form.name_purchase_order" 
+            id="name" 
+            autocomplete="off"
+            :class="{ 'p-invalid': nameError }"
+          />
+          <small v-if="nameError" class="p-error">
+            {{ nameError }}
+          </small>
+        </div>
+
+        <!-- Categoría -->
+        <div class="flex flex-col gap-2">
+          <label for="category" class="font-semibold">Categoría:*</label>
+          <Dropdown 
+            v-model="form.id_category_purchase_order_Id" 
+            :options="categoryPurchaseOrderStore.categoriesPurchaseOrders" 
+            optionLabel="name_category_purchase_order" 
+            optionValue="id_category_purchase_order"
+            placeholder="Seleccione una categoría"
+            :class="{ 'p-invalid': categoryError }"
+          />
+          <small v-if="categoryError" class="p-error">
+            {{ categoryError }}
+          </small>
+        </div>
+
+        <!-- Proveedor -->
+        <div class="flex flex-col gap-2">
+          <label for="supplier" class="font-semibold">Proveedor:*</label>
+          <Dropdown 
+            v-model="form.id_supplier_Id" 
+            :options="supplierStore.suppliers" 
+            optionLabel="name_supplier" 
+            optionValue="id_supplier"
+            placeholder="Seleccione un proveedor"
+            :class="{ 'p-invalid': supplierError }"
+          />
+          <small v-if="supplierError" class="p-error">
+            {{ supplierError }}
+          </small>
+        </div>
+
+        <!-- Estado -->
+        <div class="flex flex-col gap-2">
+          <label for="state" class="font-semibold">Estado:*</label>
+          <Dropdown 
+            v-model="form.id_state_Id" 
+            :options="stateStore.states" 
+            optionLabel="name_state" 
+            optionValue="id_state"
+            placeholder="Seleccione un estado"
+            :class="{ 'p-invalid': stateError }"
+          />
+          <small v-if="stateError" class="p-error">
+            {{ stateError }}
+          </small>
+        </div>
+
+        <!-- Tipo de Movimiento -->
+        <div class="flex flex-col gap-2">
+          <label for="movementType" class="font-semibold">Tipo de Movimiento:*</label>
+          <Dropdown 
+            v-model="form.id_movement_type_Id" 
+            :options="movementTypeStore.movementsTypes" 
+            optionLabel="name_movement_type" 
+            optionValue="id_movement_type"
+            placeholder="Seleccione un tipo de movimiento"
+            :class="{ 'p-invalid': movementTypeError }"
+          />
+          <small v-if="movementTypeError" class="p-error">
+            {{ movementTypeError }}
+          </small>
+        </div>
+
+        <!-- Productos Asociados -->
+        <div class="col-span-2">
+          <label class="font-semibold">Productos Asociados:</label>
+          <div v-for="(product, index) in form.products" :key="index" class="flex gap-2 mb-2 items-end">
+            <div class="flex-1">
+              <label class="text-sm text-gray-500">Producto</label>
+              <Dropdown
+                v-model="product.id_inventory_product_Id"
+                :options="getAvailableProducts(index)"
+                optionLabel="name_product"
+                optionValue="id_inventory_product"
+                placeholder="Seleccione un producto"
+                class="w-full"
+                :class="{ 'p-invalid': !product.id_inventory_product_Id }"
+              />
+            </div>
+            <div class="flex-1">
+              <label class="text-sm text-gray-500">Cantidad</label>
+              <InputNumber
+                v-model="product.quantity"
+                mode="decimal"
+                :min="1"
+                class="w-full"
+                :class="{ 'p-invalid': !product.quantity || product.quantity <= 0 }"
+              />
+            </div>
+            <Button
+              type="button"
+              @click="removeProduct(index)"
+              icon="pi pi-times"
+              severity="danger"
+              text
+              rounded
+            />
+          </div>
+          <Button
+            type="button"
+            @click="addProduct"
+            icon="pi pi-plus"
+            label="Añadir Producto"
+            class="p-button-text"
+            :disabled="getAvailableProducts().length === 0"
+          />
+          <small v-if="getAvailableProducts().length === 0" class="text-sm text-gray-500">
+            No hay más productos disponibles para agregar
+          </small>
+        </div>
+
+        <div class="col-span-2 flex justify-end gap-2 mt-4">
+          <Button 
+            type="button" 
+            label="Cancelar" 
+            severity="secondary" 
+            outlined
+            @click="cancelEdit"
+          />
+          <Button 
+            type="submit" 
+            label="Guardar" 
+            severity="primary"
+            :disabled="!isFormValid"
+            :loading="loadingSubmit"
+          />
+        </div>
+      </form>
+    </Dialog>
+
+    <ConfirmDialog></ConfirmDialog>
+    <Toast />
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, onMounted } from 'vue';
+import { usePurchaseOrderStore } from '@/stores/purchaseOrderStore';
+import { useSupplierStore } from '@/stores/supplierStore';
+import { useCategoryPurchaseOrderStore } from '@/stores/categoryPurchaseOrderStore';
+import { useStateStore } from '@/stores/stateStore';
+import { useMovementTypeStore } from '@/stores/movementTypeStore';
+import { useInventoryStore } from '@/stores/inventoryStore';
+import { useAuthStore } from '@/stores/authStore';
+import TableComponent from '@/components/TableComponent.vue';
+import { useConfirm } from "primevue/useconfirm";
+import { useToast } from "primevue/usetoast";
+import Card from 'primevue/card';
+import Tag from 'primevue/tag';
+import DataTable from 'primevue/datatable';
+import Column from 'primevue/column';
+import InputNumber from 'primevue/inputnumber';
+import Accordion from 'primevue/accordion';
+import AccordionTab from 'primevue/accordiontab';
+
+const confirm = useConfirm();
+const toast = useToast();
+
+// Stores
+const purchaseOrderStore = usePurchaseOrderStore();
+const supplierStore = useSupplierStore();
+const categoryPurchaseOrderStore = useCategoryPurchaseOrderStore();
+const stateStore = useStateStore();
+const movementTypeStore = useMovementTypeStore();
+const inventoryStore = useInventoryStore();
+const authStore = useAuthStore();
+
+// Estados
+const showActive = ref(true);
+const isViewing = ref(false);
+const isEditing = ref(false);
+const isCreating = ref(false);
+const loadingSubmit = ref(false);
+const currentOrder = ref<any>(null);
+const showFormModal = computed(() => isEditing.value || isCreating.value);
+
+// Columnas para la tabla
+const mappedColumns = [
+  { field: 'name_purchase_order', header: 'Nombre', sortable: true },
+  { field: 'name_user', header: 'Usuario', sortable: true },
+  { field: 'name_supplier', header: 'Proveedor', sortable: true },
+  { field: 'name_category_purchase_order', header: 'Categoría', sortable: true },
+  { field: 'name_state', header: 'Estado', sortable: true },
+  { field: 'name_movement_type', header: 'Tipo de Movimiento', sortable: true }
+];
+
+// Formulario para crear/editar
+const form = ref({
+  id_purchase_order: null as number | null,
+  name_purchase_order: '',
+  id_category_purchase_order_Id: null as number | null,
+  id_supplier_Id: null as number | null,
+  id_state_Id: null as number | null,
+  id_movement_type_Id: null as number | null,
+  id_user_Id: authStore.user?.id_user || 0,
+  id_department_Id: authStore.user?.department?.id_department || 0,
+  id_company_Id: authStore.user?.company?.id_company || 0,
+  products: [] as Array<{ id_inventory_product_Id: number; quantity: number }>,
+});
+
+// Método para obtener productos disponibles
+const getAvailableProducts = (currentIndex: number | null = null) => {
+  const selectedProductIds = form.value.products
+    .filter((_, index) => index !== currentIndex)
+    .map(p => p.id_inventory_product_Id);
   
-  <script setup lang="ts">
-  import { ref, computed, onMounted } from 'vue';
-  import { usePurchaseOrderStore } from '@/stores/purchaseOrderStore';
-  import { useAuthStore } from '@/stores/authStore';
-  import { useCategoryPurchaseOrderStore } from '@/stores/categoryPurchaseOrderStore';
-  import { useSupplierStore } from '@/stores/supplierStore';
-  import { useStateStore } from '@/stores/stateStore';
-  import { useMovementTypeStore } from '@/stores/movementTypeStore';
-  import { useInventoryStore } from '@/stores/inventoryStore';
-  import type { PurchaseOrder } from '@/interfaces/PurchaseOrder';
+  return inventoryStore.inventories.filter(
+    product => !selectedProductIds.includes(product.id_inventory_product)
+  );
+};
+
+// Validaciones
+const nameError = computed(() => {
+  const name = form.value.name_purchase_order || '';
+  if (!name.trim()) return 'El nombre es requerido';
+  if (name.length < 3) return 'Mínimo 3 caracteres';
+  return null;
+});
+
+const categoryError = computed(() => {
+  if (form.value.id_category_purchase_order_Id === null) return 'La categoría es requerida';
+  return null;
+});
+
+const supplierError = computed(() => {
+  if (form.value.id_supplier_Id === null) return 'El proveedor es requerido';
+  return null;
+});
+
+const stateError = computed(() => {
+  if (form.value.id_state_Id === null) return 'El estado es requerido';
+  return null;
+});
+
+const movementTypeError = computed(() => {
+  if (form.value.id_movement_type_Id === null) return 'El tipo de movimiento es requerido';
+  return null;
+});
+
+const productsError = computed(() => {
+  if (form.value.products.length === 0) return 'Debe agregar al menos un producto';
   
-  // Stores
-  const purchaseOrderStore = usePurchaseOrderStore();
-  const authStore = useAuthStore();
-  const categoryPurchaseOrderStore = useCategoryPurchaseOrderStore();
-  const supplierStore = useSupplierStore();
-  const stateStore = useStateStore();
-  const movementTypeStore = useMovementTypeStore();
-  const inventoryStore = useInventoryStore();
+  const hasEmptyProducts = form.value.products.some(
+    p => !p.id_inventory_product_Id || p.id_inventory_product_Id === 0 || !p.quantity || p.quantity <= 0
+  );
   
-  // Variables reactivas
-  const showActive = ref(true);
-  const isEditing = ref(false);
-  const isCreating = ref(false);
-  const isViewing = ref(false);
-  const currentOrder = ref<PurchaseOrder | null>(null);
-  const form = ref({
-    id_purchase_order: 0,
-    name_purchase_order: '',
-    id_user_Id: authStore.user?.id_user || 0,
-    id_category_purchase_order_Id: 0,
-    id_department_Id: authStore.user?.department?.id_department || 0,
-    id_supplier_Id: 0,
-    id_state_Id: 0,
-    id_movement_type_Id: 0,
-    id_company_Id: authStore.user?.company?.id_company || 0,
-    products: [] as Array<{ id_inventory_product_Id: number; quantity: number }>,
-  });
+  if (hasEmptyProducts) return 'Todos los productos deben estar completos';
   
-  // Filtro de órdenes de compra
-  const filteredPurchaseOrders = computed(() => {
-    return purchaseOrderStore.purchaseOrders.filter((order) =>
-      showActive.value ? !order.delete_log_purchase_orders : order.delete_log_purchase_orders
-    );
-  });
-  
-  // Ver información de la orden de compra
-  const viewOrder = (order: PurchaseOrder) => {
+  return null;
+});
+
+const isFormValid = computed(() => {
+  return !nameError.value && !categoryError.value && !supplierError.value && 
+         !stateError.value && !movementTypeError.value && !productsError.value;
+});
+
+// Computed properties
+const filteredPurchaseOrders = computed(() => {
+  return purchaseOrderStore.purchaseOrders.filter((order) =>
+    showActive.value ? !order.delete_log_purchase_orders : order.delete_log_purchase_orders
+  );
+});
+
+// Métodos
+const getStateSeverity = (state: string) => {
+  switch(state.toLowerCase()) {
+    case 'activo': return 'success';
+    case 'pendiente': return 'warning';
+    case 'cancelado': return 'danger';
+    default: return 'info';
+  }
+};
+
+const viewOrder = async (id: number) => {
+  currentOrder.value = filteredPurchaseOrders.value.find(o => o.id_purchase_order === id);
+  if (currentOrder.value) {
     isViewing.value = true;
-    isEditing.value = false;
-    isCreating.value = false;
-    currentOrder.value = order;
+  }
+};
+
+const openCreateModal = () => {
+  isCreating.value = true;
+  isEditing.value = false;
+  form.value = {
+    id_purchase_order: null,
+    name_purchase_order: '',
+    id_category_purchase_order_Id: null,
+    id_supplier_Id: null,
+    id_state_Id: null,
+    id_movement_type_Id: null,
+    id_user_Id: authStore.user?.id_user || 0,
+    id_department_Id: authStore.user?.department?.id_department || 0,
+    id_company_Id: authStore.user?.company?.id_company || 0,
+    products: [],
   };
-  
-  // Cerrar vista de solo lectura
-  const closeView = () => {
-    isViewing.value = false;
-    currentOrder.value = null;
-  };
-  
-  // Abrir modal de creación
-  const openCreateModal = () => {
-    isCreating.value = true;
-    isEditing.value = false;
-    isViewing.value = false;
-    form.value = {
-      id_purchase_order: 0,
-      name_purchase_order: '',
-      id_user_Id: authStore.user?.id_user || 0,
-      id_category_purchase_order_Id: 0,
-      id_department_Id: authStore.user?.department?.id_department || 0,
-      id_supplier_Id: 0,
-      id_state_Id: 0,
-      id_movement_type_Id: 0,
-      id_company_Id: authStore.user?.company?.id_company || 0,
-      products: [],
-    };
-  };
-  
-  // Iniciar edición de una orden de compra
-  const startEdit = async (order: PurchaseOrder) => {
-    // Recargar datos necesarios si no están cargados
-    await categoryPurchaseOrderStore.fetchCategoriesPurchaseOrders();
-    await supplierStore.fetchSuppliers();
-    await stateStore.fetchStates();
-    await movementTypeStore.fetchMovementsTypes();
-    await inventoryStore.fetchInventories();
-  
+};
+
+const startEdit = async (id: number) => {
+  await categoryPurchaseOrderStore.fetchCategoriesPurchaseOrders();
+  await supplierStore.fetchSuppliers();
+  await stateStore.fetchStates();
+  await movementTypeStore.fetchMovementsTypes();
+  await inventoryStore.fetchInventories();
+
+  const order = purchaseOrderStore.purchaseOrders.find(o => o.id_purchase_order === id);
+  if (order) {
     isEditing.value = true;
     isCreating.value = false;
-    isViewing.value = false;
-  
-    // Buscar el ID de la categoría por su nombre
+    
     const category = categoryPurchaseOrderStore.categoriesPurchaseOrders.find(
-      (cat) => cat.name_category_purchase_order === order.name_category_purchase_order
+      cat => cat.name_category_purchase_order === order.name_category_purchase_order
     );
-  
-    // Buscar el ID del proveedor por su nombre
+
     const supplier = supplierStore.suppliers.find(
-      (sup) => sup.name_supplier === order.name_supplier
+      sup => sup.name_supplier === order.name_supplier
     );
-  
-    // Buscar el ID del estado por su nombre
+
     const state = stateStore.states.find(
-      (st) => st.name_state === order.name_state
+      st => st.name_state === order.name_state
     );
-  
-    // Buscar el ID del tipo de movimiento por su nombre
+
     const movementType = movementTypeStore.movementsTypes.find(
-      (mt) => mt.name_movement_type === order.name_movement_type
+      mt => mt.name_movement_type === order.name_movement_type
     );
-  
-    // Mapear los productos para obtener sus IDs
+
     const products = order.products.map((product) => {
       const inventoryProduct = inventoryStore.inventories.find(
-        (inv) => inv.name_product === product.name_product
+        inv => inv.name_product === product.name_product
       );
       return {
         id_inventory_product_Id: inventoryProduct ? inventoryProduct.id_inventory_product : 0,
         quantity: product.quantity,
       };
     });
-  
+
     form.value = {
       id_purchase_order: order.id_purchase_order,
       name_purchase_order: order.name_purchase_order,
-      id_user_Id: authStore.user?.id_user || 0,
       id_category_purchase_order_Id: category ? category.id_category_purchase_order : 0,
-      id_department_Id: authStore.user?.department?.id_department || 0,
       id_supplier_Id: supplier ? supplier.id_supplier : 0,
       id_state_Id: state ? state.id_state : 0,
       id_movement_type_Id: movementType ? movementType.id_movement_type : 0,
+      id_user_Id: authStore.user?.id_user || 0,
+      id_department_Id: authStore.user?.department?.id_department || 0,
       id_company_Id: authStore.user?.company?.id_company || 0,
       products: products,
     };
-  };
+  }
+};
+
+const saveEdit = async () => {
+  if (!isFormValid.value) return;
   
-  // Cancelar edición/creación
-  const cancelEdit = () => {
-    isEditing.value = false;
-    isCreating.value = false;
-    form.value = {
-      id_purchase_order: 0,
-      name_purchase_order: '',
-      id_user_Id: 0,
-      id_category_purchase_order_Id: 0,
-      id_department_Id: 0,
-      id_supplier_Id: 0,
-      id_state_Id: 0,
-      id_movement_type_Id: 0,
-      id_company_Id: 0,
-      products: [],
+  loadingSubmit.value = true;
+  try {
+    const payload = {
+      name_purchase_order: form.value.name_purchase_order,
+      id_category_purchase_order_Id: form.value.id_category_purchase_order_Id,
+      id_supplier_Id: form.value.id_supplier_Id,
+      id_state_Id: form.value.id_state_Id,
+      id_movement_type_Id: form.value.id_movement_type_Id,
+      id_user_Id: form.value.id_user_Id,
+      id_department_Id: form.value.id_department_Id,
+      id_company_Id: form.value.id_company_Id,
+      products: form.value.products,
     };
-  };
-  
-  // Añadir producto al formulario
-  const addProduct = () => {
-    form.value.products.push({ id_inventory_product_Id: 0, quantity: 0 });
-  };
-  
-  // Eliminar producto del formulario
-  const removeProduct = (index: number) => {
-    form.value.products.splice(index, 1);
-  };
-  
-  // Guardar cambios (editar o crear)
-  const saveEdit = async () => {
-    if (isEditing.value) {
-      await purchaseOrderStore.editPurchaseOrder(form.value.id_purchase_order, form.value);
+
+    if (isEditing.value && form.value.id_purchase_order) {
+      await purchaseOrderStore.editPurchaseOrder(form.value.id_purchase_order, payload);
+      toast.add({ 
+        severity: 'success', 
+        summary: 'Éxito', 
+        detail: 'Orden de compra actualizada correctamente', 
+        life: 3000 
+      });
     } else {
-      await purchaseOrderStore.addPurchaseOrder(form.value);
+      await purchaseOrderStore.addPurchaseOrder(payload);
+      toast.add({ 
+        severity: 'success', 
+        summary: 'Éxito', 
+        detail: 'Orden de compra creada correctamente', 
+        life: 3000 
+      });
     }
+    
     cancelEdit();
-  };
-  
-  // Eliminar orden de compra
-  const removeOrder = async (id: number) => {
-    await purchaseOrderStore.removePurchaseOrder(id);
-  };
-  
-  // Restaurar orden de compra
-  const restoreOrder = async (id: number) => {
-    await purchaseOrderStore.restoreDeletedPurchaseOrder(id);
-  };
-  
-  // Cargar datos al montar el componente
-  onMounted(async () => {
     await purchaseOrderStore.fetchPurchaseOrders();
-    await categoryPurchaseOrderStore.fetchCategoriesPurchaseOrders();
-    await supplierStore.fetchSuppliers();
-    await stateStore.fetchStates();
-    await movementTypeStore.fetchMovementsTypes();
-    await inventoryStore.fetchInventories();
+  } catch (error) {
+    toast.add({ 
+      severity: 'error', 
+      summary: 'Error', 
+      detail: 'Error al guardar la orden de compra', 
+      life: 3000 
+    });
+  } finally {
+    loadingSubmit.value = false;
+  }
+};
+
+const cancelEdit = () => {
+  isEditing.value = false;
+  isCreating.value = false;
+  form.value = {
+    id_purchase_order: null,
+    name_purchase_order: '',
+    id_category_purchase_order_Id: null,
+    id_supplier_Id: null,
+    id_state_Id: null,
+    id_movement_type_Id: null,
+    id_user_Id: authStore.user?.id_user || 0,
+    id_department_Id: authStore.user?.department?.id_department || 0,
+    id_company_Id: authStore.user?.company?.id_company || 0,
+    products: [],
+  };
+};
+
+const addProduct = () => {
+  const available = getAvailableProducts();
+  if (available.length > 0) {
+    form.value.products.push({ 
+      id_inventory_product_Id: available[0].id_inventory_product,
+      quantity: 1 
+    });
+  }
+};
+
+const removeProduct = (index: number) => {
+  form.value.products.splice(index, 1);
+};
+
+const removeOrder = async (id: number) => {
+  confirm.require({
+    message: '¿Estás seguro de eliminar esta orden de compra?',
+    header: 'Confirmación',
+    icon: 'pi pi-exclamation-triangle',
+    rejectLabel: 'Cancelar',
+    rejectProps: {
+      label: 'Cancelar',
+      severity: 'secondary',
+      outlined: true
+    },
+    acceptProps: {
+      label: 'Eliminar',
+      severity: 'danger'
+    },
+    accept: async () => {
+      try {
+        await purchaseOrderStore.removePurchaseOrder(id);
+        await purchaseOrderStore.fetchPurchaseOrders();
+        toast.add({ 
+          severity: 'success', 
+          summary: 'Éxito', 
+          detail: 'Orden de compra eliminada correctamente', 
+          life: 3000 
+        });
+      } catch (error) {
+        toast.add({ 
+          severity: 'error', 
+          summary: 'Error', 
+          detail: 'Error al eliminar la orden de compra', 
+          life: 3000 
+        });
+      }
+    },
+    reject: () => {}
   });
-  </script>
-  
-  <style scoped>
-  /* Estilos adicionales si son necesarios */
-  </style>
+};
+
+const restoreOrder = async (id: number) => {
+  try {
+    await purchaseOrderStore.restoreDeletedPurchaseOrder(id);
+    await purchaseOrderStore.fetchPurchaseOrders();
+    toast.add({ 
+      severity: 'success', 
+      summary: 'Éxito', 
+      detail: 'Orden de compra restaurada correctamente', 
+      life: 3000 
+    });
+  } catch (error) {
+    toast.add({ 
+      severity: 'error', 
+      summary: 'Error', 
+      detail: 'Error al restaurar la orden de compra', 
+      life: 3000 
+    });
+  }
+};
+
+// Cargar datos iniciales
+onMounted(async () => {
+  await purchaseOrderStore.fetchPurchaseOrders();
+  await categoryPurchaseOrderStore.fetchCategoriesPurchaseOrders();
+  await supplierStore.fetchSuppliers();
+  await stateStore.fetchStates();
+  await movementTypeStore.fetchMovementsTypes();
+  await inventoryStore.fetchInventories();
+});
+</script>
+
+<style scoped>
+.p-card {
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+}
+
+.p-card-title {
+  font-size: 1.1rem;
+  color: var(--primary-color);
+}
+
+/* Estilos para campos inválidos */
+.p-invalid {
+  border-color: var(--red-500) !important;
+}
+
+.p-error {
+  color: var(--red-500);
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+</style>

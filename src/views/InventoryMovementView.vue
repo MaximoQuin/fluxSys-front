@@ -1,71 +1,208 @@
-<!-- src/views/InventoryMovementView.vue -->
 <template>
   <div class="container mx-auto p-4">
     <h1 class="text-2xl font-bold mb-4">Movimientos de Inventario</h1>
 
-    <!-- Tabla de movimientos de inventario -->
-    <table class="min-w-full bg-black">
-      <thead>
-        <tr>
-          <th class="py-2 px-4 border-b">ID</th>
-          <th class="py-2 px-4 border-b">Cantidad Modificada</th>
-          <th class="py-2 px-4 border-b">Producto</th>
-          <th class="py-2 px-4 border-b">Categoría</th>
-          <th class="py-2 px-4 border-b">Departamento</th>
-          <th class="py-2 px-4 border-b">Proveedor</th>
-          <th class="py-2 px-4 border-b">Tipo de Movimiento</th>
-          <th class="py-2 px-4 border-b">Módulo</th>
-          <th class="py-2 px-4 border-b">Empresa</th>
-          <th class="py-2 px-4 border-b">Usuario</th>
-          <th class="py-2 px-4 border-b">Fecha de Inserción</th>
-          <th class="py-2 px-4 border-b">Fecha de Actualización</th>
-          <th class="py-2 px-4 border-b">Fecha de Eliminación</th>
-          <th class="py-2 px-4 border-b">Fecha de Restauración</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr
-          v-for="movement in inventoryMovements"
-          :key="movement.id_inventory_movement"
-          class="hover:bg-gray-50"
-        >
-          <td class="py-2 px-4 border-b">{{ movement.id_inventory_movement }}</td>
-          <td class="py-2 px-4 border-b">{{ movement.amount_modify }}</td>
-          <td class="py-2 px-4 border-b">{{ movement.name_product }}</td>
-          <td class="py-2 px-4 border-b">{{ movement.name_category_product }}</td>
-          <td class="py-2 px-4 border-b">{{ movement.name_department }}</td>
-          <td class="py-2 px-4 border-b">{{ movement.name_supplier }}</td>
-          <td class="py-2 px-4 border-b">{{ movement.name_movement_type }}</td>
-          <td class="py-2 px-4 border-b">{{ movement.name_module }}</td>
-          <td class="py-2 px-4 border-b">{{ movement.name_company }}</td>
-          <td class="py-2 px-4 border-b">{{ movement.name_user }}</td>
-          <td class="py-2 px-4 border-b">{{ movement.date_insert }}</td>
-          <td class="py-2 px-4 border-b">{{ movement.date_update }}</td>
-          <td class="py-2 px-4 border-b">{{ movement.date_delete }}</td>
-          <td class="py-2 px-4 border-b">{{ movement.date_restore }}</td>
-        </tr>
-      </tbody>
-    </table>
+    <!-- Tabla de movimientos con ancho optimizado -->
+    <div class="card overflow-hidden">
+      <DataTable 
+        :value="filteredMovements" 
+        stripedRows 
+        paginator 
+        :rows="10" 
+        :rowsPerPageOptions="[10, 20, 50]"
+        :scrollable="true" 
+        scrollDirection="horizontal"
+        :loading="loading"
+        tableStyle="min-width: 700px"
+        :scrollHeight="'280px'"
+        :globalFilterFields="[
+          'amount_modify', 'name_product', 
+          'name_department', 'name_supplier', 'name_user'
+        ]"
+      >
+        <template #header>
+          <div class="flex justify-end mb-4">
+            <span class="p-input-icon-left">
+              <i class="pi pi-search" />
+              <InputText 
+                v-model="searchTerm" 
+                placeholder="Buscar movimientos..." 
+                class="p-inputtext-sm w-52"
+              />
+            </span>
+          </div>
+        </template>
 
-    <!-- Cargando -->
-    <div v-if="loading" class="mt-4">
-      Cargando...
+        <template #empty>
+          <div class="text-center py-4 text-gray-500">
+            {{ loading ? 'Cargando movimientos...' : 'No se encontraron movimientos' }}
+          </div>
+        </template>
+
+        <!-- Columnas con anchos optimizados -->
+        <Column field="amount_modify" header="Cantidad" :sortable="true" headerStyle="width: 90px" bodyStyle="width: 90px">
+          <template #body="{ data }">
+            {{ formatNumber(data.amount_modify) }}
+          </template>
+        </Column>
+        
+        <Column field="name_product" header="Producto" :sortable="true" headerStyle="width: 120px" bodyStyle="width: 120px"></Column>
+        
+        <Column field="name_department" header="Depto" :sortable="true" headerStyle="width: 100px" bodyStyle="width: 100px"></Column>
+        
+        <Column field="name_supplier" header="Proveedor" :sortable="true" headerStyle="width: 100px" bodyStyle="width: 100px"></Column>
+        
+        <Column field="name_user" header="Usuario" :sortable="true" headerStyle="width: 100px" bodyStyle="width: 100px"></Column>
+        
+        <Column field="date_insert" header="F. Inserción" :sortable="true" headerStyle="width: 120px" bodyStyle="width: 120px">
+          <template #body="{ data }">
+            <div class="whitespace-nowrap text-sm">
+              {{ formatDateTime(data.date_insert) || 'N/A'}}
+            </div>
+          </template>
+        </Column>
+        
+        <Column field="date_update" header="F. Actualización" :sortable="true" headerStyle="width: 120px" bodyStyle="width: 120px">
+          <template #body="{ data }">
+            <div class="whitespace-nowrap text-sm">
+              {{ formatDateTime(data.date_update) || 'N/A' }}
+            </div>
+          </template>
+        </Column>
+
+        <Column field="date_delete" header="F. Eliminación" :sortable="true" headerStyle="width: 120px" bodyStyle="width: 120px">
+          <template #body="{ data }">
+            <div class="whitespace-nowrap text-sm">
+              {{ formatDateTime(data.date_delete) || 'N/A' }}
+            </div>
+          </template>
+        </Column>
+
+        <Column field="date_restore" header="F. Restauración" :sortable="true" headerStyle="width: 120px" bodyStyle="width: 120px">
+          <template #body="{ data }">
+            <div class="whitespace-nowrap text-sm">
+              {{ formatDateTime(data.date_restore) || 'N/A' }}
+            </div>
+          </template>
+        </Column>
+      </DataTable>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useInventoryMovementStore } from '@/stores/inventoryMovementStore';
+import { useRoute } from 'vue-router';
+import DataTable from 'primevue/datatable';
+import Column from 'primevue/column';
+import InputText from 'primevue/inputtext';
 
 const inventoryMovementStore = useInventoryMovementStore();
-const { inventoryMovements, loading, fetchInventoryMovements } = inventoryMovementStore;
+const route = useRoute();
+const searchTerm = ref('');
 
-onMounted(() => {
-  fetchInventoryMovements();
+// Cargar datos al montar el componente y cuando cambia la ruta
+onMounted(async () => {
+  await loadMovements();
+});
+
+watch(() => route.path, async () => {
+  await loadMovements();
+}, { immediate: true });
+
+// Función para cargar los movimientos
+const loadMovements = async () => {
+  try {
+    await inventoryMovementStore.fetchInventoryMovements();
+  } catch (error) {
+    console.error('Error al cargar movimientos:', error);
+  }
+};
+
+// Formatear números
+const formatNumber = (value: number) => {
+  return value?.toLocaleString('es-ES') || '0';
+};
+
+// Formatear fecha y hora
+const formatDateTime = (dateString: string) => {
+  if (!dateString) return null;
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return null;
+    
+    return date.toLocaleString('es-ES', {
+      day: '2-digit',
+      month: 'short', 
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  } catch (error) {
+    console.error('Error formateando fecha:', error);
+    return null;
+  }
+};
+
+// Filtrar movimientos
+const filteredMovements = computed(() => {
+  if (!searchTerm.value) return inventoryMovementStore.inventoryMovements;
+  
+  const term = searchTerm.value.toLowerCase();
+  return inventoryMovementStore.inventoryMovements.filter(movement => 
+    Object.entries(movement).some(([key, value]) => {
+      if (key.includes('date')) return false; // Excluir fechas de la búsqueda
+      return String(value).toLowerCase().includes(term);
+    })
+  );
 });
 </script>
 
 <style scoped>
-/* Estilos adicionales si son necesarios */
+.container {
+  max-width: 100%;
+}
+
+.card {
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  overflow-x: auto;
+  width: 100%;
+}
+
+.p-input-icon-left {
+  position: relative;
+  margin-bottom: 1rem;
+}
+
+.p-input-icon-left i {
+  position: absolute;
+  top: 50%;
+  left: 0.75rem;
+  transform: translateY(-50%);
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+/* Scroll horizontal personalizado */
+:deep(.p-datatable-wrapper) {
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+:deep(.p-datatable-wrapper::-webkit-scrollbar) {
+  height: 8px;
+}
+
+:deep(.p-datatable-wrapper::-webkit-scrollbar-thumb) {
+  background-color: #c1c1c1;
+  border-radius: 4px;
+}
+
+/* Estilos compactos para celdas */
+:deep(.p-datatable .p-datatable-thead > tr > th),
+:deep(.p-datatable .p-datatable-tbody > tr > td) {
+  padding: 0.5rem 0.75rem;
+}
 </style>
