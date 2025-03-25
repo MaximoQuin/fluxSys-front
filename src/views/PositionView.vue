@@ -20,7 +20,7 @@
       </button>
     </div>
 
-    <!-- Tabla de puestos -->
+    <!-- Tabla -->
     <TableComponent
       :loader="positionStore.loading"
       :columns="columns"
@@ -39,12 +39,20 @@
     <Dialog v-model:visible="visibleDetails" modal header="Detalles del Puesto" :style="{ width: '30rem' }">
       <div class="flex flex-col gap-4">
         <div class="flex flex-col">
-          <span class="text-sm font-medium text-gray-500">Nombre del puesto</span>
-          <span class="font-semibold">{{ currentPosition?.name_position }}</span>
+          <span class="text-sm font-medium text-gray-500">ID del Puesto</span>
+          <span class="font-semibold">{{ currentPosition?.id_position || '—' }}</span>
+        </div>
+        <div class="flex flex-col">
+          <span class="text-sm font-medium text-gray-500">Nombre del Puesto</span>
+          <span class="font-semibold">{{ currentPosition?.name_position || '—' }}</span>
         </div>
         <div class="flex flex-col">
           <span class="text-sm font-medium text-gray-500">Compañía</span>
-          <span class="font-semibold">{{ currentPosition?.name_company }}</span>
+          <span class="font-semibold">{{ currentPosition?.name_company || '—' }}</span>
+        </div>
+        <div class="flex flex-col" v-if="currentPosition?.created_at">
+          <span class="text-sm font-medium text-gray-500">Creado el</span>
+          <span class="font-semibold">{{ formatDate(currentPosition.created_at) }}</span>
         </div>
       </div>
     </Dialog>
@@ -103,7 +111,7 @@ const form = ref({
   name_position: ''
 });
 
-// 🔍 Validación
+// Validación
 const nameError = computed(() => {
   const name = form.value.name_position?.trim() || '';
   if (!name) return 'El nombre es obligatorio';
@@ -112,23 +120,23 @@ const nameError = computed(() => {
   return null;
 });
 
-// 🔍 Columnas de la tabla
+// Columnas para la tabla
 const columns = [
   { field: 'id_position', header: 'ID' },
   { field: 'name_position', header: 'Nombre' },
   { field: 'name_company', header: 'Compañía' }
 ];
 
-// ✅ Datos filtrados según pestaña
-const filteredData = computed(() => {
-  return positionStore.positions.filter(p =>
+// Filtro para mostrar solo activos o eliminados
+const filteredData = computed(() =>
+  positionStore.positions.filter(p =>
     showActive.value
       ? p.delete_log_position === false || p.delete_log_position === 0
       : p.delete_log_position === true || p.delete_log_position === 1
-  );
-});
+  )
+);
 
-// ✅ Contadores
+// Contadores
 const totalActivos = computed(() =>
   positionStore.positions.filter(p => p.delete_log_position === false || p.delete_log_position === 0).length
 );
@@ -137,31 +145,38 @@ const totalEliminados = computed(() =>
   positionStore.positions.filter(p => p.delete_log_position === true || p.delete_log_position === 1).length
 );
 
-// ✅ Cargar datos
+// Formateo de fecha
+const formatDate = (dateString: string) => {
+  return new Date(dateString).toLocaleDateString('es-MX', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+};
+
+// Acciones
 onMounted(() => {
   positionStore.fetchPositions();
 });
 
-// ✅ Cambiar entre pestañas
 const setActive = (active: boolean) => {
   showActive.value = active;
 };
 
-// ✅ Ver
-const handleSee = async (id: number) => {
-  await positionStore.fetchPositionById(id);
-  currentPosition.value = positionStore.currentPosition;
-  visibleDetails.value = true;
+const handleSee = (id: number) => {
+  const pos = positionStore.positions.find(p => p.id_position === id);
+  if (pos) {
+    currentPosition.value = pos;
+    visibleDetails.value = true;
+  }
 };
 
-// ✅ Crear
 const handleCreate = () => {
   isEdit.value = false;
   form.value.name_position = '';
   visibleForm.value = true;
 };
 
-// ✅ Editar
 const handleUpdate = (id: number) => {
   const pos = positionStore.positions.find(p => p.id_position === id);
   if (pos) {
@@ -172,7 +187,6 @@ const handleUpdate = (id: number) => {
   }
 };
 
-// ✅ Crear nuevo puesto
 const createPosition = async () => {
   if (nameError.value) return;
   try {
@@ -185,7 +199,6 @@ const createPosition = async () => {
   }
 };
 
-// ✅ Actualizar puesto
 const updatePosition = async () => {
   if (!editingId.value || nameError.value) return;
   try {
@@ -198,7 +211,6 @@ const updatePosition = async () => {
   }
 };
 
-// ✅ Eliminar
 const handleRemove = (id: number) => {
   confirm.require({
     message: '¿Deseas eliminar este puesto?',
@@ -212,7 +224,6 @@ const handleRemove = (id: number) => {
   });
 };
 
-// ✅ Restaurar
 const handleRestore = async (id: number) => {
   try {
     await positionStore.restoreDeletedPosition(id);
