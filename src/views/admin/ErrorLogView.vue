@@ -1,86 +1,218 @@
-<!-- src/views/ErrorLogView.vue -->
 <template>
-    <div class="container mx-auto p-4">
-      <h1 class="text-2xl font-bold mb-4">Registros de Errores</h1>
-  
-      <!-- Tabla de errores -->
-      <table class="min-w-full bg-black">
-        <thead>
-          <tr>
-            <th class="py-2 px-4 border-b">ID</th>
-            <th class="py-2 px-4 border-b">Mensaje</th>
-            <th class="py-2 px-4 border-b">Fuente</th>
-            <th class="py-2 px-4 border-b">Fecha y Hora</th>
-            <th class="py-2 px-4 border-b">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="errorLog in errorLogs" :key="errorLog.id_error_log" class="hover:bg-gray-50">
-            <td class="py-2 px-4 border-b">{{ errorLog.id_error_log }}</td>
-            <td class="py-2 px-4 border-b">{{ errorLog.message_error }}</td>
-            <td class="py-2 px-4 border-b">{{ errorLog.source_error }}</td>
-            <td class="py-2 px-4 border-b">{{ errorLog.timestamp }}</td>
-            <td class="py-2 px-4 border-b">
-              <button
-                @click="showStacktrace(errorLog.stacktrace_error)"
-                class="bg-blue-500 text-white px-4 py-2 rounded"
-              >
-                Ver Stacktrace
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-  
-      <!-- Cargando -->
-      <div v-if="loading" class="mt-4">
-        Cargando...
-      </div>
-  
-      <!-- Modal para mostrar el stacktrace -->
-      <div v-if="isModalOpen" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-        <div class="bg-white p-6 rounded-lg max-w-2xl w-full">
-          <h2 class="text-xl font-bold mb-4">Stacktrace</h2>
-          <pre class="bg-gray-100 p-4 rounded overflow-auto">{{ currentStacktrace }}</pre>
-          <button
-            @click="closeModal"
-            class="mt-4 bg-red-500 text-white px-4 py-2 rounded"
-          >
-            Cerrar
-          </button>
+  <div class="container mx-auto p-4">
+    <h1 class="text-2xl font-bold mb-4">Registros de Errores</h1>
+
+    <!-- Tabla de errores con buscador -->
+    <DataTable 
+      :value="filteredErrorLogs" 
+      stripedRows 
+      paginator 
+      :rows="10" 
+      :rowsPerPageOptions="[10, 20, 50]"
+      :scrollable="true" 
+      :scrollHeight="'280px'" 
+      :loading="loading"
+      tableStyle="min-width: 100%"
+      :globalFilterFields="['message_error', 'source_error', 'timestamp']"
+    >
+      <template #header>
+        <div class="flex justify-between items-center mb-4">
+          <span class="p-input-icon-left">
+            <i class="pi pi-search" />
+            <InputText 
+              v-model="searchTerm" 
+              placeholder="Buscar en registros..." 
+              class="p-inputtext-sm"
+            />
+          </span>
+        </div>
+      </template>
+
+      <template #empty>
+        <div class="text-center py-4 text-gray-500">
+          {{ loading ? 'Cargando registros...' : 'No se encontraron registros de errores' }}
+        </div>
+      </template>
+
+      <Column field="message_error" header="Mensaje" :sortable="true">
+        <template #body="{ data }">
+          <div class="truncate max-w-xs">
+            {{ data.message_error }}
+          </div>
+        </template>
+      </Column>
+      
+      <Column field="source_error" header="Fuente" :sortable="true"></Column>
+      
+      <Column field="timestamp" header="Fecha y Hora" :sortable="true">
+        <template #body="{ data }">
+          {{ formatDateTime(data.timestamp) || 'N/A' }}
+        </template>
+      </Column>
+      
+      <Column header="Acciones">
+        <template #body="{ data }">
+          <Button 
+            label="Ver Detalles" 
+            icon="pi pi-code" 
+            class="p-button-info p-button-sm"
+            @click="showErrorDetails(data)"
+          />
+        </template>
+      </Column>
+    </DataTable>
+
+    <!-- Modal para mostrar detalles del error -->
+    <Dialog 
+      v-model:visible="isModalOpen" 
+      header="Detalles del Error" 
+      :style="{ width: '50vw' }"
+      :modal="true"
+    >
+      <div class="space-y-4">
+        <div>
+          <h3 class="font-semibold">Mensaje:</h3>
+          <p class="mt-1">{{ currentError.message_error }}</p>
+        </div>
+        
+        <div>
+          <h3 class="font-semibold">Fuente:</h3>
+          <p class="mt-1">{{ currentError.source_error }}</p>
+        </div>
+        
+        <div>
+          <h3 class="font-semibold">Fecha y Hora:</h3>
+          <p class="mt-1">{{ formatDateTime(currentError.timestamp) }}</p>
+        </div>
+        
+        <div>
+          <h3 class="font-semibold">Stacktrace:</h3>
+          <pre class="bg-gray-700 p-4 rounded mt-1 overflow-auto max-h-64">{{ currentError.stacktrace_error }}</pre>
         </div>
       </div>
-    </div>
-  </template>
+      
+      <template #footer>
+        <Button 
+          label="Cerrar" 
+          icon="pi pi-times" 
+          class="p-button-danger"
+          @click="closeModal"
+        />
+      </template>
+    </Dialog>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, onMounted, watch } from 'vue';
+import { useErrorLogStore } from '@/stores/errorLogStore';
+import { useRoute } from 'vue-router';
+import DataTable from 'primevue/datatable';
+import Column from 'primevue/column';
+import InputText from 'primevue/inputtext';
+import Button from 'primevue/button';
+import Dialog from 'primevue/dialog';
+
+const errorLogStore = useErrorLogStore();
+const route = useRoute();
+const searchTerm = ref('');
+
+// Estado del modal
+const isModalOpen = ref(false);
+const currentError = ref({
+  message_error: '',
+  source_error: '',
+  timestamp: '',
+  stacktrace_error: ''
+});
+
+// Cargar datos al montar el componente y cuando cambia la ruta
+onMounted(async () => {
+  await loadErrorLogs();
+});
+
+watch(() => route.path, async () => {
+  await loadErrorLogs();
+}, { immediate: true });
+
+// Función para cargar los registros
+const loadErrorLogs = async () => {
+  try {
+    await errorLogStore.fetchErrorLogs();
+  } catch (error) {
+    console.error('Error al cargar registros:', error);
+  }
+};
+
+// Formatear fecha y hora
+const formatDateTime = (dateString: string) => {
+  if (!dateString) return null;
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return null;
+    
+    return date.toLocaleString('es-ES', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+  } catch (error) {
+    console.error('Error formateando fecha:', error);
+    return null;
+  }
+};
+
+// Filtrar registros
+const filteredErrorLogs = computed(() => {
+  if (!searchTerm.value) return errorLogStore.errorLogs;
   
-  <script setup lang="ts">
-  import { ref, onMounted } from 'vue';
-  import { useErrorLogStore } from '@/stores/errorLogStore';
-  
-  const errorLogStore = useErrorLogStore();
-  const { errorLogs, loading, fetchErrorLogs } = errorLogStore;
-  
-  // Estado para el modal
-  const isModalOpen = ref(false);
-  const currentStacktrace = ref('');
-  
-  // Mostrar el stacktrace en un modal
-  const showStacktrace = (stacktrace: string) => {
-    currentStacktrace.value = stacktrace;
-    isModalOpen.value = true;
-  };
-  
-  // Cerrar el modal
-  const closeModal = () => {
-    isModalOpen.value = false;
-    currentStacktrace.value = '';
-  };
-  
-  onMounted(() => {
-    fetchErrorLogs();
-  });
-  </script>
-  
-  <style scoped>
-  /* Estilos adicionales si son necesarios */
-  </style>
+  const term = searchTerm.value.toLowerCase();
+  return errorLogStore.errorLogs.filter(log => 
+    Object.entries(log).some(([key, value]) => {
+      if (key === 'stacktrace_error') return false;
+      return String(value).toLowerCase().includes(term);
+    })
+  );
+});
+
+// Mostrar detalles del error
+const showErrorDetails = (error: any) => {
+  currentError.value = { ...error };
+  isModalOpen.value = true;
+};
+
+// Cerrar modal
+const closeModal = () => {
+  isModalOpen.value = false;
+};
+</script>
+
+<style scoped>
+.container {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.p-input-icon-left {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+}
+
+.p-input-icon-left i {
+  position: absolute;
+  top: 50%;
+  left: 0.75rem;
+  transform: translateY(-50%);
+  color: #6b7280;
+}
+
+.truncate {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+</style>

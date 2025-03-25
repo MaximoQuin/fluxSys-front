@@ -1,317 +1,412 @@
 <template>
-    <div class="container mx-auto p-4">
-      <h1 class="text-2xl font-bold mb-4">Gestión de Facturas</h1>
-  
-      <!-- Filtros para mostrar activos/eliminados -->
-      <div class="mb-4">
-        <button
-          @click="showActive = true"
-          :class="{ 'bg-blue-500 text-white': showActive, 'bg-gray-200': !showActive }"
-          class="px-4 py-2 rounded-l"
-        >
-          Activos
-        </button>
-        <button
-          @click="showActive = false"
-          :class="{ 'bg-red-500 text-white': !showActive, 'bg-gray-200': showActive }"
-          class="px-4 py-2 rounded-r"
-        >
-          Eliminados
-        </button>
-      </div>
-  
-      <!-- Botón para crear factura -->
+  <div class="container mx-auto p-4">
+    <h1 class="text-2xl font-bold mb-4">Gestión de Facturas</h1>
+
+    <!-- Filtros para mostrar activos/eliminados -->
+    <div class="mb-4">
       <button
-        @click="openCreateModal"
-        class="bg-green-500 text-white px-4 py-2 rounded mb-4"
+        @click="showActive = true"
+        :class="{ 'bg-blue-500 text-white': showActive, 'bg-gray-200': !showActive }"
+        class="px-4 py-2 rounded-l transition-colors duration-200"
       >
-        Crear Factura
+        Activos
       </button>
-  
-      <!-- Tabla de facturas -->
-      <table class="min-w-full bg-black">
-        <thead>
-          <tr>
-            <th class="py-2 px-4 border-b">ID</th>
-            <th class="py-2 px-4 border-b">Nombre</th>
-            <th class="py-2 px-4 border-b">Orden de Compra</th>
-            <th class="py-2 px-4 border-b">Proveedor</th>
-            <th class="py-2 px-4 border-b">Departamento</th>
-            <th class="py-2 px-4 border-b">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="invoice in filteredInvoices"
-            :key="invoice.id_invoice"
-            class="hover:bg-gray-50"
-          >
-            <td class="py-2 px-4 border-b">{{ invoice.id_invoice }}</td>
-            <td class="py-2 px-4 border-b">{{ invoice.name_invoice }}</td>
-            <td class="py-2 px-4 border-b">{{ invoice.name_purchase_order }}</td>
-            <td class="py-2 px-4 border-b">{{ invoice.name_supplier }}</td>
-            <td class="py-2 px-4 border-b">{{ invoice.name_department }}</td>
-            <td class="py-2 px-4 border-b">
-              <button
-                @click="viewInvoice(invoice)"
-                class="bg-blue-500 text-white px-4 py-2 rounded mr-2"
-              >
-                Ver
-              </button>
-              <button
-                @click="startEdit(invoice)"
-                class="bg-yellow-500 text-white px-4 py-2 rounded mr-2"
-              >
-                Editar
-              </button>
-              <button
-                v-if="showActive"
-                @click="removeInvoice(invoice.id_invoice)"
-                class="bg-red-500 text-white px-4 py-2 rounded mr-2"
-              >
-                Eliminar
-              </button>
-              <button
-                v-else
-                @click="restoreInvoice(invoice.id_invoice)"
-                class="bg-green-500 text-white px-4 py-2 rounded"
-              >
-                Restaurar
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-  
-      <!-- Formulario para crear/editar factura -->
-      <div v-if="isEditing || isCreating" class="mt-4">
-        <h2 class="text-xl font-bold mb-4">{{ isEditing ? 'Editar Factura' : 'Crear Factura' }}</h2>
-        <form @submit.prevent="saveEdit()">
-          <input
-            v-model="form.name_invoice"
-            placeholder="Nombre de la factura"
-            class="border rounded px-4 py-2 mb-2 w-full"
-            required
-          />
-          <select
-            v-model="form.id_purchase_order_Id"
-            class="border rounded px-4 py-2 mb-2 w-full"
-            required
-          >
-            <option value="" disabled>Seleccione una orden de compra</option>
-            <option
-              v-for="order in purchaseOrderStore.purchaseOrders"
-              :key="order.id_purchase_order"
-              :value="order.id_purchase_order"
-            >
-              {{ order.name_purchase_order }}
-            </option>
-          </select>
-          <select
-            v-model="form.id_supplier_Id"
-            class="border rounded px-4 py-2 mb-2 w-full"
-            required
-          >
-            <option value="" disabled>Seleccione un proveedor</option>
-            <option
-              v-for="supplier in supplierStore.suppliers"
-              :key="supplier.id_supplier"
-              :value="supplier.id_supplier"
-            >
-              {{ supplier.name_supplier }}
-            </option>
-          </select>
-  
-          <!-- Lista de productos asociados -->
-          <div class="mb-4">
-            <h3 class="font-bold mb-2">Productos Asociados</h3>
-            <div v-for="(product, index) in form.products" :key="index" class="flex gap-2 mb-2">
-              <select
-                v-model="product.id_inventory_product_Id"
-                class="border rounded px-4 py-2"
-                required
-              >
-                <option value="" disabled>Seleccione un producto</option>
-                <option
-                  v-for="inventoryProduct in inventoryStore.inventories"
-                  :key="inventoryProduct.id_inventory_product"
-                  :value="inventoryProduct.id_inventory_product"
-                >
-                  {{ inventoryProduct.name_product }}
-                </option>
-              </select>
-              <input
-                v-model="product.quantity"
-                type="number"
-                placeholder="Cantidad"
-                class="border rounded px-4 py-2"
-                required
-              />
-              <button
-                type="button"
-                @click="removeProduct(index)"
-                class="bg-red-500 text-white px-4 py-2 rounded"
-              >
-                Eliminar
-              </button>
-            </div>
-            <button
-              type="button"
-              @click="addProduct"
-              class="bg-blue-500 text-white px-4 py-2 rounded mb-4"
-            >
-              Añadir Producto
-            </button>
-          </div>
-  
-          <!-- Botones del formulario -->
-          <div class="flex justify-end gap-2">
-            <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded">
-              {{ isEditing ? 'Guardar Cambios' : 'Crear Factura' }}
-            </button>
-            <button
-              type="button"
-              @click="cancelEdit"
-              class="bg-gray-500 text-white px-4 py-2 rounded"
-            >
-              Cancelar
-            </button>
-          </div>
-        </form>
-      </div>
-  
-      <!-- Vista de solo lectura para ver factura -->
-      <div v-if="isViewing" class="mt-4">
-        <h2 class="text-xl font-bold mb-4">Información de la Factura</h2>
-        <div class="bg-white p-6 rounded-lg shadow">
-          <p><strong>Nombre:</strong> {{ currentInvoice.name_invoice }}</p>
-          <p><strong>Orden de Compra:</strong> {{ currentInvoice.name_purchase_order }}</p>
-          <p><strong>Proveedor:</strong> {{ currentInvoice.name_supplier }}</p>
-          <p><strong>Departamento:</strong> {{ currentInvoice.name_department }}</p>
-          <p><strong>Precio Total:</strong> ${{ currentInvoice?.total_price_invoice }}</p>
-          <p><strong>Cantidad de Productos:</strong> {{ currentInvoice?.amount_items_in_the_invoice }}</p>
-          <h3 class="font-bold mt-4">Productos Asociados</h3>
-          <ul>
-            <li
-              v-for="product in currentInvoice.products"
-              :key="product.id_inventory_product"
-              class="mb-2"
-            >
-              {{ product.name_product }} - Cantidad: {{ product.quantity }} - Precio Unitario: ${{ product.unit_price }}
-            </li>
-          </ul>
-          <button
-            @click="closeView"
-            class="bg-gray-500 text-white px-4 py-2 rounded mt-4"
-          >
-            Cerrar
-          </button>
-        </div>
-      </div>
+      <button
+        @click="showActive = false"
+        :class="{ 'bg-red-500 text-white': !showActive, 'bg-gray-200': showActive }"
+        class="px-4 py-2 rounded-r transition-colors duration-200"
+      >
+        Eliminados
+      </button>
     </div>
-  </template>
+
+    <!-- Tabla de facturas usando el componente Table -->
+    <TableComponent
+      :loader="invoiceStore.loading"
+      :columns="mappedColumns"
+      :data="filteredInvoices"
+      id="id_invoice"
+      :flagRestore="showActive"
+      :currentUserId="0"
+      @actionSee="viewInvoice"
+      @actionCreate="openCreateModal"
+      @actionUpdate="startEdit"
+      @actionDanger="removeInvoice"
+      @actionRestore="restoreInvoice"
+    />
+
+    <!-- Modal de detalles de la factura -->
+    <Dialog 
+      v-model:visible="isViewing" 
+      modal 
+      header="Detalles de la Factura" 
+      :style="{ width: '50rem' }"
+      :closable="true"
+      @update:visible="val => isViewing = val"
+    >
+      <div v-if="currentInvoice" class="grid grid-cols-1 gap-6">
+        <Card>
+          <template #title>
+            <div class="flex items-center gap-3">
+              <i class="pi pi-file-invoice text-primary" style="font-size: 1.5rem"></i>
+              <span>Información de la Factura</span>
+            </div>
+          </template>
+          <template #content>
+            <div class="grid grid-cols-2 gap-4">
+              <div class="flex flex-col">
+                <span class="text-sm font-medium text-gray-500">Nombre</span>
+                <span class="font-semibold">{{ currentInvoice.name_invoice }}</span>
+              </div>
+              <div class="flex flex-col">
+                <span class="text-sm font-medium text-gray-500">Orden de Compra</span>
+                <span class="font-semibold">{{ currentInvoice.name_purchase_order }}</span>
+              </div>
+              <div class="flex flex-col">
+                <span class="text-sm font-medium text-gray-500">Proveedor</span>
+                <span class="font-semibold">{{ currentInvoice.name_supplier }}</span>
+              </div>
+              <div class="flex flex-col">
+                <span class="text-sm font-medium text-gray-500">Departamento</span>
+                <span class="font-semibold">{{ currentInvoice.name_department }}</span>
+              </div>
+              <div class="flex flex-col">
+                <span class="text-sm font-medium text-gray-500">Estado</span>
+                <Tag 
+                  :value="currentInvoice.delete_log_invoices ? 'Eliminada' : 'Activa'" 
+                  :severity="currentInvoice.delete_log_invoices ? 'danger' : 'success'" 
+                  class="text-sm"
+                />
+              </div>
+              <div class="flex flex-col">
+                <span class="text-sm font-medium text-gray-500">Precio Total</span>
+                <span class="font-semibold">${{ currentInvoice.total_price_invoice }}</span>
+              </div>
+              <div class="flex flex-col">
+                <span class="text-sm font-medium text-gray-500">Cantidad de Productos</span>
+                <span class="font-semibold">{{ currentInvoice.amount_items_in_the_invoice }}</span>
+              </div>
+              
+              <!-- Lista desplegable de productos con paginador -->
+              <div class="col-span-2">
+                <Accordion>
+                  <AccordionTab header="Productos Asociados">
+                    <DataTable 
+                      :value="currentInvoice.products" 
+                      class="p-datatable-sm"
+                      paginator 
+                      :rows="5" 
+                      :rowsPerPageOptions="[5, 10, 20]"
+                    >
+                      <Column field="name_product" header="Producto" sortable></Column>
+                      <Column field="quantity" header="Cantidad" sortable></Column>
+                      <Column field="unit_price" header="Precio Unitario" sortable>
+                        <template #body="{data}">
+                          ${{ data.unit_price }}
+                        </template>
+                      </Column>
+                      <Column header="Subtotal" sortable>
+                        <template #body="{data}">
+                          ${{ (data.quantity * data.unit_price).toFixed(2) }}
+                        </template>
+                      </Column>
+                    </DataTable>
+                  </AccordionTab>
+                </Accordion>
+              </div>
+            </div>
+          </template>
+        </Card>
+      </div>
+    </Dialog>
+
+    <!-- Modal de editar/crear -->
+    <Dialog 
+      v-model:visible="showFormModal"
+      modal 
+      :header="isEditing ? 'Editar Factura' : 'Crear Factura'" 
+      :style="{ width: '50rem' }"
+      :closable="true"
+      @update:visible="val => { if (!val) cancelEdit() }"
+    >
+      <form @submit.prevent="saveEdit()" class="grid grid-cols-2 gap-4">
+        <!-- Nombre -->
+        <div class="flex flex-col gap-2">
+          <label for="name" class="font-semibold">Nombre:*</label>
+          <InputText 
+            v-model="form.name_invoice" 
+            id="name" 
+            autocomplete="off"
+            :class="{ 'p-invalid': nameError }"
+          />
+          <small v-if="nameError" class="p-error">
+            {{ nameError }}
+          </small>
+        </div>
+
+        <!-- Orden de Compra -->
+        <div class="flex flex-col gap-2">
+          <label for="purchaseOrder" class="font-semibold">Orden de Compra:*</label>
+          <Dropdown 
+            v-model="form.id_purchase_order_Id" 
+            :options="purchaseOrderStore.purchaseOrders" 
+            optionLabel="name_purchase_order" 
+            optionValue="id_purchase_order"
+            placeholder="Seleccione una orden de compra"
+            :class="{ 'p-invalid': purchaseOrderError }"
+          />
+          <small v-if="purchaseOrderError" class="p-error">
+            {{ purchaseOrderError }}
+          </small>
+        </div>
+
+        <!-- Proveedor -->
+        <div class="flex flex-col gap-2">
+          <label for="supplier" class="font-semibold">Proveedor:*</label>
+          <Dropdown 
+            v-model="form.id_supplier_Id" 
+            :options="supplierStore.suppliers" 
+            optionLabel="name_supplier" 
+            optionValue="id_supplier"
+            placeholder="Seleccione un proveedor"
+            :class="{ 'p-invalid': supplierError }"
+          />
+          <small v-if="supplierError" class="p-error">
+            {{ supplierError }}
+          </small>
+        </div>
+
+        <!-- Productos Asociados -->
+        <div class="col-span-2">
+          <label class="font-semibold">Productos Asociados:</label>
+          <div v-for="(product, index) in form.products" :key="index" class="flex gap-2 mb-2 items-end">
+            <div class="flex-1">
+              <label class="text-sm text-gray-500">Producto</label>
+              <Dropdown
+                v-model="product.id_inventory_product_Id"
+                :options="getAvailableProducts(index)"
+                optionLabel="name_product"
+                optionValue="id_inventory_product"
+                placeholder="Seleccione un producto"
+                class="w-full"
+                :class="{ 'p-invalid': !product.id_inventory_product_Id }"
+              />
+            </div>
+            <div class="flex-1">
+              <label class="text-sm text-gray-500">Cantidad</label>
+              <InputNumber
+                v-model="product.quantity"
+                mode="decimal"
+                :min="1"
+                class="w-full"
+                :class="{ 'p-invalid': !product.quantity || product.quantity <= 0 }"
+              />
+            </div>
+            <Button
+              type="button"
+              @click="removeProduct(index)"
+              icon="pi pi-times"
+              severity="danger"
+              text
+              rounded
+            />
+          </div>
+          <Button
+            type="button"
+            @click="addProduct"
+            icon="pi pi-plus"
+            label="Añadir Producto"
+            class="p-button-text"
+            :disabled="getAvailableProducts().length === 0"
+          />
+          <small v-if="getAvailableProducts().length === 0" class="text-sm text-gray-500">
+            No hay más productos disponibles para agregar
+          </small>
+        </div>
+
+        <div class="col-span-2 flex justify-end gap-2 mt-4">
+          <Button 
+            type="button" 
+            label="Cancelar" 
+            severity="secondary" 
+            outlined
+            @click="cancelEdit"
+          />
+          <Button 
+            type="submit" 
+            label="Guardar" 
+            severity="primary"
+            :disabled="!isFormValid"
+            :loading="loadingSubmit"
+          />
+        </div>
+      </form>
+    </Dialog>
+
+    <ConfirmDialog></ConfirmDialog>
+    <Toast />
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, onMounted } from 'vue';
+import { useInvoiceStore } from '@/stores/invoiceStore';
+import { useSupplierStore } from '@/stores/supplierStore';
+import { usePurchaseOrderStore } from '@/stores/purchaseOrderStore';
+import { useInventoryStore } from '@/stores/inventoryStore';
+import { useAuthStore } from '@/stores/authStore';
+import TableComponent from '@/components/TableComponent.vue';
+import { useConfirm } from "primevue/useconfirm";
+import { useToast } from "primevue/usetoast";
+import Card from 'primevue/card';
+import Tag from 'primevue/tag';
+import DataTable from 'primevue/datatable';
+import Column from 'primevue/column';
+import InputNumber from 'primevue/inputnumber';
+import Accordion from 'primevue/accordion';
+import AccordionTab from 'primevue/accordiontab';
+
+const confirm = useConfirm();
+const toast = useToast();
+
+// Stores
+const invoiceStore = useInvoiceStore();
+const supplierStore = useSupplierStore();
+const purchaseOrderStore = usePurchaseOrderStore();
+const inventoryStore = useInventoryStore();
+const authStore = useAuthStore();
+
+// Estados
+const showActive = ref(true);
+const isViewing = ref(false);
+const isEditing = ref(false);
+const isCreating = ref(false);
+const loadingSubmit = ref(false);
+const currentInvoice = ref<any>(null);
+const showFormModal = computed(() => isEditing.value || isCreating.value);
+
+// Columnas para la tabla
+const mappedColumns = [
+  { field: 'name_invoice', header: 'Nombre', sortable: true },
+  { field: 'name_purchase_order', header: 'Orden de Compra', sortable: true },
+  { field: 'name_supplier', header: 'Proveedor', sortable: true },
+  { field: 'name_department', header: 'Departamento', sortable: true }
+];
+
+// Formulario para crear/editar
+const form = ref({
+  id_invoice: null as number | null,
+  name_invoice: '',
+  id_purchase_order_Id: null as number | null,
+  id_supplier_Id: null as number | null,
+  id_department_Id: authStore.user?.department?.id_department || 0,
+  id_company_Id: authStore.user?.company?.id_company || 0,
+  products: [] as Array<{ id_inventory_product_Id: number; quantity: number }>,
+});
+
+// Método para obtener productos disponibles
+const getAvailableProducts = (currentIndex: number | null = null) => {
+  const selectedProductIds = form.value.products
+    .filter((_, index) => index !== currentIndex)
+    .map(p => p.id_inventory_product_Id);
   
-  <script setup lang="ts">
-  import { ref, computed, onMounted } from 'vue';
-  import { useInvoiceStore } from '@/stores/invoiceStore';
-  import { useAuthStore } from '@/stores/authStore';
-  import { useSupplierStore } from '@/stores/supplierStore';
-  import { usePurchaseOrderStore } from '@/stores/purchaseOrderStore';
-  import { useInventoryStore } from '@/stores/inventoryStore';
-  import type { Invoice } from '@/interfaces/Invoice';
+  return inventoryStore.inventories.filter(
+    product => !selectedProductIds.includes(product.id_inventory_product)
+  );
+};
+
+// Validaciones
+const nameError = computed(() => {
+  const name = form.value.name_invoice || '';
+  if (!name.trim()) return 'El nombre es requerido';
+  if (name.length < 3) return 'Mínimo 3 caracteres';
+  return null;
+});
+
+const purchaseOrderError = computed(() => {
+  if (form.value.id_purchase_order_Id === null) return 'La orden de compra es requerida';
+  return null;
+});
+
+const supplierError = computed(() => {
+  if (form.value.id_supplier_Id === null) return 'El proveedor es requerido';
+  return null;
+});
+
+const productsError = computed(() => {
+  if (form.value.products.length === 0) return 'Debe agregar al menos un producto';
   
-  // Stores
-  const invoiceStore = useInvoiceStore();
-  const authStore = useAuthStore();
-  const supplierStore = useSupplierStore();
-  const purchaseOrderStore = usePurchaseOrderStore();
-  const inventoryStore = useInventoryStore();
+  const hasEmptyProducts = form.value.products.some(
+    p => !p.id_inventory_product_Id || p.id_inventory_product_Id === 0 || !p.quantity || p.quantity <= 0
+  );
   
-  // Variables reactivas
-  const showActive = ref(true);
-  const isEditing = ref(false);
-  const isCreating = ref(false);
-  const isViewing = ref(false);
-  const currentInvoice = ref<Invoice | null>(null);
-  const form = ref({
-    id_invoice: 0,
+  if (hasEmptyProducts) return 'Todos los productos deben estar completos';
+  
+  return null;
+});
+
+const isFormValid = computed(() => {
+  return !nameError.value && !purchaseOrderError.value && 
+         !supplierError.value && !productsError.value;
+});
+
+// Computed properties
+const filteredInvoices = computed(() => {
+  return invoiceStore.invoices.filter((invoice) =>
+    showActive.value ? !invoice.delete_log_invoices : invoice.delete_log_invoices
+  );
+});
+
+// Métodos
+const viewInvoice = async (id: number) => {
+  currentInvoice.value = filteredInvoices.value.find(i => i.id_invoice === id);
+  if (currentInvoice.value) {
+    isViewing.value = true;
+  }
+};
+
+const openCreateModal = () => {
+  isCreating.value = true;
+  isEditing.value = false;
+  form.value = {
+    id_invoice: null,
     name_invoice: '',
-    id_purchase_order_Id: 0,
-    id_supplier_Id: 0,
+    id_purchase_order_Id: null,
+    id_supplier_Id: null,
     id_department_Id: authStore.user?.department?.id_department || 0,
     id_company_Id: authStore.user?.company?.id_company || 0,
-    products: [] as Array<{ id_inventory_product_Id: number; quantity: number }>,
-  });
-  
-  // Filtro de facturas
-  const filteredInvoices = computed(() => {
-    return invoiceStore.invoices.filter((invoice) =>
-      showActive.value ? !invoice.delete_log_invoices : invoice.delete_log_invoices
-    );
-  });
-  
-  // Ver información de la factura
-  const viewInvoice = (invoice: Invoice) => {
-    isViewing.value = true;
-    isEditing.value = false;
-    isCreating.value = false;
-    currentInvoice.value = invoice;
+    products: [],
   };
-  
-  // Cerrar vista de solo lectura
-  const closeView = () => {
-    isViewing.value = false;
-    currentInvoice.value = null;
-  };
-  
-  // Abrir modal de creación
-  const openCreateModal = () => {
-    isCreating.value = true;
-    isEditing.value = false;
-    isViewing.value = false;
-    form.value = {
-      id_invoice: 0,
-      name_invoice: '',
-      id_purchase_order_Id: 0,
-      id_supplier_Id: 0,
-      id_department_Id: authStore.user?.department?.id_department || 0,
-      id_company_Id: authStore.user?.company?.id_company || 0,
-      products: [],
-    };
-  };
-  
-  // Iniciar edición de una factura
-  const startEdit = async (invoice: Invoice) => {
-    // Recargar órdenes de compra, proveedores y productos si no están cargados
-    await purchaseOrderStore.fetchPurchaseOrders();
-    await supplierStore.fetchSuppliers();
-    await inventoryStore.fetchInventories();
-  
+};
+
+const startEdit = async (id: number) => {
+  await purchaseOrderStore.fetchPurchaseOrders();
+  await supplierStore.fetchSuppliers();
+  await inventoryStore.fetchInventories();
+
+  const invoice = invoiceStore.invoices.find(i => i.id_invoice === id);
+  if (invoice) {
     isEditing.value = true;
     isCreating.value = false;
-    isViewing.value = false;
-  
-    // Buscar el ID de la orden de compra por su nombre
+    
     const purchaseOrder = purchaseOrderStore.purchaseOrders.find(
-      (order) => order.name_purchase_order === invoice.name_purchase_order
+      po => po.name_purchase_order === invoice.name_purchase_order
     );
-  
-    // Buscar el ID del proveedor por su nombre
+
     const supplier = supplierStore.suppliers.find(
-      (sup) => sup.name_supplier === invoice.name_supplier
+      sup => sup.name_supplier === invoice.name_supplier
     );
-  
-    // Mapear los productos para obtener sus IDs
+
     const products = invoice.products.map((product) => {
       const inventoryProduct = inventoryStore.inventories.find(
-        (inv) => inv.name_product === product.name_product
+        inv => inv.name_product === product.name_product
       );
       return {
         id_inventory_product_Id: inventoryProduct ? inventoryProduct.id_inventory_product : 0,
         quantity: product.quantity,
       };
     });
-  
+
     form.value = {
       id_invoice: invoice.id_invoice,
       name_invoice: invoice.name_invoice,
@@ -321,75 +416,169 @@
       id_company_Id: authStore.user?.company?.id_company || 0,
       products: products,
     };
-  };
+  }
+};
+
+const saveEdit = async () => {
+  if (!isFormValid.value) return;
   
-  // Cancelar edición/creación
-  const cancelEdit = () => {
-    isEditing.value = false;
-    isCreating.value = false;
-    form.value = {
-      id_invoice: 0,
-      name_invoice: '',
-      id_purchase_order_Id: 0,
-      id_supplier_Id: 0,
-      id_department_Id: authStore.user?.department?.id_department || 0,
-      id_company_Id: 0,
-      products: [],
+  loadingSubmit.value = true;
+  try {
+    const payload = {
+      name_invoice: form.value.name_invoice,
+      id_purchase_order_Id: form.value.id_purchase_order_Id,
+      id_supplier_Id: form.value.id_supplier_Id,
+      id_department_Id: form.value.id_department_Id,
+      id_company_Id: form.value.id_company_Id,
+      products: form.value.products,
     };
-  };
-  
-  // Añadir producto al formulario
-  const addProduct = () => {
-    form.value.products.push({ id_inventory_product_Id: 0, quantity: 0 });
-  };
-  
-  // Eliminar producto del formulario
-  const removeProduct = (index: number) => {
-    form.value.products.splice(index, 1);
-  };
-  
-  // Guardar cambios (editar o crear)
-  const saveEdit = async () => {
-    try {
-      const payload = {
-        name_invoice: form.value.name_invoice,
-        id_purchase_order_Id: form.value.id_purchase_order_Id,
-        id_supplier_Id: form.value.id_supplier_Id,
-        id_department_Id: form.value.id_department_Id,
-        id_company_Id: form.value.id_company_Id,
-        products: form.value.products,
-      };
-  
-      if (isEditing.value) {
-        await invoiceStore.editInvoice(form.value.id_invoice, payload);
-      } else {
-        await invoiceStore.addInvoice(payload);
-      }
-      cancelEdit();
-    } catch (error) {
-      console.error("Error al guardar la factura:", error);
+
+    if (isEditing.value && form.value.id_invoice) {
+      await invoiceStore.editInvoice(form.value.id_invoice, payload);
+      toast.add({ 
+        severity: 'success', 
+        summary: 'Éxito', 
+        detail: 'Factura actualizada correctamente', 
+        life: 3000 
+      });
+    } else {
+      await invoiceStore.addInvoice(payload);
+      toast.add({ 
+        severity: 'success', 
+        summary: 'Éxito', 
+        detail: 'Factura creada correctamente', 
+        life: 3000 
+      });
     }
+    
+    cancelEdit();
+    await invoiceStore.fetchInvoices();
+  } catch (error) {
+    toast.add({ 
+      severity: 'error', 
+      summary: 'Error', 
+      detail: 'Error al guardar la factura', 
+      life: 3000 
+    });
+  } finally {
+    loadingSubmit.value = false;
+  }
+};
+
+const cancelEdit = () => {
+  isEditing.value = false;
+  isCreating.value = false;
+  form.value = {
+    id_invoice: null,
+    name_invoice: '',
+    id_purchase_order_Id: null,
+    id_supplier_Id: null,
+    id_department_Id: authStore.user?.department?.id_department || 0,
+    id_company_Id: authStore.user?.company?.id_company || 0,
+    products: [],
   };
-  
-  // Eliminar factura
-  const removeInvoice = async (id: number) => {
-    await invoiceStore.removeInvoice(id);
-  };
-  
-  // Restaurar factura
-  const restoreInvoice = async (id: number) => {
-    await invoiceStore.restoreDeletedInvoice(id);
-  };
-  
-  // Cargar datos al montar el componente
-  onMounted(() => {
-    invoiceStore.fetchInvoices();
-    supplierStore.fetchSuppliers();
-    purchaseOrderStore.fetchPurchaseOrders();
-    inventoryStore.fetchInventories();
+};
+
+const addProduct = () => {
+  const available = getAvailableProducts();
+  if (available.length > 0) {
+    form.value.products.push({ 
+      id_inventory_product_Id: available[0].id_inventory_product,
+      quantity: 1 
+    });
+  }
+};
+
+const removeProduct = (index: number) => {
+  form.value.products.splice(index, 1);
+};
+
+const removeInvoice = async (id: number) => {
+  confirm.require({
+    message: '¿Estás seguro de eliminar esta factura?',
+    header: 'Confirmación',
+    icon: 'pi pi-exclamation-triangle',
+    rejectLabel: 'Cancelar',
+    rejectProps: {
+      label: 'Cancelar',
+      severity: 'secondary',
+      outlined: true
+    },
+    acceptProps: {
+      label: 'Eliminar',
+      severity: 'danger'
+    },
+    accept: async () => {
+      try {
+        await invoiceStore.removeInvoice(id);
+        await invoiceStore.fetchInvoices();
+        toast.add({ 
+          severity: 'success', 
+          summary: 'Éxito', 
+          detail: 'Factura eliminada correctamente', 
+          life: 3000 
+        });
+      } catch (error) {
+        toast.add({ 
+          severity: 'error', 
+          summary: 'Error', 
+          detail: 'Error al eliminar la factura', 
+          life: 3000 
+        });
+      }
+    },
+    reject: () => {}
   });
-  </script>
-  
-  <style scoped>
-  /* Estilos adicionales si son necesarios */
-  </style>
+};
+
+const restoreInvoice = async (id: number) => {
+  try {
+    await invoiceStore.restoreDeletedInvoice(id);
+    await invoiceStore.fetchInvoices();
+    toast.add({ 
+      severity: 'success', 
+      summary: 'Éxito', 
+      detail: 'Factura restaurada correctamente', 
+      life: 3000 
+    });
+  } catch (error) {
+    toast.add({ 
+      severity: 'error', 
+      summary: 'Error', 
+      detail: 'Error al restaurar la factura', 
+      life: 3000 
+    });
+  }
+};
+
+// Cargar datos iniciales
+onMounted(async () => {
+  await invoiceStore.fetchInvoices();
+  await purchaseOrderStore.fetchPurchaseOrders();
+  await supplierStore.fetchSuppliers();
+  await inventoryStore.fetchInventories();
+});
+</script>
+
+<style scoped>
+.p-card {
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+}
+
+.p-card-title {
+  font-size: 1.1rem;
+  color: var(--primary-color);
+}
+
+/* Estilos para campos inválidos */
+.p-invalid {
+  border-color: var(--red-500) !important;
+}
+
+.p-error {
+  color: var(--red-500);
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+</style>

@@ -38,7 +38,8 @@
               @click="handleUpdate(id, props.data)" />
 
             <!-- Botón Eliminar -->
-            <Button v-if="hasPermission('Borrar') && props.data.name_company !== currentUserCompany" label="Eliminar"
+            <!-- Modificacion de la prop para user el id de user-->
+            <Button v-if="hasPermission('Borrar') && props.data[id] !== currentUserId"  label="Eliminar"
               icon="pi pi-times" class="p-button-danger" @click="handleDanger(id, props.data)" />
           </div>
           <div v-else>
@@ -69,7 +70,8 @@ const props = defineProps<{
   columns: { field: string; header: string }[];
   id: string;
   flagRestore: boolean;
-  currentUserCompany: string; // Recibir el nombre de la compañía del usuario actual
+  currentUserId: number; // Cambio aquí - ahora esperamos un ID de usuario
+  //currentUserCompany: string; // Recibir el nombre de la compañía del usuario actual
 }>();
 
 const emit = defineEmits<{
