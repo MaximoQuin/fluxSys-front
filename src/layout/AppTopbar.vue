@@ -82,14 +82,8 @@ const toggle = (event) => {
   <nav class="bg-white dark:bg-gray-900 flex relative justify-between items-center px-8 h-20 mb-2 rounded-lg shadow-sm">
     <div class="flex mr-4 items-center">
       <div class="block relative">
-        <Button 
-          type="button" 
-          icon="pi pi-bars" 
-          class="hidden md:inline-block p-2 hover:bg-gray-200 rounded-full" 
-          text 
-          severity="secondary"
-          @click="toggleSidebar" 
-        />
+        <Button type="button" icon="pi pi-bars" class="hidden md:inline-block p-2 hover:bg-gray-200 rounded-full" text
+          severity="secondary" @click="toggleSidebar" />
       </div>
     </div>
 
@@ -97,13 +91,8 @@ const toggle = (event) => {
       <div class="flex justify-end items-center relative">
         <Dialog v-model:visible="profile" modal header="Perfil de Usuario" :style="{ width: '40rem' }">
           <div class="flex flex-column align-items-center gap-3 mb-5">
-            <Avatar 
-              :label="user?.name_user?.split(' ').map(n => n[0]).join('')" 
-              class="text-4xl" 
-              size="xlarge" 
-              shape="circle"
-              style="background-color: var(--primary-color); color: white; width: 80px; height: 80px;" 
-            />
+            <Avatar :label="user?.name_user?.split(' ').map(n => n[0]).join('')" class="text-4xl" size="xlarge"
+              shape="circle" style="background-color: var(--primary-color); color: white; width: 80px; height: 80px;" />
             <div class="text-center">
               <h2 class="text-2xl font-bold mb-1">{{ user?.name_user }}</h2>
               <Tag :value="user?.role?.name_role" severity="info" class="text-sm" />
@@ -124,7 +113,7 @@ const toggle = (event) => {
                 </div>
               </div>
             </div>
-            
+
             <div class="col-12 md:col-6">
               <div class="p-3 border-round border-1 surface-border">
                 <div class="text-500 font-medium mb-2">Información Laboral</div>
@@ -151,19 +140,10 @@ const toggle = (event) => {
 
         <div class="block">
           <div class="inline relative">
-            <Button 
-              type="button" 
-              class="flex gap-3 items-center p-3 border-round-xl hover:shadow-2"
-              @click="toggle" 
-              aria-haspopup="true" 
-              aria-controls="overlay_menu"
-              text
-            >
-              <Avatar 
-                :label="user?.name_user?.split(' ').map(n => n[0]).join('')" 
-                shape="circle"
-                style="background-color: var(--primary-color); color: white;" 
-              />
+            <Button type="button" class="flex gap-3 items-center p-3 border-round-xl hover:shadow-2" @click="toggle"
+              aria-haspopup="true" aria-controls="overlay_menu" text>
+              <Avatar :label="user?.name_user?.split(' ').map(n => n[0]).join('')" shape="circle"
+                class="text-black dark:text-white" style="background-color: var(--primary-color);" />
               <i class="pi pi-chevron-down"></i>
             </Button>
             <Menu ref="menu" id="overlay_menu" :model="items" :popup="true" />
