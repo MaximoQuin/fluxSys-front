@@ -6,58 +6,41 @@
     <div class="mb-4">
       <button
         @click="showActive = true"
-        :class="{ 'bg-blue-500 text-white': showActive, 'bg-gray-200': !showActive }"
-        class="px-4 py-2 rounded-l transition-colors duration-200"
+        :class="{ 'bg-blue-500 text-white': showActive, 'bg-gray-200 text-gray-800': !showActive }"
+        class="px-4 py-2 rounded-l shadow-md hover:bg-blue-700 hover:text-white active:bg-blue-800 transiton-colors"
       >
         Activas
       </button>
       <button
         @click="showActive = false"
-        :class="{ 'bg-red-500 text-white': !showActive, 'bg-gray-200': showActive }"
-        class="px-4 py-2 rounded-r transition-colors duration-200"
+        :class="{ 'bg-red-500 text-white': !showActive, 'bg-gray-200 text-gray-800': showActive }"
+        class="px-4 py-2 rounded-r shadow-md hover:bg-red-600 hover:text-white active:bg-red-800 transition-colors"
       >
         Eliminadas
       </button>
     </div>
 
     <!-- Tabla reutilizable -->
-    <TableComponent
-      :loader="loading"
-      :columns="columns"
-      :data="filteredCategories"
-      id="id_category_purchase_order"
-      :flagRestore="showActive"
-      :currentUserId="0"
-      @actionSee="handleSee"
-      @actionUpdate="handleUpdate"
-      @actionDanger="removeCategoryPurchaseOrder"
-      @actionRestore="restoreDeletedCategoryPurchaseOrder"
-      @actionCreate="showCreateModal"
-    />
+    <TableComponent :loader="loading" :columns="columns" :data="filteredCategories" id="id_category_purchase_order"
+      :flagRestore="showActive" :currentUserId="0" @actionSee="handleSee" @actionUpdate="handleUpdate"
+      @actionDanger="removeCategoryPurchaseOrder" @actionRestore="restoreDeletedCategoryPurchaseOrder"
+      @actionCreate="showCreateModal" />
 
     <!-- Modal Crear/Editar -->
-    <Dialog v-model:visible="visibleForm" modal :header="isEdit ? 'Editar Categoría' : 'Crear Categoría'" :style="{ width: '30rem' }">
+    <Dialog v-model:visible="visibleForm" modal :header="isEdit ? 'Editar Categoría' : 'Crear Categoría'"
+      :style="{ width: '30rem' }">
       <div class="flex flex-col gap-4">
         <div>
           <label class="font-semibold">Nombre de la categoría:*</label>
-          <InputText 
-            v-model="formCategoryName" 
-            :class="{ 'p-invalid': nameError }"
-            placeholder="Ingrese el nombre de la categoría"
-          />
+          <InputText v-model="formCategoryName" :class="{ 'p-invalid': nameError }"
+            placeholder="Ingrese el nombre de la categoría" />
           <small v-if="nameError" class="p-error">{{ nameError }}</small>
         </div>
       </div>
 
       <div class="flex justify-end gap-2 mt-4">
         <Button label="Cancelar" severity="danger" @click="visibleForm = false" />
-        <Button 
-          label="Guardar" 
-          severity="info" 
-          :disabled="!isFormValid" 
-          @click="submitForm" 
-          :loading="loadingSubmit"
-        />
+        <Button label="Guardar" severity="info" :disabled="!isFormValid" @click="submitForm" :loading="loadingSubmit" />
       </div>
     </Dialog>
 
@@ -66,11 +49,11 @@
       <div class="flex flex-col gap-4">
         <div>
           <span class="font-semibold text-gray-500">Nombre:</span>
-          <div class="font-bold text-white">{{ viewCategory?.name_category_purchase_order }}</div>
+          <div class="font-bold">{{ viewCategory?.name_category_purchase_order }}</div>
         </div>
         <div>
           <span class="font-semibold text-gray-500">Compañía:</span>
-          <div class="font-bold text-white">{{ viewCategory?.name_company }}</div>
+          <div class="font-bold">{{ viewCategory?.name_company }}</div>
         </div>
       </div>
     </Dialog>
@@ -111,7 +94,6 @@ const formCategoryName = ref('');
 const viewCategory = ref<any>(null);
 
 const columns = [
-  { field: 'id_category_purchase_order', header: 'ID' },
   { field: 'name_category_purchase_order', header: 'Nombre' },
   { field: 'name_company', header: 'Compañía' },
 ];
@@ -176,7 +158,7 @@ const submitForm = async () => {
   try {
     if (isEdit.value && editingId.value !== null) {
       await categoryPurchaseOrderStore.editCategoryPurchaseOrder(
-        editingId.value, 
+        editingId.value,
         formCategoryName.value
       );
       toast.add({ severity: 'success', summary: 'Actualizado', detail: 'Categoría actualizada', life: 3000 });
@@ -203,8 +185,16 @@ const removeCategoryPurchaseOrder = (id: number) => {
     message: '¿Deseas eliminar esta categoría?',
     header: 'Confirmación',
     icon: 'pi pi-exclamation-triangle',
-    acceptLabel: 'Eliminar',
     rejectLabel: 'Cancelar',
+    rejectProps: {
+      label: 'Cancelar',
+      severity: 'secondary',
+      outlined: true
+    },
+    acceptProps: {
+      label: 'Eliminar',
+      severity: 'danger'
+    },
     accept: async () => {
       loading.value = true;
       await categoryPurchaseOrderStore.removeCategoryPurchaseOrder(id);

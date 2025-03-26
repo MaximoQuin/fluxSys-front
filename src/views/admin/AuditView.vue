@@ -4,14 +4,14 @@
 
     <!-- Tabla de auditorías con buscador -->
     <DataTable :value="filteredAudits" stripedRows paginator :rows="10" :rowsPerPageOptions="[10, 20, 50]"
-      :scrollable="true" :scrollHeight="'280px'" :loading="auditStore.loading" tableStyle="min-width: 100px"
+      :scrollable="true" :scrollHeight="'350px'" :loading="auditStore.loading"
       :globalFilterFields="['date_insert', 'date_update', 'date_delete', 'date_restore', 'amount_modify', 'name_user', 'name_department', 'name_module', 'name_company']">
       <template #header>
-        <div class="flex justify-between items-center mb-4">
-          <span class="p-input-icon-left">
-            <i class="pi pi-search" />
-            <InputText v-model="searchTerm" placeholder="Buscar en auditorías..." class="p-inputtext-sm" />
-          </span>
+        <div class="flex justify-end items-center mb-4">
+          <!-- <span class="p-input-icon-left"> -->
+          <!-- <i class="pi pi-search" /> -->
+          <InputText v-model="searchTerm" placeholder="Buscar en auditorías..." />
+          <!-- </span> -->
         </div>
       </template>
 
@@ -61,21 +61,21 @@ const searchTerm = ref('');
 // Función segura para formatear fechas
 const safeFormatDate = (dateString: string | null | undefined): string | null => {
   if (!dateString) return null;
-  
+
   try {
     // Asegurarnos que la fecha es válida antes de formatear
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return null;
-    
-    const options: Intl.DateTimeFormatOptions = { 
-      year: 'numeric', 
-      month: 'short', 
+
+    const options: Intl.DateTimeFormatOptions = {
+      year: 'numeric',
+      month: 'short',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
       timeZone: 'UTC' // Asegurar consistencia en la zona horaria
     };
-    
+
     return date.toLocaleDateString('es-ES', options);
   } catch (error) {
     console.error('Error formateando fecha:', error);
@@ -92,9 +92,9 @@ const formatNumber = (value: number | null | undefined): string => {
 // Filtrado de auditorías
 const filteredAudits = computed(() => {
   if (!searchTerm.value) return auditStore.audits;
-  
+
   const term = searchTerm.value.toLowerCase();
-  return auditStore.audits.filter(audit => 
+  return auditStore.audits.filter(audit =>
     Object.entries(audit).some(([key, value]) => {
       // Excluir campos de fecha de la búsqueda si no son strings
       if (key.includes('date') && typeof value !== 'string') return false;
@@ -119,7 +119,7 @@ onMounted(() => {
 .p-input-icon-left {
   position: relative;
   width: 100%;
-  max-width: 400px;
+  max-width: 350px;
 }
 
 .p-input-icon-left i {

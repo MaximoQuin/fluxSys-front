@@ -6,15 +6,15 @@
     <div class="mb-4">
       <button
         @click="showActive = true"
-        :class="{ 'bg-blue-500 text-white': showActive, 'bg-gray-200': !showActive }"
-        class="px-4 py-2 rounded-l transition-colors duration-200"
+        :class="{ 'bg-blue-600 text-white': showActive, 'bg-gray-200 text-gray-800': !showActive }"
+        class="px-4 py-2 rounded-l shadow-md hover:bg-blue-700 hover:text-white active:bg-blue-800 transiton-colors"
       >
         Activos
       </button>
       <button
         @click="showActive = false"
-        :class="{ 'bg-red-500 text-white': !showActive, 'bg-gray-200': showActive }"
-        class="px-4 py-2 rounded-r transition-colors duration-200"
+        :class="{ 'bg-red-500 text-white': !showActive, 'bg-gray-200 text-gray-800': showActive }"
+        class="px-4 py-2 rounded-r shadow-md hover:bg-red-600 hover:text-white active:bg-red-800 transition-colors"
       >
         Eliminados
       </button>
@@ -156,7 +156,7 @@
             {{ passwordError }}
           </small>
           <small v-if="isEditing" class="text-gray-500 text-xs">
-            Dejar vacío para mantener la contraseña actual
+            {{ userForm.password_user ? 'La contraseña debe tener mínimo 10 caracteres para actulizarla' : 'Dejar vacío para mantener la contraseña actual' }}
           </small>
         </div>
 
@@ -345,12 +345,16 @@ const phoneError = computed(() => {
 });
 
 const passwordError = computed(() => {
-  if (isEditing.value) return null; // No requerido para edición
-  
   const password = userForm.value.password_user || '';
-  if (!password) return 'La contraseña es requerida';
-  if (password.length < 8) return 'Mínimo 8 caracteres';
-  if (password.length > 50) return 'Máximo 50 caracteres';
+  
+  if (!isEditing.value) {
+    if (!password) return 'La contraseña es requerida';
+    if (password.length < 8) return 'Mínimo 8 caracteres';
+    if (password.length > 50) return 'Máximo 50 caracteres';
+  } else if (password.length > 0 && password.length < 10) {
+    return 'La contraseña debe tener mínimo 10 caracteres';
+  }
+  
   return null;
 });
 
@@ -375,6 +379,11 @@ const companyError = computed(() => {
 });
 
 const isFormValid = computed(() => {
+  // Validación especial para contraseña en edición
+  if (isEditing.value && userForm.value.password_user) {
+    if (userForm.value.password_user.length < 10) return false;
+  }
+  
   return !nameError.value && !emailError.value && !phoneError.value && 
          (!isEditing.value ? !passwordError.value : true) && 
          !roleError.value && !positionError.value && 

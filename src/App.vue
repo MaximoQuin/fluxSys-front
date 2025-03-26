@@ -31,11 +31,11 @@ onMounted(async () => {
   <div>
     <!-- Renderiza el layout solo si el usuario está autenticado -->
     <template v-if="authStore.token">
-      <div class="flex w-full p-2">
+      <div class="max-w-screen flex w-full p-2">
         <div class="w-fit">
           <AppSidebar :isSidebarActive="isSidebarActive"></AppSidebar>
         </div>
-        <div class="w-full">
+        <div class="max-w-full w-full overflow-hidden">
           <AppTopbar @toggle-sidebar="toggleSidebar"></AppTopbar>
           <div class="bg-white dark:bg-gray-900 rounded-md">
             <RouterView />
