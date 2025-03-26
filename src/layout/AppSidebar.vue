@@ -17,31 +17,31 @@ const items = [
   {
     key: 'Compañías',
     label: 'Administracion General',
-    icon: 'dolly',
+    icon: 'home',
     visibleForRoles: ['Administrador', 'Administrador Empresarial', 'Jefe de Departamento'],
     to: '/users-ua',
     items: [
       {
         label: 'Compañías',
-        icon: 'table-list',
+        icon: 'building',
         to: '/companies-a',
         visibleForRoles: ['Administrador'],
       },
       {
         label: 'Usuarios',
-        icon: 'table-list',
+        icon: 'users',
         to: '/users-ua',
-        visibleForRoles: ['Administrador Empresarial'],
+        visibleForRoles: ['Administrador', 'Administrador Empresarial'],
       },
       {
         label: 'Departamentos',
-        icon: 'table-list',
+        icon: 'building',
         to: '/departments-u',
         visibleForRoles: ['Administrador', 'Administrador Empresarial'],
       },
       {
         label: 'Posiciones',
-        icon: 'table-list',
+        icon: 'briefcase',
         to: '/positions-u',
       },
     ],
@@ -60,22 +60,24 @@ const items = [
       },
       {
         label: 'Categorias',
-        icon: 'table-list',
+        icon: 'table-columns',
         to: '/ca-products-u',
       },
       {
         label: 'Tipos de Movimientos',
-        icon: 'table-list',
+        icon: 'arrows-turn-to-dots',
         to: '/movements-types-u',
       },
       {
         label: 'Estados de Productos',
-        icon: 'table-list',
+        icon: 'circle-info',
         to: '/states-u',
       },
       {
-        label: 'Movimientos de Inventario',
+        label: 'Historial de Inventario',
         icon: 'table-list',
+        label: 'Historial de Inventario',
+        icon: 'arrows-turn-to-dots',
         to: '/inv-movements-ua',
         visibleForRoles: ['Administrador', 'Administrador Empresarial', 'Jefe de Departamento', 'Subjefe de Departamento'],
       },
@@ -84,18 +86,18 @@ const items = [
   {
     key: 'Proveedores',
     label: 'Proveedores',
-    icon: 'user',
+    icon: 'users',
     visibleForRoles: ['Administrador', 'Administrador Empresarial', 'Jefe de Departamento', 'Subjefe de Departamento', 'Colaborador'],
     to: '/suppliers-u',
     items: [
       {
         label: 'Proveedores',
-        icon: 'table-list',
+        icon: 'users',
         to: '/suppliers-u',
       },
       {
         label: 'Categorias',
-        icon: 'table-list',
+        icon: 'table-columns',
         to: '/ca-suppliers-u',
       },
     ],
@@ -109,12 +111,12 @@ const items = [
     items: [
       {
         label: 'Ordenes de Compra',
-        icon: 'table-list',
+        icon: 'cart-shopping',
         to: '/purchase-orders-u',
       },
       {
         label: 'Categorias',
-        icon: 'table-list',
+        icon: 'table-columns',
         to: '/ca-purchase-orders-u',
       },
     ],
@@ -122,13 +124,13 @@ const items = [
   {
     key: 'Facturas',
     label: 'Gestión de Facturas',
-    icon: 'dolly',
+    icon: 'file-invoice-dollar',
     visibleForRoles: ['Administrador', 'Administrador Empresarial', 'Jefe de Departamento', 'Subjefe de Departamento', 'Colaborador'],
     to: '/invoices-u',
     items: [
       {
         label: 'Facturas',
-        icon: 'table-list',
+        icon: 'file-invoice',
         to: '/invoices-u',
       },
     ],
@@ -136,28 +138,23 @@ const items = [
   {
     key: 'Administración',
     label: 'Sistema',
-    icon: 'user',
+    icon: 'desktop',
     visibleForRoles: ['Administrador'],
-    to: '/users-ua',
+    to: '/audits-a',
     items: [
       {
-        label: 'Usuarios',
-        icon: 'table-list',
-        to: '/users-ua',
-      },
-      {
         label: 'Auditorias',
-        icon: 'table-list',
+        icon: 'search',
         to: '/audits-a',
       },
       {
         label: 'Visor de Eventos',
-        icon: 'table-list',
+        icon: 'calendar',
         to: '/errors-a',
       },
       {
         label: 'Movimientos de Inventario',
-        icon: 'table-list',
+        icon: 'arrows-turn-to-dots',
         to: '/inv-movements-ua',
       },
     ],
@@ -178,7 +175,6 @@ const filteredItems = computed(() => {
 
 const expandedKeys = ref<Record<string, boolean>>({});
 
-// Cerrar todos los submenús cuando el sidebar se cierra
 watch(() => props.isSidebarActive, (isActive) => {
   if (!isActive) {
     expandedKeys.value = {};
@@ -188,42 +184,40 @@ watch(() => props.isSidebarActive, (isActive) => {
 const toggleItem = (itemKey: string) => {
   if (!props.isSidebarActive) return;
 
-  // Comportamiento de acordeón: cerrar todos los demás
   const newExpandedKeys: Record<string, boolean> = {};
   
-  // Si el item no estaba expandido, lo expandimos
   if (!expandedKeys.value[itemKey]) {
     newExpandedKeys[itemKey] = true;
   }
-  
+
   expandedKeys.value = newExpandedKeys;
 };
 
-const handleMainItemClick = (event: Event, item: any) => {
-  if (!props.isSidebarActive) {
-    // Sidebar cerrado - permitir navegación
-    return;
+const handleMainItemClick = (event: Event, item: any, navigate: Function) => {
+  if (props.isSidebarActive) {
+    event.preventDefault();
+    toggleItem(item.key);
+  } else {
+    navigate();
   }
-
-  // Sidebar abierto - manejar expansión
-  event.preventDefault();
-  toggleItem(item.key);
 };
 </script>
 
 <template>
-  <aside class="flex mr-2 min-h-[95vh]">
+  <aside class="flex mr-2 min-h-[94vh]">
     <div class="flex flex-col py-8 px-5 bg-white dark:bg-gray-900 dark:border-gray-700 rounded-lg gap-4">
-      <RouterLink to="/">
-        <button style="cursor: pointer;"
-          class="flex items-center transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none p-4 sidebar"
-          :class="sidebarClass">
-          <img class="w-auto h-6" src="@/assets/logo.svg" alt="">
-          <p class="text-sm font-medium text-gray-700 capitalize dark:text-white sidebar">
-            FLUX-SYS
-          </p>
-        </button>
-      </RouterLink>
+      <RouterLink to="/" active-class="" exact-active-class="">
+  <button 
+    style="cursor: pointer;"
+    class="flex items-center transition-colors duration-200 gap-x-2 focus:outline-none p-4 sidebar"
+    :class="sidebarClass"
+  >
+    <img class="w-auto h-8" src="@/assets/logo.png" alt="">
+    <p class="text-sm font-medium text-gray-700 capitalize dark:text-white sidebar">
+      FluxSYS
+    </p>
+  </button>
+</RouterLink>
 
       <PanelMenu :model="filteredItems" :expandedKeys="expandedKeys">
         <template #item="{ item }">
@@ -231,7 +225,6 @@ const handleMainItemClick = (event: Event, item: any) => {
           <template v-if="item.key">
             <RouterLink 
               :to="item.to" 
-              @click="(e) => handleMainItemClick(e, item)"
               custom
               v-slot="{ navigate, isActive }"
             >
@@ -239,13 +232,13 @@ const handleMainItemClick = (event: Event, item: any) => {
                 style="cursor: pointer;"
                 class="flex items-center transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none p-4 sidebar w-full"
                 :class="[sidebarClass, { 'bg-gray-100 dark:bg-gray-800': isActive }]"
-                @click="navigate"
+                @click="(e) => handleMainItemClick(e, item, navigate)"
+                @keydown.enter="(e) => handleMainItemClick(e, item, navigate)"
               >
                 <font-awesome-icon :icon="['fas', item.icon]" />
                 <p class="text-sm font-medium text-gray-700 capitalize dark:text-white sidebar">
                   {{ item.label }}
                 </p>
-                <!-- Flecha para indicar que es desplegable (solo cuando sidebar está abierto) -->
                 <span v-if="props.isSidebarActive && item.items" class="ml-auto">
                   <font-awesome-icon 
                     :icon="['fas', expandedKeys[item.key] ? 'chevron-up' : 'chevron-down']" 
@@ -255,16 +248,13 @@ const handleMainItemClick = (event: Event, item: any) => {
               </button>
             </RouterLink>
           </template>
-          
+
           <!-- Sub-ítems (sin key) -->
           <template v-else>
             <RouterLink v-if="item.to" :to="item.to" custom v-slot="{ navigate, isActive }">
-              <button 
-                style="cursor: pointer;"
+              <button style="cursor: pointer;"
                 class="flex items-center transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none p-4 sidebar"
-                :class="[sidebarClass, { 'bg-gray-100 dark:bg-gray-800': isActive }]"
-                @click="navigate"
-              >
+                :class="[sidebarClass, { 'bg-gray-100 dark:bg-gray-800': isActive }]" @click="navigate">
                 <font-awesome-icon :icon="['fas', item.icon]" />
                 <p class="text-sm font-medium text-gray-700 capitalize dark:text-white sidebar">
                   {{ item.label }}
@@ -287,12 +277,11 @@ const handleMainItemClick = (event: Event, item: any) => {
 </template>
 
 <style lang="scss" scoped>
-/* Estilos para resaltar el ítem activo */
 .router-link-active {
   button {
-    background-color: #f3f4f6; /* bg-gray-100 */
+    background-color: #f3f4f6;
     .dark & {
-      background-color: #1f2937; /* dark:bg-gray-800 */
+      background-color: #1f2937;
     }
   }
 }

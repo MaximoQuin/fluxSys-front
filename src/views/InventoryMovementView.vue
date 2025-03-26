@@ -4,32 +4,17 @@
 
     <!-- Tabla de movimientos con ancho optimizado -->
     <div class="card overflow-hidden">
-      <DataTable 
-        :value="filteredMovements" 
-        stripedRows 
-        paginator 
-        :rows="10" 
-        :rowsPerPageOptions="[10, 20, 50]"
-        :scrollable="true" 
-        scrollDirection="horizontal"
-        :loading="loading"
-        tableStyle="min-width: 700px"
-        :scrollHeight="'280px'"
-        :globalFilterFields="[
-          'amount_modify', 'name_product', 
+      <DataTable :value="filteredMovements" stripedRows paginator :rows="10" :rowsPerPageOptions="[10, 20, 50]"
+        :scrollable="true" :scrollHeight="'350px'" :loading="loading" :globalFilterFields="[
+          'amount_modify', 'name_product',
           'name_department', 'name_supplier', 'name_user'
-        ]"
-      >
+        ]">
         <template #header>
           <div class="flex justify-end mb-4">
-            <span class="p-input-icon-left">
-              <i class="pi pi-search" />
-              <InputText 
-                v-model="searchTerm" 
-                placeholder="Buscar movimientos..." 
-                class="p-inputtext-sm w-52"
-              />
-            </span>
+            <!-- <span class="p-input-icon-left"> -->
+            <!-- <i class="pi pi-search" /> -->
+            <InputText v-model="searchTerm" placeholder="Buscar movimientos..." />
+            <!-- </span> -->
           </div>
         </template>
 
@@ -40,29 +25,39 @@
         </template>
 
         <!-- Columnas con anchos optimizados -->
-        <Column field="amount_modify" header="Cantidad" :sortable="true" headerStyle="width: 90px" bodyStyle="width: 90px">
+        <Column field="amount_modify" header="Cantidad" :sortable="true" headerStyle="width: 90px"
+          bodyStyle="width: 90px">
           <template #body="{ data }">
             {{ formatNumber(data.amount_modify) }}
           </template>
         </Column>
-        
-        <Column field="name_product" header="Producto" :sortable="true" headerStyle="width: 120px" bodyStyle="width: 120px"></Column>
-        
-        <Column field="name_department" header="Depto" :sortable="true" headerStyle="width: 100px" bodyStyle="width: 100px"></Column>
-        
-        <Column field="name_supplier" header="Proveedor" :sortable="true" headerStyle="width: 100px" bodyStyle="width: 100px"></Column>
-        
-        <Column field="name_user" header="Usuario" :sortable="true" headerStyle="width: 100px" bodyStyle="width: 100px"></Column>
-        
-        <Column field="date_insert" header="F. Inserción" :sortable="true" headerStyle="width: 120px" bodyStyle="width: 120px">
+
+        <Column field="name_product" header="Producto" :sortable="true" headerStyle="width: 120px"
+          bodyStyle="width: 120px">
+        </Column>
+
+        <Column field="name_department" header="Depto" :sortable="true" headerStyle="width: 100px"
+          bodyStyle="width: 100px">
+        </Column>
+
+        <Column field="name_supplier" header="Proveedor" :sortable="true" headerStyle="width: 100px"
+          bodyStyle="width: 100px">
+        </Column>
+
+        <Column field="name_user" header="Usuario" :sortable="true" headerStyle="width: 100px" bodyStyle="width: 100px">
+        </Column>
+
+        <Column field="date_insert" header="F. Inserción" :sortable="true" headerStyle="width: 120px"
+          bodyStyle="width: 120px">
           <template #body="{ data }">
             <div class="whitespace-nowrap text-sm">
-              {{ formatDateTime(data.date_insert) || 'N/A'}}
+              {{ formatDateTime(data.date_insert) || 'N/A' }}
             </div>
           </template>
         </Column>
-        
-        <Column field="date_update" header="F. Actualización" :sortable="true" headerStyle="width: 120px" bodyStyle="width: 120px">
+
+        <Column field="date_update" header="F. Actualización" :sortable="true" headerStyle="width: 120px"
+          bodyStyle="width: 120px">
           <template #body="{ data }">
             <div class="whitespace-nowrap text-sm">
               {{ formatDateTime(data.date_update) || 'N/A' }}
@@ -70,7 +65,8 @@
           </template>
         </Column>
 
-        <Column field="date_delete" header="F. Eliminación" :sortable="true" headerStyle="width: 120px" bodyStyle="width: 120px">
+        <Column field="date_delete" header="F. Eliminación" :sortable="true" headerStyle="width: 120px"
+          bodyStyle="width: 120px">
           <template #body="{ data }">
             <div class="whitespace-nowrap text-sm">
               {{ formatDateTime(data.date_delete) || 'N/A' }}
@@ -78,7 +74,8 @@
           </template>
         </Column>
 
-        <Column field="date_restore" header="F. Restauración" :sortable="true" headerStyle="width: 120px" bodyStyle="width: 120px">
+        <Column field="date_restore" header="F. Restauración" :sortable="true" headerStyle="width: 120px"
+          bodyStyle="width: 120px">
           <template #body="{ data }">
             <div class="whitespace-nowrap text-sm">
               {{ formatDateTime(data.date_restore) || 'N/A' }}
@@ -131,10 +128,10 @@ const formatDateTime = (dateString: string) => {
   try {
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return null;
-    
+
     return date.toLocaleString('es-ES', {
       day: '2-digit',
-      month: 'short', 
+      month: 'short',
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
@@ -148,9 +145,9 @@ const formatDateTime = (dateString: string) => {
 // Filtrar movimientos
 const filteredMovements = computed(() => {
   if (!searchTerm.value) return inventoryMovementStore.inventoryMovements;
-  
+
   const term = searchTerm.value.toLowerCase();
-  return inventoryMovementStore.inventoryMovements.filter(movement => 
+  return inventoryMovementStore.inventoryMovements.filter(movement =>
     Object.entries(movement).some(([key, value]) => {
       if (key.includes('date')) return false; // Excluir fechas de la búsqueda
       return String(value).toLowerCase().includes(term);

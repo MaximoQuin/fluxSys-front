@@ -6,15 +6,15 @@
     <div class="flex mb-6">
       <button
         @click="setActive(true)"
-        :class="showActive ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'"
-        class="px-4 py-2 rounded-l shadow-md hover:bg-blue-700"
+        :class="showActive ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'"
+        class="px-4 py-2 rounded-l shadow-md hover:bg-blue-700 hover:text-white active:bg-blue-800 transiton-colors"
       >
         Activos
       </button>
       <button
         @click="setActive(false)"
         :class="!showActive ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-800'"
-        class="px-4 py-2 rounded-r shadow-md hover:bg-red-600"
+        class="px-4 py-2 rounded-r shadow-md hover:bg-red-600 hover:text-white active:bg-red-800 transition-colors"
       >
         Eliminados
       </button>
@@ -27,7 +27,7 @@
       :data="filteredData"
       id="id_position"
       :flagRestore="showActive"
-      :currentUserCompany="0"
+      :currentUserId="0"
       @actionSee="handleSee"
       @actionCreate="handleCreate"
       @actionUpdate="handleUpdate"
@@ -44,27 +44,20 @@
     </Dialog>
 
     <!-- Modal Crear/Editar -->
-    <Dialog v-model:visible="visibleForm" modal :header="isEdit ? 'Editar Puesto' : 'Crear Puesto'" :style="{ width: '30rem' }">
+    <Dialog v-model:visible="visibleForm" modal :header="isEdit ? 'Editar Puesto' : 'Crear Puesto'"
+      :style="{ width: '30rem' }">
       <div class="flex flex-col gap-3">
         <label class="font-semibold">Nombre del puesto *</label>
-        <InputText 
-          v-model="formPositionName" 
-          :class="{ 'p-invalid': nameError }"
-          placeholder="Ingrese el nombre del puesto"
-        ></InputText>
+        <InputText v-model="formPositionName" :class="{ 'p-invalid': nameError }"
+          placeholder="Ingrese el nombre del puesto"></InputText>
         <small v-if="nameError" class="p-error">{{ nameError }}</small>
 
         <!-- Selector de compañía solo para administradores -->
         <template v-if="authStore.isAdmin">
           <label class="font-semibold">Compañía *</label>
-          <Dropdown
-            v-model="formCompanyId"
-            :options="companyOptions"
-            optionLabel="name_company"
-            optionValue="id_company"
-            placeholder="Seleccione una compañía"
-            :class="{ 'p-invalid': companyError }"
-          ></Dropdown>
+          <Dropdown v-model="formCompanyId" :options="companyOptions" optionLabel="name_company"
+            optionValue="id_company" placeholder="Seleccione una compañía" :class="{ 'p-invalid': companyError }">
+          </Dropdown>
           <small v-if="companyError" class="p-error">{{ companyError }}</small>
         </template>
 
@@ -118,26 +111,26 @@ const formCompanyId = ref<number | null>(null);
 // Validación mejorada basada en el ViewModel
 const nameError = computed(() => {
   const name = formPositionName.value.trim();
-  
+
   // Validar si está vacío
   if (!name) return 'El nombre es obligatorio';
-  
+
   // Validar contra caracteres especiales
   const specialCharsRegex = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+/;
   if (specialCharsRegex.test(name)) {
     return 'No se permiten caracteres especiales';
   }
-  
+
   // Validar solo letras y espacios según el pattern del ViewModel
   const validCharsRegex = /^[a-zA-Z\s]+$/;
   if (!validCharsRegex.test(name)) {
     return 'Solo se permiten letras y espacios';
   }
-  
+
   // Validar longitud mínima y máxima
   if (name.length < 3) return 'Mínimo 3 caracteres';
   if (name.length > 50) return 'Máximo 50 caracteres';
-  
+
   return null;
 });
 
@@ -188,14 +181,14 @@ const handleCreate = () => {
   isEdit.value = false;
   editingId.value = null;
   formPositionName.value = '';
-  
+
   // Si no es admin, asignar automáticamente la compañía del usuario
   if (!authStore.isAdmin) {
     formCompanyId.value = authStore.user?.company?.id_company || null;
   } else {
     formCompanyId.value = null;
   }
-  
+
   visibleForm.value = true;
 };
 
@@ -216,43 +209,43 @@ const submitForm = async () => {
   try {
     // Para usuarios no admin, asegurar que siempre use su compañía
     const companyIdToUse = authStore.isAdmin ? formCompanyId.value : authStore.user?.company?.id_company;
-    
+
     if (isEdit.value && editingId.value !== null) {
       await positionStore.editPosition(
-        editingId.value, 
+        editingId.value,
         formPositionName.value.trim(),
         companyIdToUse
       );
-      toast.add({ 
-        severity: 'success', 
-        summary: 'Actualizado', 
-        detail: 'Puesto actualizado correctamente', 
-        life: 3000 
+      toast.add({
+        severity: 'success',
+        summary: 'Actualizado',
+        detail: 'Puesto actualizado correctamente',
+        life: 3000
       });
     } else {
       await positionStore.addPosition(
         formPositionName.value.trim(),
         companyIdToUse
       );
-      toast.add({ 
-        severity: 'success', 
-        summary: 'Creado', 
-        detail: 'Puesto creado correctamente', 
-        life: 3000 
+      toast.add({
+        severity: 'success',
+        summary: 'Creado',
+        detail: 'Puesto creado correctamente',
+        life: 3000
       });
     }
-    
+
     await positionStore.fetchPositions();
     visibleForm.value = false;
     editingId.value = null;
     formPositionName.value = '';
     formCompanyId.value = null;
   } catch (e) {
-    toast.add({ 
-      severity: 'error', 
-      summary: 'Error', 
-      detail: 'Operación fallida', 
-      life: 3000 
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: 'Operación fallida',
+      life: 3000
     });
   }
 };
@@ -262,25 +255,33 @@ const handleRemove = (id: number) => {
     message: '¿Estás seguro de eliminar este puesto?',
     header: 'Confirmar eliminación',
     icon: 'pi pi-exclamation-triangle',
-    acceptLabel: 'Eliminar',
     rejectLabel: 'Cancelar',
+    rejectProps: {
+      label: 'Cancelar',
+      severity: 'secondary',
+      outlined: true
+    },
+    acceptProps: {
+      label: 'Eliminar',
+      severity: 'danger'
+    },
     accept: () => {
       positionStore.removePosition(id)
         .then(() => {
           positionStore.fetchPositions();
-          toast.add({ 
-            severity: 'success', 
-            summary: 'Eliminado', 
-            detail: 'Puesto eliminado correctamente', 
-            life: 3000 
+          toast.add({
+            severity: 'success',
+            summary: 'Eliminado',
+            detail: 'Puesto eliminado correctamente',
+            life: 3000
           });
         })
         .catch(() => {
-          toast.add({ 
-            severity: 'error', 
-            summary: 'Error', 
-            detail: 'No se pudo eliminar el puesto', 
-            life: 3000 
+          toast.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'No se pudo eliminar el puesto',
+            life: 3000
           });
         });
     }
@@ -291,19 +292,19 @@ const handleRestore = (id: number) => {
   positionStore.restoreDeletedPosition(id)
     .then(() => {
       positionStore.fetchPositions();
-      toast.add({ 
-        severity: 'success', 
-        summary: 'Restaurado', 
-        detail: 'Puesto restaurado correctamente', 
-        life: 3000 
+      toast.add({
+        severity: 'success',
+        summary: 'Restaurado',
+        detail: 'Puesto restaurado correctamente',
+        life: 3000
       });
     })
     .catch(() => {
-      toast.add({ 
-        severity: 'error', 
-        summary: 'Error', 
-        detail: 'No se pudo restaurar el puesto', 
-        life: 3000 
+      toast.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'No se pudo restaurar el puesto',
+        life: 3000
       });
     });
 };
@@ -313,6 +314,7 @@ const handleRestore = (id: number) => {
 .p-invalid {
   border-color: var(--red-500) !important;
 }
+
 .p-error {
   color: var(--red-500);
   font-size: 0.875rem;

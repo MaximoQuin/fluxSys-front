@@ -1,73 +1,103 @@
 <template>
   <div class="flex items-center justify-center min-h-screen bg-cover bg-center" :style="{ backgroundImage: 'url(/background.jpg)' }">
-    <div class="w-full max-w-md p-8 bg-black/50 backdrop-blur-sm rounded-2xl shadow-lg backdrop-blur-lg">
-      <h1 class="text-4xl font-bold text-center text-white mb-8">Inicia Sesión</h1>
-      <form @submit.prevent="handleLogin" class="space-y-6">
-        <!-- Campo de correo electrónico -->
-        <div>
-          <label class="block text-gray-300 text-sm font-medium">Correo electrónico</label>
-          <div class="relative">
-            <span class="absolute left-3 top-2 text-gray-400">
-              <i class="fas fa-envelope"></i>
-            </span>
-            <input
-              v-model="email"
-              type="email"
-              placeholder="Tu correo"
-              required
-              class="peer w-full pl-10 py-2 bg-transparent border-b border-gray-400 text-white focus:outline-none focus:border-orange-500 invalid:border-red-500 invalid:text-red-600"
-              :class="{ 'invalid:border-red-500': !isEmailValid }"
-            />
-          </div>
-          <!-- Mensaje de error para correo electrónico inválido -->
-          <p v-if="email && !isEmailValid" class="text-sm text-red-500 mt-2">
-            Ingresa una dirección de correo electrónico válida.
-          </p>
+    <!-- Toast para mostrar mensajes de error -->
+    <Toast position="top-right" />
+    
+    <!-- Dialog draggable -->
+    <Dialog 
+      v-model:visible="visible" 
+      :draggable="true" 
+      :modal="false"
+      :closable="false"
+      :style="{ width: '28rem', backgroundColor: 'rgba(0, 0, 0, 0.5)', backdropFilter: 'blur(4px)' }"
+      contentClass="border border-white/10 rounded-2xl shadow-2xl p-0"
+      position="center"
+      class="p-0"
+    >
+      <template #header>
+        <!-- Header vacío para que no muestre la barra de título por defecto -->
+      </template>
+      
+      <div class="p-8">
+        <div class="text-center mb-8">
+          <Avatar icon="pi pi-user" size="xlarge" class="bg-orange-500/20 text-orange-500 border-2 border-orange-500/50 mb-4" shape="circle" />
+          <h1 class="text-4xl font-bold text-center text-white mb-2">Inicia Sesión</h1>
+          <p class="text-gray-300">Ingresa tus credenciales para continuar</p>
         </div>
-
-        <!-- Campo de contraseña -->
-        <div>
-          <label class="block text-gray-300 text-sm font-medium">Contraseña</label>
-          <div class="relative">
-            <span class="absolute left-3 top-2 text-gray-400">
-              <i class="fas fa-key"></i>
+        
+        <form @submit.prevent="handleLogin" class="space-y-6">
+          <!-- Campo de correo electrónico -->
+          <div class="space-y-2">
+            <span class="p-float-label">
+              <InputText 
+                v-model="email"
+                type="email" 
+                placeholder="Tu correo" 
+                required
+                class="w-full bg-transparent border-b border-gray-400 text-white focus:border-orange-500"
+                :class="{ 'p-invalid': email && !isEmailValid }"
+              />
+              <label class="text-gray-300">Correo electrónico</label>
             </span>
-            <input
-              v-model="password"
-              type="password"
-              placeholder="********"
-              required
-              class="w-full pl-10 py-2 bg-transparent border-b border-gray-400 text-white focus:outline-none focus:border-orange-500"
-            />
+            <!-- Mensaje de error para correo electrónico inválido -->
+            <br>
+            <small v-if="email && !isEmailValid" class="p-error">
+              Ingresa una dirección de correo electrónico válida.
+            </small>
           </div>
-        </div>
 
-        <!-- Botón de inicio de sesión -->
-        <button
-          type="submit"
-          class="w-full py-3 bg-orange-500 text-white font-semibold rounded-lg hover:bg-orange-600 transition"
-        >
-          Sign In
-        </button>
+          <!-- Campo de contraseña -->
+          <div class="space-y-2">
+            <span class="p-float-label">
+              <Password 
+                v-model="password"
+                placeholder="********" 
+                required
+                class="w-full bg-transparent border-b border-gray-400 text-white"
+                inputClass="w-full bg-transparent text-white"
+                :feedback="false"
+                toggleMask
+              />
+              <label class="text-gray-300">Contraseña</label>
+            </span>
+          </div>
 
-        <!-- Mensaje de error de credenciales incorrectas o usuario no disponible -->
-        <p v-if="loginError" class="text-sm text-red-500 mt-2 text-center">
-          {{ loginError }}
-        </p>
-      </form>
-    </div>
+          <!-- Botón de inicio de sesión -->
+          <Button 
+            type="submit" 
+            label="Sign In" 
+            icon="pi pi-sign-in"
+            class="w-full py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold hover:from-orange-600 hover:to-orange-700 transition-all"
+            :loading="loading"
+          />
+        </form>
+      </div>
+    </Dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useAuthStore } from '../stores/authStore';
 import { useRouter } from 'vue-router';
+import { useToast } from 'primevue/usetoast';
+import Avatar from 'primevue/avatar';
+import InputText from 'primevue/inputtext';
+import Password from 'primevue/password';
+import Button from 'primevue/button';
+import Dialog from 'primevue/dialog';
+import Toast from 'primevue/toast';
+
+// Toast para mostrar mensajes
+const toast = useToast();
 
 // Variables reactivas
 const email = ref('');
 const password = ref('');
-const loginError = ref(''); // Almacena el mensaje de error
+const remember = ref(false);
+const loading = ref(false);
+const loginError = ref('');
+const visible = ref(true); // Para controlar la visibilidad del Dialog
 const authStore = useAuthStore();
 const router = useRouter();
 
@@ -81,10 +111,17 @@ const isEmailValid = computed(() => {
 const handleLogin = async () => {
   // Limpiar el mensaje de error
   loginError.value = '';
+  loading.value = true;
 
   // Validar el correo electrónico antes de continuar
   if (!isEmailValid.value) {
-    loginError.value = 'Ingresa una dirección de correo electrónico válida.';
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: 'Ingresa una dirección de correo electrónico válida.',
+      life: 5000
+    });
+    loading.value = false;
     return;
   }
 
@@ -95,34 +132,85 @@ const handleLogin = async () => {
     router.push('/');
   } catch (error) {
     // Manejar errores específicos
+    let errorMessage = "Credenciales incorrectas. Inténtalo de nuevo.";
+    
     if (error.response && error.response.data.message === "El usuario no está disponible.") {
-      loginError.value = "Tu cuenta no existe o se encuentra fuera de servicio.";
-    } else {
-      loginError.value = "Credenciales incorrectas. Inténtalo de nuevo.";
+      errorMessage = "Tu cuenta no existe o se encuentra fuera de servicio.";
     }
+    
+    // Mostrar mensaje de error con Toast
+    toast.add({
+      severity: 'error',
+      summary: 'Error de inicio de sesión',
+      detail: errorMessage,
+      life: 5000
+    });
+  } finally {
+    loading.value = false;
   }
 };
+
+// Mostrar el diálogo al montar el componente
+onMounted(() => {
+  visible.value = true;
+});
 </script>
 
 <style scoped>
 /* Estilos personalizados */
-.bg-black\/50 {
-  background-color: rgba(0, 0, 0, 0.5);
+:deep(.p-password input) {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #9ca3af;
+  border-radius: 0;
+  color: white;
+  padding-left: 2rem;
 }
 
-.backdrop-blur-sm {
-  backdrop-filter: blur(4px);
+:deep(.p-inputtext) {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #9ca3af;
+  border-radius: 0;
+  color: white;
+  padding-left: 2rem;
+  width: 100%;
 }
 
-.backdrop-blur-lg {
-  backdrop-filter: blur(16px);
+:deep(.p-inputtext:enabled:focus) {
+  box-shadow: none;
+  border-color: #f97316;
 }
 
-.invalid\:border-red-500:invalid {
-  border-color: #ef4444;
+:deep(.p-dialog .p-dialog-header) {
+  padding: 0;
 }
 
-.invalid\:text-red-600:invalid {
-  color: #dc2626;
+:deep(.p-dialog .p-dialog-content) {
+  padding: 0;
+}
+
+:deep(.p-dialog) {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+:deep(.p-button) {
+  transition: all 0.3s ease;
+}
+
+:deep(.p-button:enabled:hover) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(249, 115, 22, 0.3);
+}
+
+/* Estilos para el toast */
+:deep(.p-toast) {
+  opacity: 0.9;
+}
+
+:deep(.p-toast .p-toast-message) {
+  margin: 0 0 1rem 0;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.3);
 }
 </style>
