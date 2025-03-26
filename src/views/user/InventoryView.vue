@@ -2,38 +2,53 @@
   <div class="container mx-auto p-4">
     <h1 class="text-2xl font-bold mb-4">Gestión de Inventario</h1>
 
-    <!-- Filtros -->
-    <div class="mb-4">
-      <button
-        @click="showActiveInventories"
-        :class="{ 'bg-blue-500 text-white': showActive, 'bg-gray-200 text-gray-800': !showActive }"
-        class="px-4 py-2 rounded-l shadow-md hover:bg-blue-700 hover:text-white active:bg-blue-800 transiton-colors"
-      >
-        Activos
-      </button>
-      <button
-        @click="showDeletedInventories"
-        :class="{ 'bg-red-500 text-white': !showActive, 'bg-gray-200 text-gray-800': showActive }"
-        class="px-4 py-2 rounded-r shadow-md hover:bg-red-600 hover:text-white active:bg-red-800 transition-colors"
-      >
-        Eliminados
-      </button>
+   <!-- Filtros y botones de exportación -->
+   <div class="mb-4 flex items-center gap-2">
+      <!-- Contenedor de filtros -->
+      <div class="flex">
+        <button 
+          @click="showActiveInventories"
+          :class="{ 'bg-blue-500 text-white': showActive, 'bg-gray-200 text-gray-800': !showActive }"
+          class="px-4 py-2 rounded-l shadow-md hover:bg-blue-700 hover:text-white active:bg-blue-800 transition-colors"
+        >
+          Activos
+        </button>
+        <button 
+          @click="showDeletedInventories"
+          :class="{ 'bg-red-500 text-white': !showActive, 'bg-gray-200 text-gray-800': showActive }"
+          class="px-4 py-2 rounded-r shadow-md hover:bg-red-600 hover:text-white active:bg-red-800 transition-colors"
+        >
+          Eliminados
+        </button>
+      </div>
+      
+      <!-- Botones de exportación -->
+      <div class="flex gap-2">
+        <!-- Botón para generar PDF -->
+        <button 
+          @click="generatePDF"
+          class="px-4 py-2 bg-green-500 text-white rounded shadow-md hover:bg-green-600 transition-colors flex items-center gap-2"
+        >
+          <i class="pi pi-file-pdf"></i>
+          Exportar a PDF
+        </button>
+        
+        <!-- Botón para generar Excel -->
+        <button 
+          @click="exportToExcel"
+          class="px-4 py-2 bg-blue-600 text-white rounded shadow-md hover:bg-blue-700 transition-colors flex items-center gap-2"
+        >
+          <i class="pi pi-file-excel"></i>
+          Exportar a Excel
+        </button>
+      </div>
     </div>
 
     <!-- Tabla de inventario -->
-    <TableComponent
-      :loader="inventoryStore.loading"
-      :columns="mappedColumns"
-      :data="filteredInventories"
-      id="id_inventory_product"
-      :flagRestore="showActive"
-      :currentUserId="0"
-      @actionSee="handleSee"
-      @actionCreate="handleCreate"
-      @actionUpdate="handleUpdate"
-      @actionDanger="handleRemove"
-      @actionRestore="restoreDeletedInventory"
-    />
+    <TableComponent :loader="inventoryStore.loading" :columns="mappedColumns" :data="filteredInventories"
+      id="id_inventory_product" :flagRestore="showActive" :currentUserId="0" @actionSee="handleSee"
+      @actionCreate="handleCreate" @actionUpdate="handleUpdate" @actionDanger="handleRemove"
+      @actionRestore="restoreDeletedInventory" />
 
     <!-- Modal de detalles mejorado -->
     <Dialog v-model:visible="visibleDetails" modal header="Detalles del Producto" :style="{ width: '60rem' }">
@@ -71,8 +86,8 @@
               </div>
               <div class="flex flex-col">
                 <span class="text-sm font-medium text-gray-500">Estado</span>
-                <Tag :value="currentProduct.name_state" 
-                     :severity="currentProduct.name_state === 'Activo' ? 'success' : 'warning'" />
+                <Tag :value="currentProduct.name_state"
+                  :severity="currentProduct.name_state === 'Activo' ? 'success' : 'warning'" />
               </div>
               <div class="flex flex-col">
                 <span class="text-sm font-medium text-gray-500">Tipo Movimiento</span>
@@ -146,129 +161,86 @@
     </Dialog>
 
     <!-- Modal de editar/crear con validaciones -->
-    <Dialog v-model:visible="visibleForm" modal :header="isEdit ? 'Editar Producto' : 'Crear Producto'" :style="{ width: '50rem' }">
+    <Dialog v-model:visible="visibleForm" modal :header="isEdit ? 'Editar Producto' : 'Crear Producto'"
+      :style="{ width: '50rem' }">
       <div class="grid grid-cols-2 gap-4">
         <!-- Nombre del Producto -->
         <div class="flex flex-col gap-2">
           <label for="name" class="font-semibold">Nombre del producto:*</label>
-          <InputText 
-            v-model="formProduct.name_product" 
-            id="name" 
-            autocomplete="off"
-            :class="{ 'p-invalid': nameError }"
-          />
+          <InputText v-model="formProduct.name_product" id="name" autocomplete="off"
+            :class="{ 'p-invalid': nameError }" />
           <small v-if="nameError" class="p-error">
             {{ nameError }}
           </small>
         </div>
-        
+
         <!-- Stock -->
         <div class="flex flex-col gap-2">
           <label for="stock" class="font-semibold">Stock:*</label>
-          <InputNumber 
-            v-model="formProduct.stock_product" 
-            id="stock" 
-            mode="decimal" 
-            :min="0" 
-            :max="2147483647"
-            :class="{ 'p-invalid': stockError }"
-          />
+          <InputNumber v-model="formProduct.stock_product" id="stock" mode="decimal" :min="0" :max="2147483647"
+            :class="{ 'p-invalid': stockError }" />
           <small v-if="stockError" class="p-error">
             {{ stockError }}
           </small>
         </div>
-        
+
         <!-- Precio -->
         <div class="flex flex-col gap-2">
           <label for="price" class="font-semibold">Precio:*</label>
-          <InputNumber 
-            v-model="formProduct.price_product" 
-            id="price" 
-            mode="currency" 
-            currency="USD" 
-            locale="en-US"
-            :min="0.01"
-            :class="{ 'p-invalid': priceError }"
-          />
+          <InputNumber v-model="formProduct.price_product" id="price" mode="currency" currency="USD" locale="en-US"
+            :min="0.01" :class="{ 'p-invalid': priceError }" />
           <small v-if="priceError" class="p-error">
             {{ priceError }}
           </small>
         </div>
-        
+
         <!-- Categoría -->
         <div class="flex flex-col gap-2">
           <label for="category" class="font-semibold">Categoría:*</label>
-          <Dropdown 
-            v-model="formProduct.id_category_product_Id" 
-            :options="categoryProductStore.categoriesProducts" 
-            optionLabel="name_category_product" 
-            optionValue="id_category_product"
-            placeholder="Seleccione una categoría"
-            :class="{ 'p-invalid': categoryError }"
-          />
+          <Dropdown v-model="formProduct.id_category_product_Id" :options="categoryProductStore.categoriesProducts"
+            optionLabel="name_category_product" optionValue="id_category_product" placeholder="Seleccione una categoría"
+            :class="{ 'p-invalid': categoryError }" />
           <small v-if="categoryError" class="p-error">
             {{ categoryError }}
           </small>
         </div>
-        
+
         <!-- Estado -->
         <div class="flex flex-col gap-2">
           <label for="state" class="font-semibold">Estado:*</label>
-          <Dropdown 
-            v-model="formProduct.id_state_Id" 
-            :options="stateStore.states" 
-            optionLabel="name_state" 
-            optionValue="id_state"
-            placeholder="Seleccione un estado"
-            :class="{ 'p-invalid': stateError }"
-          />
+          <Dropdown v-model="formProduct.id_state_Id" :options="stateStore.states" optionLabel="name_state"
+            optionValue="id_state" placeholder="Seleccione un estado" :class="{ 'p-invalid': stateError }" />
           <small v-if="stateError" class="p-error">
             {{ stateError }}
           </small>
         </div>
-        
+
         <!-- Tipo de Movimiento -->
         <div class="flex flex-col gap-2">
           <label for="movement" class="font-semibold">Tipo de Movimiento:*</label>
-          <Dropdown 
-            v-model="formProduct.id_movement_type_Id" 
-            :options="movementTypeStore.movementsTypes" 
-            optionLabel="name_movement_type" 
-            optionValue="id_movement_type"
-            placeholder="Seleccione un tipo"
-            :class="{ 'p-invalid': movementError }"
-          />
+          <Dropdown v-model="formProduct.id_movement_type_Id" :options="movementTypeStore.movementsTypes"
+            optionLabel="name_movement_type" optionValue="id_movement_type" placeholder="Seleccione un tipo"
+            :class="{ 'p-invalid': movementError }" />
           <small v-if="movementError" class="p-error">
             {{ movementError }}
           </small>
         </div>
-        
+
         <!-- Proveedor -->
         <div class="flex flex-col gap-2">
           <label for="supplier" class="font-semibold">Proveedor Principal:*</label>
-          <Dropdown 
-            v-model="formProduct.id_supplier_Id" 
-            :options="supplierStore.suppliers" 
-            optionLabel="name_supplier" 
-            optionValue="id_supplier"
-            placeholder="Seleccione un proveedor"
-            :class="{ 'p-invalid': supplierError }"
-          />
+          <Dropdown v-model="formProduct.id_supplier_Id" :options="supplierStore.suppliers" optionLabel="name_supplier"
+            optionValue="id_supplier" placeholder="Seleccione un proveedor" :class="{ 'p-invalid': supplierError }" />
           <small v-if="supplierError" class="p-error">
             {{ supplierError }}
           </small>
         </div>
       </div>
-      
+
       <div class="flex justify-end gap-2 mt-4">
         <Button type="button" label="Cancelar" severity="danger" @click="visibleForm = false"></Button>
-        <Button 
-          type="button" 
-          label="Guardar" 
-          severity="info"
-          :disabled="!isFormValid"
-          @click="isEdit ? updateProduct() : createProduct()"
-        ></Button>
+        <Button type="button" label="Guardar" severity="info" :disabled="!isFormValid"
+          @click="isEdit ? updateProduct() : createProduct()"></Button>
       </div>
     </Dialog>
 
@@ -286,6 +258,8 @@ import { useMovementTypeStore } from '@/stores/movementTypeStore';
 import { useSupplierStore } from '@/stores/supplierStore';
 import { useAuthStore } from '@/stores/authStore';
 import TableComponent from '@/components/TableComponent.vue';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 import { useConfirm } from "primevue/useconfirm";
 import { useToast } from "primevue/usetoast";
@@ -613,6 +587,88 @@ const getStatusSeverity = (status: string) => {
     default: return 'info';
   }
 };
+
+const generatePDF = () => {
+  // Crear documento PDF
+  const doc = new jsPDF();
+  
+  // Título del documento
+  doc.setFontSize(18);
+  doc.text(`Reporte de Inventario - ${showActive.value ? 'Activos' : 'Eliminados'}`, 14, 15);
+  
+  // Fecha de generación
+  doc.setFontSize(10);
+  doc.text(`Generado el: ${new Date().toLocaleDateString()}`, 14, 22);
+  
+  // Configurar tabla
+  const headers = mappedColumns.map(col => col.header);
+  const data = filteredInventories.value.map(item => [
+    item.name_product,
+    item.stock_product,
+    `$${item.price_product?.toFixed(2)}`,
+    item.name_category_product,
+    item.name_state,
+    item.name_movement_type,
+    item.name_supplier
+  ]);
+  
+  // Agregar tabla al PDF (usando autoTable directamente)
+  autoTable(doc, {
+    head: [headers],
+    body: data,
+    startY: 30,
+    styles: {
+      fontSize: 8,
+      cellPadding: 2,
+      overflow: 'linebreak'
+    },
+    headStyles: {
+      fillColor: [41, 128, 185],
+      textColor: 255,
+      fontStyle: 'bold'
+    },
+    alternateRowStyles: {
+      fillColor: [245, 245, 245]
+    },
+    columnStyles: {
+      0: { cellWidth: 40 },
+      1: { cellWidth: 15 },
+      2: { cellWidth: 20 },
+      3: { cellWidth: 30 },
+      4: { cellWidth: 20 },
+      5: { cellWidth: 30 },
+      6: { cellWidth: 40 }
+    }
+  });
+  
+  // Guardar el PDF
+  doc.save(`inventario_${showActive.value ? 'activos' : 'eliminados'}_${new Date().toISOString().slice(0,10)}.pdf`);
+};
+
+// Nuevo método para exportar a Excel
+const exportToExcel = () => {
+  // Crear contenido CSV
+  const headers = mappedColumns.map(col => `"${col.header}"`).join(',');
+  const rows = filteredInventories.value.map(item => 
+    `"${item.name_product}",${item.stock_product},${item.price_product},"${item.name_category_product}","${item.name_state}","${item.name_movement_type}","${item.name_supplier}"`
+  ).join('\n');
+  
+  const csvContent = `${headers}\n${rows}`;
+  
+  // Crear archivo y descargar
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  const url = URL.createObjectURL(blob);
+  
+  link.setAttribute('href', url);
+  link.setAttribute('download', `inventario_${showActive.value ? 'activos' : 'eliminados'}_${new Date().toISOString().slice(0,10)}.csv`);
+  link.style.visibility = 'hidden';
+  
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
 
 // Cargar datos iniciales
 onMounted(() => {
