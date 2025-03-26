@@ -44,27 +44,20 @@
     </Dialog>
 
     <!-- Modal Crear/Editar -->
-    <Dialog v-model:visible="visibleForm" modal :header="isEdit ? 'Editar Categoría' : 'Crear Categoría'" :style="{ width: '30rem' }">
+    <Dialog v-model:visible="visibleForm" modal :header="isEdit ? 'Editar Categoría' : 'Crear Categoría'"
+      :style="{ width: '30rem' }">
       <div class="flex flex-col gap-3">
         <label class="font-semibold">Nombre de la categoría *</label>
-        <InputText 
-          v-model="formCategoryName" 
-          :class="{ 'p-invalid': nameError }"
-          placeholder="Ingrese el nombre de la categoría"
-        ></InputText>
+        <InputText v-model="formCategoryName" :class="{ 'p-invalid': nameError }"
+          placeholder="Ingrese el nombre de la categoría"></InputText>
         <small v-if="nameError" class="p-error">{{ nameError }}</small>
 
         <!-- Selector de compañía solo para administradores -->
         <template v-if="authStore.isAdmin">
           <label class="font-semibold">Compañía *</label>
-          <Dropdown
-            v-model="formCompanyId"
-            :options="companyOptions"
-            optionLabel="name_company"
-            optionValue="id_company"
-            placeholder="Seleccione una compañía"
-            :class="{ 'p-invalid': companyError }"
-          ></Dropdown>
+          <Dropdown v-model="formCompanyId" :options="companyOptions" optionLabel="name_company"
+            optionValue="id_company" placeholder="Seleccione una compañía" :class="{ 'p-invalid': companyError }">
+          </Dropdown>
           <small v-if="companyError" class="p-error">{{ companyError }}</small>
         </template>
 
@@ -118,17 +111,17 @@ const formCompanyId = ref<number | null>(null);
 // Validación
 const nameError = computed(() => {
   const name = formCategoryName.value.trim();
-  
+
   if (!name) return 'El nombre es obligatorio';
-  
+
   const specialCharsRegex = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+/;
   if (specialCharsRegex.test(name)) {
     return 'No se permiten caracteres especiales';
   }
-  
+
   if (name.length < 3) return 'Mínimo 3 caracteres';
   if (name.length > 50) return 'Máximo 50 caracteres';
-  
+
   return null;
 });
 
@@ -169,14 +162,14 @@ const handleCreate = () => {
   isEdit.value = false;
   editingId.value = null;
   formCategoryName.value = '';
-  
+
   // Si no es admin, asignar automáticamente la compañía del usuario
   if (!authStore.isAdmin) {
     formCompanyId.value = authStore.user?.company?.id_company || null;
   } else {
     formCompanyId.value = null;
   }
-  
+
   visibleForm.value = true;
 };
 
@@ -197,43 +190,43 @@ const submitForm = async () => {
   try {
     // Para usuarios no admin, asegurar que siempre use su compañía
     const companyIdToUse = authStore.isAdmin ? formCompanyId.value : authStore.user?.company?.id_company;
-    
+
     if (isEdit.value && editingId.value !== null) {
       await categorySupplierStore.editCategorySupplier(
-        editingId.value, 
+        editingId.value,
         formCategoryName.value.trim(),
         companyIdToUse
       );
-      toast.add({ 
-        severity: 'success', 
-        summary: 'Actualizado', 
-        detail: 'Categoría actualizada correctamente', 
-        life: 3000 
+      toast.add({
+        severity: 'success',
+        summary: 'Actualizado',
+        detail: 'Categoría actualizada correctamente',
+        life: 3000
       });
     } else {
       await categorySupplierStore.addCategorySupplier(
         formCategoryName.value.trim(),
         companyIdToUse
       );
-      toast.add({ 
-        severity: 'success', 
-        summary: 'Creado', 
-        detail: 'Categoría creada correctamente', 
-        life: 3000 
+      toast.add({
+        severity: 'success',
+        summary: 'Creado',
+        detail: 'Categoría creada correctamente',
+        life: 3000
       });
     }
-    
+
     await categorySupplierStore.fetchCategoriesSuppliers();
     visibleForm.value = false;
     editingId.value = null;
     formCategoryName.value = '';
     formCompanyId.value = null;
   } catch (e) {
-    toast.add({ 
-      severity: 'error', 
-      summary: 'Error', 
-      detail: 'Operación fallida', 
-      life: 3000 
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: 'Operación fallida',
+      life: 3000
     });
   }
 };
@@ -243,25 +236,33 @@ const handleRemove = (id: number) => {
     message: '¿Estás seguro de eliminar esta categoría?',
     header: 'Confirmar eliminación',
     icon: 'pi pi-exclamation-triangle',
-    acceptLabel: 'Eliminar',
     rejectLabel: 'Cancelar',
+    rejectProps: {
+      label: 'Cancelar',
+      severity: 'secondary',
+      outlined: true
+    },
+    acceptProps: {
+      label: 'Eliminar',
+      severity: 'danger'
+    },
     accept: () => {
       categorySupplierStore.removeCategorySupplier(id)
         .then(() => {
           categorySupplierStore.fetchCategoriesSuppliers();
-          toast.add({ 
-            severity: 'success', 
-            summary: 'Eliminado', 
-            detail: 'Categoría eliminada correctamente', 
-            life: 3000 
+          toast.add({
+            severity: 'success',
+            summary: 'Eliminado',
+            detail: 'Categoría eliminada correctamente',
+            life: 3000
           });
         })
         .catch(() => {
-          toast.add({ 
-            severity: 'error', 
-            summary: 'Error', 
-            detail: 'No se pudo eliminar la categoría', 
-            life: 3000 
+          toast.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'No se pudo eliminar la categoría',
+            life: 3000
           });
         });
     }
@@ -272,19 +273,19 @@ const handleRestore = (id: number) => {
   categorySupplierStore.restoreDeletedCategorySupplier(id)
     .then(() => {
       categorySupplierStore.fetchCategoriesSuppliers();
-      toast.add({ 
-        severity: 'success', 
-        summary: 'Restaurado', 
-        detail: 'Categoría restaurada correctamente', 
-        life: 3000 
+      toast.add({
+        severity: 'success',
+        summary: 'Restaurado',
+        detail: 'Categoría restaurada correctamente',
+        life: 3000
       });
     })
     .catch(() => {
-      toast.add({ 
-        severity: 'error', 
-        summary: 'Error', 
-        detail: 'No se pudo restaurar la categoría', 
-        life: 3000 
+      toast.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'No se pudo restaurar la categoría',
+        life: 3000
       });
     });
 };
@@ -294,6 +295,7 @@ const handleRestore = (id: number) => {
 .p-invalid {
   border-color: var(--red-500) !important;
 }
+
 .p-error {
   color: var(--red-500);
   font-size: 0.875rem;

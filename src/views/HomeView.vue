@@ -1,5 +1,5 @@
 <template>
-  <div class="p-4 md:p-6" style="height: 552px; overflow-y: auto;">
+  <div class="p-4 md:p-6" style="height: 610px; overflow-y: auto;">
     <!-- Sección de Bienvenida -->
     <Card class="mb-4">
       <template #title>
