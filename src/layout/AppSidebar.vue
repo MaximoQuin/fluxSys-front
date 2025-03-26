@@ -74,7 +74,7 @@ const items = [
         to: '/states-u',
       },
       {
-        label: 'Movimientos de Inventario',
+        label: 'Historial de Inventario',
         icon: 'table-list',
         to: '/inv-movements-ua',
         visibleForRoles: ['Administrador', 'Administrador Empresarial', 'Jefe de Departamento', 'Subjefe de Departamento'],
@@ -178,7 +178,6 @@ const filteredItems = computed(() => {
 
 const expandedKeys = ref<Record<string, boolean>>({});
 
-// Cerrar todos los submenús cuando el sidebar se cierra
 watch(() => props.isSidebarActive, (isActive) => {
   if (!isActive) {
     expandedKeys.value = {};
@@ -188,10 +187,8 @@ watch(() => props.isSidebarActive, (isActive) => {
 const toggleItem = (itemKey: string) => {
   if (!props.isSidebarActive) return;
 
-  // Comportamiento de acordeón: cerrar todos los demás
   const newExpandedKeys: Record<string, boolean> = {};
   
-  // Si el item no estaba expandido, lo expandimos
   if (!expandedKeys.value[itemKey]) {
     newExpandedKeys[itemKey] = true;
   }
@@ -199,28 +196,26 @@ const toggleItem = (itemKey: string) => {
   expandedKeys.value = newExpandedKeys;
 };
 
-const handleMainItemClick = (event: Event, item: any) => {
-  if (!props.isSidebarActive) {
-    // Sidebar cerrado - permitir navegación
-    return;
+const handleMainItemClick = (event: Event, item: any, navigate: Function) => {
+  if (props.isSidebarActive) {
+    event.preventDefault();
+    toggleItem(item.key);
+  } else {
+    navigate();
   }
-
-  // Sidebar abierto - manejar expansión
-  event.preventDefault();
-  toggleItem(item.key);
 };
 </script>
 
 <template>
-  <aside class="flex mr-2 min-h-[95vh]">
+  <aside class="flex mr-2 min-h-[97vh]">
     <div class="flex flex-col py-8 px-5 bg-white dark:bg-gray-900 dark:border-gray-700 rounded-lg gap-4">
       <RouterLink to="/">
         <button style="cursor: pointer;"
-          class="flex items-center transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none p-4 sidebar"
+          class="flex items-center transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 focus:outline-none p-4 sidebar"
           :class="sidebarClass">
-          <img class="w-auto h-6" src="@/assets/logo.svg" alt="">
+          <img class="w-auto h-8" src="@/assets/logo.png" alt="">
           <p class="text-sm font-medium text-gray-700 capitalize dark:text-white sidebar">
-            FLUX-SYS
+            FluxSYS
           </p>
         </button>
       </RouterLink>
@@ -231,7 +226,6 @@ const handleMainItemClick = (event: Event, item: any) => {
           <template v-if="item.key">
             <RouterLink 
               :to="item.to" 
-              @click="(e) => handleMainItemClick(e, item)"
               custom
               v-slot="{ navigate, isActive }"
             >
@@ -239,13 +233,13 @@ const handleMainItemClick = (event: Event, item: any) => {
                 style="cursor: pointer;"
                 class="flex items-center transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none p-4 sidebar w-full"
                 :class="[sidebarClass, { 'bg-gray-100 dark:bg-gray-800': isActive }]"
-                @click="navigate"
+                @click="(e) => handleMainItemClick(e, item, navigate)"
+                @keydown.enter="(e) => handleMainItemClick(e, item, navigate)"
               >
                 <font-awesome-icon :icon="['fas', item.icon]" />
                 <p class="text-sm font-medium text-gray-700 capitalize dark:text-white sidebar">
                   {{ item.label }}
                 </p>
-                <!-- Flecha para indicar que es desplegable (solo cuando sidebar está abierto) -->
                 <span v-if="props.isSidebarActive && item.items" class="ml-auto">
                   <font-awesome-icon 
                     :icon="['fas', expandedKeys[item.key] ? 'chevron-up' : 'chevron-down']" 
@@ -287,12 +281,11 @@ const handleMainItemClick = (event: Event, item: any) => {
 </template>
 
 <style lang="scss" scoped>
-/* Estilos para resaltar el ítem activo */
 .router-link-active {
   button {
-    background-color: #f3f4f6; /* bg-gray-100 */
+    background-color: #f3f4f6;
     .dark & {
-      background-color: #1f2937; /* dark:bg-gray-800 */
+      background-color: #1f2937;
     }
   }
 }

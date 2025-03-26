@@ -6,15 +6,15 @@
     <div class="mb-4">
       <button
         @click="showActive = true"
-        :class="{ 'bg-blue-500 text-white': showActive, 'bg-gray-200': !showActive }"
-        class="px-4 py-2 rounded-l transition-colors duration-200"
+        :class="{ 'bg-blue-500 text-white': showActive, 'bg-gray-200 text-gray-800': !showActive }"
+        class="px-4 py-2 rounded-l shadow-md hover:bg-blue-700 hover:text-white active:bg-blue-800 transiton-colors"
       >
         Activos
       </button>
       <button
         @click="showActive = false"
-        :class="{ 'bg-red-500 text-white': !showActive, 'bg-gray-200': showActive }"
-        class="px-4 py-2 rounded-r transition-colors duration-200"
+        :class="{ 'bg-red-500 text-white': !showActive, 'bg-gray-200 text-gray-800': showActive }"
+        class="px-4 py-2 rounded-r shadow-md hover:bg-red-600 hover:text-white active:bg-red-800 transition-colors"
       >
         Eliminados
       </button>
@@ -336,7 +336,8 @@ const categoryError = computed(() => {
 });
 
 const productsError = computed(() => {
-  if (form.value.products.length === 0) return 'Debe agregar al menos un producto';
+  //Eliminacion de validacion los productos son opcionales
+  //if (form.value.products.length === 0) return 'Debe agregar al menos un producto';
   
   // Verificar que todos los productos tengan un producto seleccionado
   const hasEmptyProducts = form.value.products.some(

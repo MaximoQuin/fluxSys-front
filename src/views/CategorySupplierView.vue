@@ -6,15 +6,15 @@
     <div class="flex mb-6">
       <button
         @click="setActive(true)"
-        :class="showActive ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'"
-        class="px-4 py-2 rounded-l shadow-md hover:bg-blue-700"
+        :class="showActive ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'"
+        class="px-4 py-2 rounded-l shadow-md hover:bg-blue-700 hover:text-white active:bg-blue-800 transiton-colors"
       >
         Activas
       </button>
       <button
         @click="setActive(false)"
         :class="!showActive ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-800'"
-        class="px-4 py-2 rounded-r shadow-md hover:bg-red-600"
+        class="px-4 py-2 rounded-r shadow-md hover:bg-red-600 hover:text-white active:bg-red-800 transition-colors"
       >
         Eliminadas
       </button>
@@ -27,7 +27,7 @@
       :data="filteredCategories"
       id="id_category_supplier"
       :flagRestore="showActive"
-      :currentUserCompany="0"
+      :currentUserId="0"
       @actionSee="handleSee"
       @actionCreate="handleCreate"
       @actionUpdate="handleUpdate"

@@ -6,15 +6,15 @@
     <div class="mb-4">
       <button
         @click="showActiveCompanies"
-        :class="{ 'bg-blue-500 text-white': showActive, 'bg-gray-200': !showActive }"
-        class="px-4 py-2 rounded-l transition-colors duration-200"
+        :class="{ 'bg-blue-500 text-white': showActive, 'bg-gray-200 text-gray-800': !showActive }"
+        class="px-4 py-2 rounded-l shadow-md transition-colors hover:bg-blue-700 hover:text-white active:bg-blue-800"
       >
         Activas
       </button>
       <button
         @click="showDeletedCompanies"
-        :class="{ 'bg-red-500 text-white': !showActive, 'bg-gray-200': showActive }"
-        class="px-4 py-2 rounded-r transition-colors duration-200"
+        :class="{ 'bg-red-500 text-white': !showActive, 'bg-gray-200 text-gray-800': showActive }"
+        class="px-4 py-2 rounded-r shadow-md transition-colors hover:bg-red-600 hover:text-white active:bg-red-800"
       >
         Eliminadas
       </button>

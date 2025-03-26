@@ -6,15 +6,15 @@
     <div class="mb-4">
       <button
         @click="showActiveInventories"
-        :class="{ 'bg-blue-500 text-white': showActive, 'bg-gray-200': !showActive }"
-        class="px-4 py-2 rounded-l"
+        :class="{ 'bg-blue-500 text-white': showActive, 'bg-gray-200 text-gray-800': !showActive }"
+        class="px-4 py-2 rounded-l shadow-md hover:bg-blue-700 hover:text-white active:bg-blue-800 transiton-colors"
       >
         Activos
       </button>
       <button
         @click="showDeletedInventories"
-        :class="{ 'bg-red-500 text-white': !showActive, 'bg-gray-200': showActive }"
-        class="px-4 py-2 rounded-r"
+        :class="{ 'bg-red-500 text-white': !showActive, 'bg-gray-200 text-gray-800': showActive }"
+        class="px-4 py-2 rounded-r shadow-md hover:bg-red-600 hover:text-white active:bg-red-800 transition-colors"
       >
         Eliminados
       </button>
@@ -27,6 +27,7 @@
       :data="filteredInventories"
       id="id_inventory_product"
       :flagRestore="showActive"
+      :currentUserId="0"
       @actionSee="handleSee"
       @actionCreate="handleCreate"
       @actionUpdate="handleUpdate"
