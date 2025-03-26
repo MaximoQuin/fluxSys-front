@@ -206,16 +206,18 @@ const handleMainItemClick = (event: Event, item: any, navigate: Function) => {
 <template>
   <aside class="flex mr-2 min-h-[94vh]">
     <div class="flex flex-col py-8 px-5 bg-white dark:bg-gray-900 dark:border-gray-700 rounded-lg gap-4">
-      <RouterLink to="/">
-        <button style="cursor: pointer;"
-          class="flex items-center transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 focus:outline-none p-4 sidebar"
-          :class="sidebarClass">
-          <img class="w-auto h-8" src="@/assets/logo.png" alt="">
-          <p class="text-sm font-medium text-gray-700 capitalize dark:text-white sidebar">
-            FluxSYS
-          </p>
-        </button>
-      </RouterLink>
+      <RouterLink to="/" active-class="" exact-active-class="">
+  <button 
+    style="cursor: pointer;"
+    class="flex items-center transition-colors duration-200 gap-x-2 focus:outline-none p-4 sidebar"
+    :class="sidebarClass"
+  >
+    <img class="w-auto h-8" src="@/assets/logo.png" alt="">
+    <p class="text-sm font-medium text-gray-700 capitalize dark:text-white sidebar">
+      FluxSYS
+    </p>
+  </button>
+</RouterLink>
 
       <PanelMenu :model="filteredItems" :expandedKeys="expandedKeys">
         <template #item="{ item }">
