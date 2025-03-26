@@ -185,7 +185,7 @@ const toggleItem = (itemKey: string) => {
   if (!props.isSidebarActive) return;
 
   const newExpandedKeys: Record<string, boolean> = {};
-  
+
   if (!expandedKeys.value[itemKey]) {
     newExpandedKeys[itemKey] = true;
   }
@@ -207,43 +207,33 @@ const handleMainItemClick = (event: Event, item: any, navigate: Function) => {
   <aside class="flex mr-2 min-h-[94vh]">
     <div class="flex flex-col py-8 px-5 bg-white dark:bg-gray-900 dark:border-gray-700 rounded-lg gap-4">
       <RouterLink to="/" active-class="" exact-active-class="">
-  <button 
-    style="cursor: pointer;"
-    class="flex items-center transition-colors duration-200 gap-x-2 focus:outline-none p-4 sidebar"
-    :class="sidebarClass"
-  >
-    <img class="w-auto h-8" src="@/assets/logo.png" alt="">
-    <p class="text-sm font-medium text-gray-700 capitalize dark:text-white sidebar">
-      FluxSYS
-    </p>
-  </button>
-</RouterLink>
+        <button style="cursor: pointer;"
+          class="flex items-center transition-colors duration-200 gap-x-2 focus:outline-none p-4 sidebar"
+          :class="sidebarClass">
+          <img class="w-auto h-8" src="@/assets/logo.webp" alt="">
+          <p class="text-sm font-medium text-gray-700 capitalize dark:text-white sidebar">
+            FluxSYS
+          </p>
+        </button>
+      </RouterLink>
 
       <PanelMenu :model="filteredItems" :expandedKeys="expandedKeys">
         <template #item="{ item }">
           <!-- Ítems principales (con key) -->
           <template v-if="item.key">
-            <RouterLink 
-              :to="item.to" 
-              custom
-              v-slot="{ navigate, isActive }"
-            >
-              <button 
-                style="cursor: pointer;"
+            <RouterLink :to="item.to" custom v-slot="{ navigate, isActive }">
+              <button style="cursor: pointer;"
                 class="flex items-center transition-colors duration-200 dark:hover:bg-gray-800 gap-x-2 hover:bg-gray-100 focus:outline-none p-4 sidebar w-full"
                 :class="[sidebarClass, { 'bg-gray-100 dark:bg-gray-800': isActive }]"
                 @click="(e) => handleMainItemClick(e, item, navigate)"
-                @keydown.enter="(e) => handleMainItemClick(e, item, navigate)"
-              >
+                @keydown.enter="(e) => handleMainItemClick(e, item, navigate)">
                 <font-awesome-icon :icon="['fas', item.icon]" />
                 <p class="text-sm font-medium text-gray-700 capitalize dark:text-white sidebar">
                   {{ item.label }}
                 </p>
                 <span v-if="props.isSidebarActive && item.items" class="ml-auto">
-                  <font-awesome-icon 
-                    :icon="['fas', expandedKeys[item.key] ? 'chevron-up' : 'chevron-down']" 
-                    class="text-xs"
-                  />
+                  <font-awesome-icon :icon="['fas', expandedKeys[item.key] ? 'chevron-up' : 'chevron-down']"
+                    class="text-xs" />
                 </span>
               </button>
             </RouterLink>
@@ -280,6 +270,7 @@ const handleMainItemClick = (event: Event, item: any, navigate: Function) => {
 .router-link-active {
   button {
     background-color: #f3f4f6;
+
     .dark & {
       background-color: #1f2937;
     }
