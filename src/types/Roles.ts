@@ -13,7 +13,7 @@ export const roles: Record<string, Role> = {
   'Administrador': {
     Ver: true,
     Crear: true,
-    Editar: true,
+    Editar: false,
     Borrar: true,
     Restaurar: true,
   },

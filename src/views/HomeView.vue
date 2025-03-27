@@ -31,7 +31,7 @@
     <!-- Sección solo para Administradores -->
     <div v-if="userRole === 'Administrador'">
       <!-- Estadísticas -->
-      <Card class="mb-4" style="height: 370px; overflow-y: auto;">
+      <Card class="mb-4" style="height: 410px; overflow-y: auto;">
         <template #title>Resumen del Sistema</template>
         <template #content>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -75,7 +75,7 @@
           <DataTable :value="recentProducts" 
                     :loading="loading"
                     :scrollable="true"
-                    scrollHeight="200px"
+                    scrollHeight="90px"
                     stripedRows
                     responsiveLayout="scroll"
                     class="p-datatable-sm">
