@@ -21,7 +21,7 @@
     </div>
 
     <!-- Tabla reutilizable -->
-    <TableComponent :loader="loading" :columns="columns" :data="filteredCategories" id="id_category_purchase_order"
+    <TableComponent class="h-118" :loader="loading" :columns="columns" :data="filteredCategories" id="id_category_purchase_order"
       :flagRestore="showActive" :currentUserId="0" @actionSee="handleSee" @actionUpdate="handleUpdate"
       @actionDanger="removeCategoryPurchaseOrder" @actionRestore="restoreDeletedCategoryPurchaseOrder"
       @actionCreate="showCreateModal" />

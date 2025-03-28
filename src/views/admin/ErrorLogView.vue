@@ -3,7 +3,7 @@
     <h1 class="text-2xl font-bold mb-4">Registros de Errores</h1>
 
     <!-- Tabla de errores con buscador -->
-    <DataTable :value="filteredErrorLogs" stripedRows paginator :rows="10" :rowsPerPageOptions="[10, 20, 50]"
+    <DataTable class="h-133" :value="filteredErrorLogs" stripedRows paginator :rows="10" :rowsPerPageOptions="[10, 20, 50]"
       :scrollable="true" :scrollHeight="'350px'" :loading="loading"
       :globalFilterFields="['message_error', 'source_error', 'timestamp']">
       <template #header>

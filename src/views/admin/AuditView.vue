@@ -3,7 +3,7 @@
     <h1 class="text-2xl font-bold mb-4">Auditorías</h1>
 
     <!-- Tabla de auditorías con buscador -->
-    <DataTable :value="filteredAudits" stripedRows paginator :rows="10" :rowsPerPageOptions="[10, 20, 50]"
+    <DataTable class="h-133" :value="filteredAudits" stripedRows paginator :rows="10" :rowsPerPageOptions="[10, 20, 50]"
       :scrollable="true" :scrollHeight="'350px'" :loading="auditStore.loading"
       :globalFilterFields="['date_insert', 'date_update', 'date_delete', 'date_restore', 'amount_modify', 'name_user', 'name_department', 'name_module', 'name_company']">
       <template #header>

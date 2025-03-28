@@ -21,7 +21,7 @@
     </div>
 
     <!-- Tabla de proveedores usando el componente Table -->
-    <TableComponent
+    <TableComponent class="h-118"
       :loader="supplierStore.loading"
       :columns="mappedColumns"
       :data="filteredSuppliers"
@@ -161,12 +161,25 @@
           <label for="category" class="font-semibold">Categoría:*</label>
           <Dropdown 
             v-model="form.id_category_supplier_Id" 
-            :options="categorySupplierStore.categoriesSuppliers" 
+            :options="activeCategories" 
             optionLabel="name_category_supplier" 
             optionValue="id_category_supplier"
             placeholder="Seleccione una categoría"
             :class="{ 'p-invalid': categoryError }"
+            v-if="hasActiveCategories"
           />
+          <div v-else class="p-4 border rounded">
+            <p class="mb-2">
+              No hay categorías activas
+            </p>
+            <Button 
+              label="Crear Categoría" 
+              severity="primary" 
+              outlined
+              @click="redirectToCategories"
+              class="w-full"
+            />
+          </div>
           <small v-if="categoryError" class="p-error">
             {{ categoryError }}
           </small>
@@ -259,6 +272,7 @@ import Tag from 'primevue/tag';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import InputNumber from 'primevue/inputnumber';
+import router from '@/router';
 
 const confirm = useConfirm();
 const toast = useToast();
@@ -268,6 +282,12 @@ const supplierStore = useSupplierStore();
 const categorySupplierStore = useCategorySupplierStore();
 const inventoryStore = useInventoryStore();
 const authStore = useAuthStore();
+
+// Redirecciones
+const redirectToCategories = () => {
+  showFormModal.value = false;
+  router.push('/ca-suppliers-u');
+};
 
 // Estados
 const showActive = ref(true);
@@ -306,6 +326,15 @@ const getAvailableProducts = (currentIndex: number | null = null) => {
     product => !selectedProductIds.includes(product.id_inventory_product)
   );
 };
+
+// Propiedades computadas para filtrar las categorias
+const activeCategories = computed(() => {
+  return categorySupplierStore.categoriesSuppliers.filter(cat => !cat.delete_log_category_supplier);
+});
+
+const hasActiveCategories = computed(() => {
+  return activeCategories.value.length > 0;
+});
 
 // Validaciones
 const nameError = computed(() => {
