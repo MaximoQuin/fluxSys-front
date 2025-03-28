@@ -21,7 +21,7 @@
     </div>
 
     <!-- Tabla de órdenes de compra usando el componente Table -->
-    <TableComponent
+    <TableComponent class="h-118"
       :loader="purchaseOrderStore.loading"
       :columns="mappedColumns"
       :data="filteredPurchaseOrders"
@@ -153,12 +153,25 @@
           <label for="category" class="font-semibold">Categoría:*</label>
           <Dropdown 
             v-model="form.id_category_purchase_order_Id" 
-            :options="categoryPurchaseOrderStore.categoriesPurchaseOrders" 
+            :options="activeCategories" 
             optionLabel="name_category_purchase_order" 
             optionValue="id_category_purchase_order"
             placeholder="Seleccione una categoría"
             :class="{ 'p-invalid': categoryError }"
+            v-if="hasActiveCategories"
           />
+          <div v-else class="p-4 border rounded">
+            <p class="mb-2">
+              No hay categorías activas
+            </p>
+            <Button 
+              label="Crear Categoría" 
+              severity="primary" 
+              outlined
+              @click="redirectToCategories"
+              class="w-full"
+            />
+          </div>
           <small v-if="categoryError" class="p-error">
             {{ categoryError }}
           </small>
@@ -169,12 +182,25 @@
           <label for="supplier" class="font-semibold">Proveedor:*</label>
           <Dropdown 
             v-model="form.id_supplier_Id" 
-            :options="supplierStore.suppliers" 
+            :options="activeSuppliers" 
             optionLabel="name_supplier" 
             optionValue="id_supplier"
             placeholder="Seleccione un proveedor"
             :class="{ 'p-invalid': supplierError }"
+            v-if="hasActiveSuppliers"
           />
+          <div v-else class="p-4 border rounded">
+            <p class="mb-2">
+              No hay proveedores activos
+            </p>
+            <Button 
+              label="Crear Proveedor" 
+              severity="primary" 
+              outlined
+              @click="redirectToSuppliers"
+              class="w-full"
+            />
+          </div>
           <small v-if="supplierError" class="p-error">
             {{ supplierError }}
           </small>
@@ -185,12 +211,25 @@
           <label for="state" class="font-semibold">Estado:*</label>
           <Dropdown 
             v-model="form.id_state_Id" 
-            :options="stateStore.states" 
+            :options="activeStates" 
             optionLabel="name_state" 
             optionValue="id_state"
             placeholder="Seleccione un estado"
             :class="{ 'p-invalid': stateError }"
+            v-if="hasActiveStates"
           />
+          <div v-else class="p-4 border rounded">
+            <p class="mb-2">
+              No hay estados activos
+            </p>
+            <Button 
+              label="Crear Estado" 
+              severity="primary" 
+              outlined
+              @click="redirectToStates"
+              class="w-full"
+            />
+          </div>
           <small v-if="stateError" class="p-error">
             {{ stateError }}
           </small>
@@ -201,12 +240,25 @@
           <label for="movementType" class="font-semibold">Tipo de Movimiento:*</label>
           <Dropdown 
             v-model="form.id_movement_type_Id" 
-            :options="movementTypeStore.movementsTypes" 
+            :options="activeMovementTypes" 
             optionLabel="name_movement_type" 
             optionValue="id_movement_type"
             placeholder="Seleccione un tipo de movimiento"
             :class="{ 'p-invalid': movementTypeError }"
+            v-if="hasActiveMovementTypes"
           />
+          <div v-else class="p-4 border rounded">
+            <p class="mb-2">
+              No hay tipos de movimiento activos
+            </p>
+            <Button 
+              label="Crear Tipo" 
+              severity="primary" 
+              outlined
+              @click="redirectToMovementTypes"
+              class="w-full"
+            />
+          </div>
           <small v-if="movementTypeError" class="p-error">
             {{ movementTypeError }}
           </small>
@@ -303,6 +355,7 @@ import Column from 'primevue/column';
 import InputNumber from 'primevue/inputnumber';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
+import router from '@/router';
 
 const confirm = useConfirm();
 const toast = useToast();
@@ -324,6 +377,27 @@ const isCreating = ref(false);
 const loadingSubmit = ref(false);
 const currentOrder = ref<any>(null);
 const showFormModal = computed(() => isEditing.value || isCreating.value);
+
+// Redirecciones
+const redirectToCategories = () => {
+  showFormModal.value = false;
+  router.push('/ca-purchase-orders-u');
+};
+
+const redirectToSuppliers = () => {
+  showFormModal.value = false;
+  router.push('/suppliers-u');
+};
+
+const redirectToStates = () => {
+  showFormModal.value = false;
+  router.push('/states-u');
+};
+
+const redirectToMovementTypes = () => {
+  showFormModal.value = false;
+  router.push('/movements-types-u');
+};
 
 // Columnas para la tabla
 const mappedColumns = [
@@ -347,6 +421,42 @@ const form = ref({
   id_department_Id: authStore.user?.department?.id_department || 0,
   id_company_Id: authStore.user?.company?.id_company || 0,
   products: [] as Array<{ id_inventory_product_Id: number; quantity: number }>,
+});
+
+// Categorias y opciones filtradas por borrado logico
+const activeCategories = computed(() => {
+  return categoryPurchaseOrderStore.categoriesPurchaseOrders.filter(cat => !cat.delete_log_category_purchase_order);
+});
+
+const hasActiveCategories = computed(() => {
+  return activeCategories.value.length > 0;
+});
+
+// Proveedores activos
+const activeSuppliers = computed(() => {
+  return supplierStore.suppliers.filter(sup => !sup.delete_log_suppliers);
+});
+
+const hasActiveSuppliers = computed(() => {
+  return activeSuppliers.value.length > 0;
+});
+
+// Estados activos
+const activeStates = computed(() => {
+  return stateStore.states.filter(state => !state.delete_log_state);
+});
+
+const hasActiveStates = computed(() => {
+  return activeStates.value.length > 0;
+});
+
+// Tipos de movimiento activos
+const activeMovementTypes = computed(() => {
+  return movementTypeStore.movementsTypes.filter(mt => !mt.delete_log_movement_type);
+});
+
+const hasActiveMovementTypes = computed(() => {
+  return activeMovementTypes.value.length > 0;
 });
 
 // Método para obtener productos disponibles

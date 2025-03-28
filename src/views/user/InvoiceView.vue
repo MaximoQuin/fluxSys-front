@@ -21,7 +21,7 @@
     </div>
 
     <!-- Tabla de facturas usando el componente Table -->
-    <TableComponent
+    <TableComponent class="h-118"
       :loader="invoiceStore.loading"
       :columns="mappedColumns"
       :data="filteredInvoices"
@@ -149,12 +149,25 @@
           <label for="purchaseOrder" class="font-semibold">Orden de Compra:*</label>
           <Dropdown 
             v-model="form.id_purchase_order_Id" 
-            :options="purchaseOrderStore.purchaseOrders" 
+            :options="activePurchaseOrders" 
             optionLabel="name_purchase_order" 
             optionValue="id_purchase_order"
             placeholder="Seleccione una orden de compra"
             :class="{ 'p-invalid': purchaseOrderError }"
+            v-if="hasActivePurchaseOrders"
           />
+          <div v-else class="p-4 border rounded">
+            <p class="mb-2">
+              No hay órdenes de compra activas
+            </p>
+            <Button 
+              label="Crear Orden" 
+              severity="primary" 
+              outlined
+              @click="redirectToPurchaseOrders"
+              class="w-full"
+            />
+          </div>
           <small v-if="purchaseOrderError" class="p-error">
             {{ purchaseOrderError }}
           </small>
@@ -165,12 +178,25 @@
           <label for="supplier" class="font-semibold">Proveedor:*</label>
           <Dropdown 
             v-model="form.id_supplier_Id" 
-            :options="supplierStore.suppliers" 
+            :options="activeSuppliers" 
             optionLabel="name_supplier" 
             optionValue="id_supplier"
             placeholder="Seleccione un proveedor"
             :class="{ 'p-invalid': supplierError }"
+            v-if="hasActiveSuppliers"
           />
+          <div v-else class="p-4 border rounded">
+            <p class="mb-2">
+              No hay proveedores activos
+            </p>
+            <Button 
+              label="Crear Proveedor" 
+              severity="primary" 
+              outlined
+              @click="redirectToSuppliers"
+              class="w-full"
+            />
+          </div>
           <small v-if="supplierError" class="p-error">
             {{ supplierError }}
           </small>
@@ -265,6 +291,7 @@ import Column from 'primevue/column';
 import InputNumber from 'primevue/inputnumber';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
+import router from '@/router';
 
 const confirm = useConfirm();
 const toast = useToast();
@@ -284,6 +311,34 @@ const isCreating = ref(false);
 const loadingSubmit = ref(false);
 const currentInvoice = ref<any>(null);
 const showFormModal = computed(() => isEditing.value || isCreating.value);
+
+// Redirecciones
+const redirectToPurchaseOrders = () => {
+  showFormModal.value = false;
+  router.push('/purchase-orders-u');
+};
+
+const redirectToSuppliers = () => {
+  showFormModal.value = false;
+  router.push('/suppliers-u');
+};
+
+// Filtro de borrado logico
+const activePurchaseOrders = computed(() => {
+  return purchaseOrderStore.purchaseOrders.filter(po => !po.delete_log_purchase_orders);
+});
+
+const hasActivePurchaseOrders = computed(() => {
+  return activePurchaseOrders.value.length > 0;
+});
+
+const activeSuppliers = computed(() => {
+  return supplierStore.suppliers.filter(sup => !sup.delete_log_suppliers);
+});
+
+const hasActiveSuppliers = computed(() => {
+  return activeSuppliers.value.length > 0;
+});
 
 // Columnas para la tabla
 const mappedColumns = [

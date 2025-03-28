@@ -45,7 +45,7 @@
     </div>
 
     <!-- Tabla de inventario -->
-    <TableComponent :loader="inventoryStore.loading" :columns="mappedColumns" :data="filteredInventories"
+    <TableComponent class="h-118" :loader="inventoryStore.loading" :columns="mappedColumns" :data="filteredInventories"
       id="id_inventory_product" :flagRestore="showActive" :currentUserId="0" @actionSee="handleSee"
       @actionCreate="handleCreate" @actionUpdate="handleUpdate" @actionDanger="handleRemove"
       @actionRestore="restoreDeletedInventory" />
@@ -194,22 +194,59 @@
           </small>
         </div>
 
-        <!-- Categoría -->
+        <!-- Categorias de productos -->
         <div class="flex flex-col gap-2">
           <label for="category" class="font-semibold">Categoría:*</label>
-          <Dropdown v-model="formProduct.id_category_product_Id" :options="categoryProductStore.categoriesProducts"
-            optionLabel="name_category_product" optionValue="id_category_product" placeholder="Seleccione una categoría"
-            :class="{ 'p-invalid': categoryError }" />
+          <Dropdown 
+            v-model="formProduct.id_category_product_Id" 
+            :options="activeCategories" 
+            optionLabel="name_category_product" 
+            optionValue="id_category_product"
+            placeholder="Seleccione una categoría"
+            :class="{ 'p-invalid': categoryError }"
+            v-if="hasActiveCategories"
+          />
+          <div v-else class="p-4 border rounded">
+            <p class=" mb-2">
+              No hay categorías activas
+            </p>
+            <Button 
+              label="Crear Categoría" 
+              severity="primary" 
+              outlined
+              @click="redirectToCategories"
+              class="w-full"
+            />
+          </div>
           <small v-if="categoryError" class="p-error">
             {{ categoryError }}
           </small>
         </div>
 
-        <!-- Estado -->
+        <!-- Estados -->
         <div class="flex flex-col gap-2">
           <label for="state" class="font-semibold">Estado:*</label>
-          <Dropdown v-model="formProduct.id_state_Id" :options="stateStore.states" optionLabel="name_state"
-            optionValue="id_state" placeholder="Seleccione un estado" :class="{ 'p-invalid': stateError }" />
+          <Dropdown 
+            v-model="formProduct.id_state_Id" 
+            :options="activeStates" 
+            optionLabel="name_state" 
+            optionValue="id_state"
+            placeholder="Seleccione un estado"
+            :class="{ 'p-invalid': stateError }"
+            v-if="hasActiveStates"
+          />
+          <div v-else class="p-4 border rounded">
+            <p class=" mb-2">
+              No hay estados activos
+            </p>
+            <Button 
+              label="Crear Estado" 
+              severity="primary" 
+              outlined
+              @click="redirectToStates"
+              class="w-full"
+            />
+          </div>
           <small v-if="stateError" class="p-error">
             {{ stateError }}
           </small>
@@ -218,9 +255,27 @@
         <!-- Tipo de Movimiento -->
         <div class="flex flex-col gap-2">
           <label for="movement" class="font-semibold">Tipo de Movimiento:*</label>
-          <Dropdown v-model="formProduct.id_movement_type_Id" :options="movementTypeStore.movementsTypes"
-            optionLabel="name_movement_type" optionValue="id_movement_type" placeholder="Seleccione un tipo"
-            :class="{ 'p-invalid': movementError }" />
+          <Dropdown 
+            v-model="formProduct.id_movement_type_Id" 
+            :options="activeMovementTypes" 
+            optionLabel="name_movement_type" 
+            optionValue="id_movement_type"
+            placeholder="Seleccione un tipo"
+            :class="{ 'p-invalid': movementError }"
+            v-if="hasActiveMovementTypes"
+          />
+          <div v-else class="p-4 border  rounded">
+            <p class=" mb-2">
+              No hay tipos de movimiento activos
+            </p>
+            <Button 
+              label="Crear Tipo de Movimiento" 
+              severity="primary" 
+              outlined
+              @click="redirectToMovementTypes"
+              class="w-full"
+            />
+          </div>
           <small v-if="movementError" class="p-error">
             {{ movementError }}
           </small>
@@ -229,8 +284,27 @@
         <!-- Proveedor -->
         <div class="flex flex-col gap-2">
           <label for="supplier" class="font-semibold">Proveedor Principal:*</label>
-          <Dropdown v-model="formProduct.id_supplier_Id" :options="supplierStore.suppliers" optionLabel="name_supplier"
-            optionValue="id_supplier" placeholder="Seleccione un proveedor" :class="{ 'p-invalid': supplierError }" />
+          <Dropdown 
+            v-model="formProduct.id_supplier_Id" 
+            :options="activeSuppliers" 
+            optionLabel="name_supplier" 
+            optionValue="id_supplier"
+            placeholder="Seleccione un proveedor"
+            :class="{ 'p-invalid': supplierError }"
+            v-if="hasActiveSuppliers"
+          />
+          <div v-else class="p-4 border  rounded">
+            <p class=" mb-2">
+              No hay proveedores activos
+            </p>
+            <Button 
+              label="Crear Proveedor" 
+              severity="primary" 
+              outlined
+              @click="redirectToSuppliers"
+              class="w-full"
+            />
+          </div>
           <small v-if="supplierError" class="p-error">
             {{ supplierError }}
           </small>
@@ -263,6 +337,7 @@ import autoTable from 'jspdf-autotable';
 
 import { useConfirm } from "primevue/useconfirm";
 import { useToast } from "primevue/usetoast";
+import router from '@/router';
 
 const confirm = useConfirm();
 const toast = useToast();
@@ -274,6 +349,61 @@ const stateStore = useStateStore();
 const movementTypeStore = useMovementTypeStore();
 const supplierStore = useSupplierStore();
 const authStore = useAuthStore();
+
+// Métodos de redirección
+const redirectToCategories = () => {
+  visibleForm.value = false;
+  router.push('/ca-products-u');
+};
+
+const redirectToStates = () => {
+  visibleForm.value = false;
+  router.push('/states-u');
+};
+
+const redirectToMovementTypes = () => {
+  visibleForm.value = false;
+  router.push('/movements-types-u');
+};
+
+const redirectToSuppliers = () => {
+  visibleForm.value = false;
+  router.push('/suppliers-u');
+};
+
+// Computed properties para elementos activos
+const activeCategories = computed(() => {
+  return categoryProductStore.categoriesProducts.filter(cat => !cat.delete_log_category_product);
+});
+
+const activeStates = computed(() => {
+  return stateStore.states.filter(state => !state.delete_log_state);
+});
+
+const activeMovementTypes = computed(() => {
+  return movementTypeStore.movementsTypes.filter(mt => !mt.delete_log_movement_type);
+});
+
+const activeSuppliers = computed(() => {
+  return supplierStore.suppliers.filter(supplier => !supplier.delete_log_suppliers);
+});
+
+// Computed properties para verificar si hay activos
+const hasActiveCategories = computed(() => {
+  return categoryProductStore.categoriesProducts.some(cat => !cat.delete_log_category_product);
+});
+
+const hasActiveStates = computed(() => {
+  return stateStore.states.some(state => !state.delete_log_state);
+});
+
+const hasActiveMovementTypes = computed(() => {
+  return movementTypeStore.movementsTypes.some(mt => !mt.delete_log_movement_type);
+});
+
+const hasActiveSuppliers = computed(() => {
+  return supplierStore.suppliers.some(supplier => !supplier.delete_log_suppliers);
+});
 
 // Estados
 const showActive = ref(true);
@@ -706,5 +836,19 @@ onMounted(() => {
   color: var(--red-500);
   font-size: 0.875rem;
   margin-top: 0.25rem;
+}
+
+/* Estilo para los contenedores de "no hay elementos" */
+.border-gray-600 {
+  background-color: #2d3748;
+}
+
+/* Estilo para los botones de redirección */
+.w-full {
+  transition: all 0.3s ease;
+}
+
+.w-full:hover {
+  transform: translateY(-2px);
 }
 </style>

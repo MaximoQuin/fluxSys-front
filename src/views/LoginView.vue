@@ -65,7 +65,7 @@
           <!-- Botón de inicio de sesión -->
           <Button 
             type="submit" 
-            label="Sign In" 
+            label="Iniciar Sesión" 
             icon="pi pi-sign-in"
             class="w-full py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold hover:from-orange-600 hover:to-orange-700 transition-all"
             :loading="loading"

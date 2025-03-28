@@ -21,7 +21,7 @@
     </div>
 
     <!-- Tabla de usuarios usando el componente Table -->
-    <TableComponent
+    <TableComponent class="h-118"
       :loader="userStore.loading"
       :columns="mappedColumns"
       :data="filteredUsers"
@@ -176,55 +176,91 @@
           </small>
         </div>
 
-        <!-- Posición -->
+        <!-- Modificación para el dropdown de Posición -->
         <div class="flex flex-col gap-2">
           <label for="position" class="font-semibold">Posición:*</label>
           <Dropdown 
             v-model="userForm.id_position_Id" 
-            :options="positionStore.positions" 
+            :options="activePositions" 
             optionLabel="name_position" 
             optionValue="id_position"
             placeholder="Seleccione una posición"
             :class="{ 'p-invalid': positionError }"
+            v-if="hasActivePositions"
           />
+          <div v-else class="p-4 border  rounded">
+            <p class=" mb-2">
+              {{ isAdmin ? 'No hay posiciones activas en el sistema' : 'Tu empresa no posee posiciones activas' }}
+            </p>
+            <Button 
+              label="Crear Posición" 
+              severity="primary" 
+              outlined
+              @click="redirectToPositions"
+              class="w-full"
+            />
+          </div>
           <small v-if="positionError" class="p-error">
             {{ positionError }}
           </small>
         </div>
 
-        <!-- Departamento -->
+        <!-- Modificación para el dropdown de Departamento -->
         <div class="flex flex-col gap-2">
           <label for="department" class="font-semibold">Departamento:*</label>
           <Dropdown 
             v-model="userForm.id_department_Id" 
-            :options="departmentStore.departments" 
+            :options="activeDepartments" 
             optionLabel="name_deparment" 
             optionValue="id_department"
             placeholder="Seleccione un departamento"
             :class="{ 'p-invalid': departmentError }"
+            v-if="hasActiveDepartments"
           />
+          <div v-else class="p-4 border  rounded">
+            <p class=" mb-2">
+              {{ isAdmin ? 'No hay departamentos activos en el sistema' : 'Tu empresa no posee departamentos activos' }}
+            </p>
+            <Button 
+              label="Crear Departamento" 
+              severity="primary"
+              outlined
+              @click="redirectToDepartments"
+              class="w-full"
+            />
+          </div>
           <small v-if="departmentError" class="p-error">
             {{ departmentError }}
           </small>
         </div>
 
-        <!-- Compañía -->
+        <!-- Modificación para el dropdown de Compañía -->
         <div class="flex flex-col gap-2">
           <label for="company" class="font-semibold">Compañía:*</label>
           <Dropdown 
             v-model="userForm.id_company_Id" 
-            :options="companyStore.companies" 
+            :options="activeCompanies" 
             optionLabel="name_company" 
             optionValue="id_company"
             placeholder="Seleccione una compañía"
             :class="{ 'p-invalid': companyError }"
+            v-if="hasActiveCompanies"
             :disabled="!isAdmin"
           />
+          <div v-else class="p-4 border  rounded">
+            <p class=" mb-2">
+              No hay compañías activas en el sistema
+            </p>
+            <Button 
+              label="Crear Compañía" 
+              severity="primary"
+              outlined
+              @click="redirectToCompanies"
+              class="w-full"
+            />
+          </div>
           <small v-if="companyError" class="p-error">
             {{ companyError }}
-          </small>
-          <small v-if="!isAdmin" class="text-sm text-gray-500">
-            * Solo los administradores pueden cambiar la compañía
           </small>
         </div>
       </div>
@@ -267,9 +303,11 @@ import { useConfirm } from "primevue/useconfirm";
 import { useToast } from "primevue/usetoast";
 import Card from 'primevue/card';
 import Tag from 'primevue/tag';
+import { useRouter } from 'vue-router';
 
 const confirm = useConfirm();
 const toast = useToast();
+const router = useRouter();
 
 // Stores
 const userStore = useUserStore();
@@ -286,6 +324,22 @@ const isEditing = ref(false);
 const loadingSubmit = ref(false);
 const currentUser = ref<any>(null);
 const roles = ref<Role[]>([]);
+
+// Constantes de redireccion
+const redirectToDepartments = () => {
+  visibleForm.value = false;
+  router.push('/departments-u');
+};
+
+const redirectToPositions = () => {
+  visibleForm.value = false;
+  router.push('/positions-u');
+};
+
+const redirectToCompanies = () => {
+  visibleForm.value = false;
+  router.push('/companies-a');
+};
 
 // Columnas para la tabla
 const mappedColumns = [
@@ -309,6 +363,33 @@ const userForm = ref({
   id_position_Id: null as number | null,
   id_department_Id: null as number | null,
   id_company_Id: null as number | null,
+});
+
+// Filtramos departamentos y posiciones activas
+const activeDepartments = computed(() => {
+  return departmentStore.departments.filter(dept => !dept.delete_log_department);
+});
+
+const activePositions = computed(() => {
+  return positionStore.positions.filter(pos => !pos.delete_log_position);
+});
+
+// Verificamos si hay al menos un departamento/posición activa
+const hasActiveDepartments = computed(() => {
+  return departmentStore.departments.some(dept => !dept.delete_log_department);
+});
+
+const hasActivePositions = computed(() => {
+  return positionStore.positions.some(pos => !pos.delete_log_position);
+});
+
+const activeCompanies = computed(() => {
+  return companyStore.companies.filter(company => !company.delete_log_company);
+});
+
+// Verificamos si hay al menos una compañía activa
+const hasActiveCompanies = computed(() => {
+  return companyStore.companies.some(company => !company.delete_log_company);
 });
 
 // Validaciones reactivas basadas en UserViewModel

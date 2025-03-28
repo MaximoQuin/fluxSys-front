@@ -2,12 +2,13 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
 import type { User } from "@/interfaces/User";
-import { getUsers, createUser, updateUser, deleteUser, restoreUser } from "@/services/userService";
+import { getUsers, createUser, updateUser, deleteUser, restoreUser, getUsersByCompany } from "@/services/userService";
 import { useAuthStore } from "@/stores/authStore";
 
 export const useUserStore = defineStore("user", () => {
   const authStore = useAuthStore();
   const users = ref<User[]>([]);
+  const companyUsers = ref<User[]>([]);
   const loading = ref<boolean>(false);
 
   // Obtener todos los usuarios
@@ -21,6 +22,25 @@ export const useUserStore = defineStore("user", () => {
       loading.value = false;
     }
   };
+
+  // En tu userStore.ts
+const fetchUsersByCompany = async (companyId: number) => {
+  loading.value = true;
+  try {
+    const response = await getUsersByCompany(companyId); // Esta es la función del servicio
+    if (Array.isArray(response)) {
+      companyUsers.value = response;
+    } else {
+      throw new Error('Formato de respuesta inesperado');
+    }
+  } catch (error) {
+    console.error("Error fetching users by company:", error);
+    throw error;
+  } finally {
+    loading.value = false;
+  }
+};
+
 
   // Crear un nuevo usuario
   const addUser = async (data: any) => {
@@ -58,6 +78,8 @@ export const useUserStore = defineStore("user", () => {
     users,
     loading,
     fetchUsers,
+    fetchUsersByCompany,
+    companyUsers,
     addUser,
     editUser,
     removeUser,
