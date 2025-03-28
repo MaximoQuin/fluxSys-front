@@ -23,6 +23,11 @@ export async function getUsers(): Promise<User[]> {
   }
 }
 
+// Obtener usuarios por ID de compañía (sin restricción de rol)
+export async function getUsersByCompany(companyId: number): Promise<User[]> {
+  return genericRequest<User[]>("get", `${API_URL}/get-users-by-company/${companyId}`);
+}
+
 // Crear un nuevo usuario
 export async function createUser(data: any, nameUser: string, nameDepartment: string): Promise<User> {
   return genericRequest<User>("post", `${API_URL}/create-user?nameUser=${nameUser}&nameDepartment=${nameDepartment}`, data);

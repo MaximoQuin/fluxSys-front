@@ -4,7 +4,7 @@
 
     <!-- Tabla de movimientos con ancho optimizado -->
     <div class="card overflow-hidden">
-      <DataTable :value="filteredMovements" stripedRows paginator :rows="10" :rowsPerPageOptions="[10, 20, 50]"
+      <DataTable class="h-133" :value="filteredMovements" stripedRows paginator :rows="10" :rowsPerPageOptions="[10, 20, 50]"
         :scrollable="true" :scrollHeight="'350px'" :loading="loading" :globalFilterFields="[
           'amount_modify', 'name_product',
           'name_department', 'name_supplier', 'name_user'

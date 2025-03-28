@@ -21,7 +21,7 @@
     </div>
 
     <!-- Tabla -->
-    <TableComponent
+    <TableComponent class="h-118"
       :loader="stateStore.loading"
       :columns="columns"
       :data="filteredStates"

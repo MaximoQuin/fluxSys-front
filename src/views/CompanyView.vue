@@ -26,33 +26,59 @@
       @actionDanger="handleRemove" @actionRestore="restoreDeletedCompany" :currentUserCompany="currentUserCompany" />
 
     <!-- Modal de detalles mejorado -->
-    <Dialog v-model:visible="visibleDetails" modal header="Detalles de la Compañía" :style="{ width: '50rem' }">
-      <div v-if="currentCompany" class="grid grid-cols-1 gap-6">
-        <Card>
-          <template #title>
-            <div class="flex items-center gap-3">
-              <i class="pi pi-building text-primary" style="font-size: 1.5rem"></i>
-              <span>Información de la Compañía</span>
-            </div>
-          </template>
-          <template #content>
-            <div class="grid grid-cols-2 gap-4">
-              <div class="flex flex-col">
-                <span class="text-sm font-medium text-gray-500">Nombre</span>
-                <span class="font-semibold text-lg">{{ currentCompany.name_company }}</span>
-              </div>
-              <div class="flex flex-col">
-                <span class="text-sm font-medium text-gray-500">Estado</span>
-                <Tag :value="currentCompany.delete_log_company ? 'Eliminada' : 'Activa'"
-                  :severity="currentCompany.delete_log_company ? 'danger' : 'success'" class="text-sm" />
-              </div>
-            </div>
-          </template>
-        </Card>
+<Dialog v-model:visible="visibleDetails" modal header="Detalles de la Compañía" :style="{ width: '70rem' }">
+  <div v-if="currentCompany" class="grid grid-cols-1 gap-6">
+    <Card>
+      <template #title>
+        <div class="flex items-center gap-3">
+          <i class="pi pi-building text-primary" style="font-size: 1.5rem"></i>
+          <span>Información de la Compañía</span>
+        </div>
+      </template>
+      <template #content>
+        <div class="grid grid-cols-2 gap-4 mb-6">
+          <div class="flex flex-col">
+            <span class="text-sm font-medium text-gray-500">Nombre</span>
+            <span class="font-semibold text-lg">{{ currentCompany.name_company }}</span>
+          </div>
+          <div class="flex flex-col">
+            <span class="text-sm font-medium text-gray-500">Estado</span>
+            <Tag :value="currentCompany.delete_log_company ? 'Eliminada' : 'Activa'"
+              :severity="currentCompany.delete_log_company ? 'danger' : 'success'" class="text-sm" />
+          </div>
+        </div>
 
+        <Divider />
 
-      </div>
-    </Dialog>
+        <h3 class="text-lg font-semibold mb-4">Usuarios asociados</h3>
+        <DataTable 
+          :value="companyUsers" 
+          :paginator="true" 
+          :rows="5"
+          :rowsPerPageOptions="[5, 10, 20]"
+          :loading="loadingUsers"
+          paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
+          currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} usuarios"
+          stripedRows
+        >
+          <Column field="name_user" header="Nombre" sortable></Column>
+          <Column field="mail_user" header="Email" sortable></Column>
+          <Column field="phone_user" header="Teléfono"></Column>
+          <Column field="name_role" header="Rol" sortable></Column>
+          <Column field="name_position" header="Posición" sortable></Column>
+          <Column header="Estado">
+            <template #body="{ data }">
+              <Tag 
+                :value="data.delete_log_user ? 'Inactivo' : 'Activo'" 
+                :severity="data.delete_log_user ? 'danger' : 'success'" 
+              />
+            </template>
+          </Column>
+        </DataTable>
+      </template>
+    </Card>
+  </div>
+</Dialog>
 
     <!-- Modal de formulario con validaciones -->
     <Dialog v-model:visible="visibleForm" modal :header="isEdit ? 'Editar Compañía' : 'Crear Compañía'"
@@ -91,6 +117,10 @@ import { useAuthStore } from '@/stores/authStore';
 import TableComponent from '@/components/TableComponent.vue';
 import { useConfirm } from "primevue/useconfirm";
 import { useToast } from "primevue/usetoast";
+import { useUserStore } from '@/stores/userStore';
+import DataTable from 'primevue/datatable';
+import Column from 'primevue/column';
+import Divider from 'primevue/divider';
 
 const confirm = useConfirm();
 const toast = useToast();
@@ -98,6 +128,7 @@ const toast = useToast();
 // Stores
 const companyStore = useCompanyStore();
 const authStore = useAuthStore();
+const userStore = useUserStore();
 
 // Estados
 const showActive = ref(true);
@@ -107,6 +138,8 @@ const isEdit = ref(false);
 const currentCompany = ref<any>(null);
 const editingId = ref<number | null>(null);
 const loadingSubmit = ref(false);
+const companyUsers = ref<any[]>([]);
+const loadingUsers = ref(false);
 
 // Formulario
 const formCompany = ref({
@@ -173,6 +206,34 @@ const showDeletedCompanies = () => showActive.value = false;
 const handleSee = async (id: number) => {
   currentCompany.value = filteredCompanies.value.find(c => c.id_company === id);
   if (currentCompany.value) {
+    loadingUsers.value = true;
+    try {
+      // Cambia esto:
+      await userStore.fetchUsersByCompany(id); // Usa fetchUsersByCompany en lugar de getUsersByCompany
+      
+      // Usamos directamente companyUsers del store
+      companyUsers.value = userStore.companyUsers;
+      
+      // Verificamos si hay usuarios
+      if (companyUsers.value.length === 0) {
+        toast.add({
+          severity: 'info',
+          summary: 'Información',
+          detail: 'Esta compañía no tiene usuarios asociados',
+          life: 3000
+        });
+      }
+    } catch (error) {
+      console.error('Error al cargar usuarios:', error);
+      toast.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'No se pudieron cargar los usuarios de la compañía',
+        life: 3000
+      });
+    } finally {
+      loadingUsers.value = false;
+    }
     visibleDetails.value = true;
   }
 };
